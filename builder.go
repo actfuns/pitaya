@@ -240,6 +240,7 @@ func (builder *Builder) Build() Pitaya {
 		builder.MetricsReporters,
 		builder.HandlerHooks,
 		handlerPool,
+		builder.Config.Concurrency.Handler.Dispatch,
 	)
 
 	app := NewApp(

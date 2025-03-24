@@ -62,9 +62,9 @@ type (
 	// HandlerService service
 	HandlerService struct {
 		baseService
-		chLocalProcess   chan unhandledMessage // channel of messages that will be processed locally
-		chRemoteProcess  chan unhandledMessage // channel of messages that will be processed remotely
-		decoder          codec.PacketDecoder   // binary decoder
+		chLocalProcess   []chan unhandledMessage // channel of messages that will be processed locally
+		chRemoteProcess  []chan unhandledMessage // channel of messages that will be processed remotely
+		decoder          codec.PacketDecoder     // binary decoder
 		remoteService    *RemoteService
 		serializer       serialize.Serializer          // message serializer
 		server           *cluster.Server               // server obj
@@ -73,6 +73,7 @@ type (
 		agentFactory     agent.AgentFactory
 		handlerPool      *HandlerPool
 		handlers         map[string]*component.Handler // all handler method
+		concurrencyCount int64
 	}
 
 	unhandledMessage struct {
@@ -95,11 +96,12 @@ func NewHandlerService(
 	metricsReporters []metrics.Reporter,
 	handlerHooks *pipeline.HandlerHooks,
 	handlerPool *HandlerPool,
+	concurrencyCount int,
 ) *HandlerService {
 	h := &HandlerService{
 		services:         make(map[string]*component.Service),
-		chLocalProcess:   make(chan unhandledMessage, localProcessBufferSize),
-		chRemoteProcess:  make(chan unhandledMessage, remoteProcessBufferSize),
+		chLocalProcess:   make([]chan unhandledMessage, 0),
+		chRemoteProcess:  make([]chan unhandledMessage, 0),
 		decoder:          packetDecoder,
 		serializer:       serializer,
 		server:           server,
@@ -108,9 +110,15 @@ func NewHandlerService(
 		metricsReporters: metricsReporters,
 		handlerPool:      handlerPool,
 		handlers:         make(map[string]*component.Handler),
+		concurrencyCount: int64(concurrencyCount),
 	}
 
 	h.handlerHooks = handlerHooks
+
+	for range h.concurrencyCount {
+		h.chLocalProcess = append(h.chLocalProcess, make(chan unhandledMessage, localProcessBufferSize))
+		h.chRemoteProcess = append(h.chRemoteProcess, make(chan unhandledMessage, remoteProcessBufferSize))
+	}
 
 	return h
 }
@@ -123,11 +131,11 @@ func (h *HandlerService) Dispatch(thread int) {
 	for {
 		// Calls to remote servers block calls to local server
 		select {
-		case lm := <-h.chLocalProcess:
+		case lm := <-h.chLocalProcess[thread]:
 			metrics.ReportMessageProcessDelayFromCtx(lm.ctx, h.metricsReporters, "local")
 			h.localProcess(lm.ctx, lm.agent, lm.route, lm.msg)
 
-		case rm := <-h.chRemoteProcess:
+		case rm := <-h.chRemoteProcess[thread]:
 			metrics.ReportMessageProcessDelayFromCtx(rm.ctx, h.metricsReporters, "remote")
 			h.remoteService.remoteProcess(rm.ctx, nil, rm.agent, rm.route, rm.msg)
 
@@ -294,15 +302,16 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	ctx := pcontext.AddToPropagateCtx(context.Background(), constants.StartTimeKey, time.Now().UnixNano())
 	ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, msg.Route)
 	ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestIDKey, requestID)
+	session := a.GetSession()
 	tags := opentracing.Tags{
 		"local.id":   h.server.ID,
 		"span.kind":  "server",
 		"msg.type":   strings.ToLower(msg.Type.String()),
-		"user.id":    a.GetSession().UID(),
+		"user.id":    session.UID(),
 		"request.id": requestID,
 	}
 	ctx = tracing.StartSpan(ctx, msg.Route, tags)
-	ctx = context.WithValue(ctx, constants.SessionCtxKey, a.GetSession())
+	ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
 
 	r, err := route.Decode(msg.Route)
 	if err != nil {
@@ -321,11 +330,12 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		route: r,
 		msg:   msg,
 	}
+	idx := session.ID() % h.concurrencyCount
 	if r.SvType == h.server.Type {
-		h.chLocalProcess <- message
+		h.chLocalProcess[idx] <- message
 	} else {
 		if h.remoteService != nil {
-			h.chRemoteProcess <- message
+			h.chRemoteProcess[idx] <- message
 		} else {
 			logger.Log.Warnf("request made to another server type but no remoteService running")
 		}
