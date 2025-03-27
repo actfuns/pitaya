@@ -35,11 +35,11 @@ type PitayaConfig struct {
 			RemoteProcess int `mapstructure:"remoteprocess"`
 		} `mapstructure:"handler"`
 	} `mapstructure:"buffer"`
-	Concurrency struct {
-		Handler struct {
-			Dispatch int `mapstructure:"dispatch"`
-		} `mapstructure:"handler"`
-	} `mapstructure:"concurrency"`
+	Task struct {
+		Size                 int `mapstructure:"size"`
+		WorkerChanCap        int `mapstructure:"workerChanCap"`
+		ExpiryDurationSecond int `mapstructure:"expiryDurationSecond"`
+	}
 	Session struct {
 		Unique bool `mapstructure:"unique"`
 		Drain  struct {
@@ -117,16 +117,14 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 				RemoteProcess: 20,
 			},
 		},
-		Concurrency: struct {
-			Handler struct {
-				Dispatch int `mapstructure:"dispatch"`
-			} `mapstructure:"handler"`
+		Task: struct {
+			Size                 int `mapstructure:"size"`
+			WorkerChanCap        int `mapstructure:"workerChanCap"`
+			ExpiryDurationSecond int `mapstructure:"expiryDurationSecond"`
 		}{
-			Handler: struct {
-				Dispatch int `mapstructure:"dispatch"`
-			}{
-				Dispatch: 25,
-			},
+			Size:                 1 << 20,
+			WorkerChanCap:        10,
+			ExpiryDurationSecond: 5,
 		},
 		Session: struct {
 			Unique bool `mapstructure:"unique"`

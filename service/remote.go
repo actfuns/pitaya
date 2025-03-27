@@ -66,6 +66,7 @@ type RemoteService struct {
 	sessionPool            session.SessionPool
 	handlerPool            *HandlerPool
 	remotes                map[string]*component.Remote // all remote method
+	taskSevice             *TaskService
 }
 
 // NewRemoteService creates and return a new RemoteService
@@ -82,6 +83,7 @@ func NewRemoteService(
 	remoteHooks *pipeline.RemoteHooks,
 	handlerHooks *pipeline.HandlerHooks,
 	handlerPool *HandlerPool,
+	taskSevice *TaskService,
 ) *RemoteService {
 	remote := &RemoteService{
 		services:               make(map[string]*component.Service),
@@ -97,6 +99,7 @@ func NewRemoteService(
 		sessionPool:            sessionPool,
 		handlerPool:            handlerPool,
 		remotes:                make(map[string]*component.Remote),
+		taskSevice:             taskSevice,
 	}
 
 	remote.remoteHooks = remoteHooks
@@ -151,7 +154,23 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 	if err == nil {
 		result := make(chan *protos.Response, 1)
 		go func() {
-			result <- processRemoteMessage(c, req, r)
+			rt, err := route.Decode(req.GetMsg().GetRoute())
+			if err != nil {
+				response := &protos.Response{
+					Error: &protos.Error{
+						Code: e.ErrBadRequestCode,
+						Msg:  "cannot decode route",
+						Metadata: map[string]string{
+							"route": req.GetMsg().GetRoute(),
+						},
+					},
+				}
+				result <- response
+				return
+			}
+			r.taskSevice.Submit(rt.Service, func() {
+				result <- processRemoteMessage(c, req, r, rt)
+			})
 		}()
 
 		reqTimeout := pcontext.GetFromPropagateCtx(ctx, constants.RequestTimeout)
@@ -303,21 +322,7 @@ func (r *RemoteService) Register(comp component.Component, opts []component.Opti
 	return nil
 }
 
-func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteService) *protos.Response {
-	rt, err := route.Decode(req.GetMsg().GetRoute())
-	if err != nil {
-		response := &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrBadRequestCode,
-				Msg:  "cannot decode route",
-				Metadata: map[string]string{
-					"route": req.GetMsg().GetRoute(),
-				},
-			},
-		}
-		return response
-	}
-
+func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteService, rt *route.Route) *protos.Response {
 	switch {
 	case req.Type == protos.RPCType_Sys:
 		return r.handleRPCSys(ctx, req, rt)
@@ -337,15 +342,16 @@ func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteSer
 }
 
 func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, rt *route.Route) *protos.Response {
-	remote, ok := r.remotes[rt.Short()]
+	serviceKey := rt.ServiceKey()
+	remote, ok := r.remotes[serviceKey]
 	if !ok {
-		logger.Log.Warnf("pitaya/remote: %s not found", rt.Short())
+		logger.Log.Warnf("pitaya/remote: %s not found", serviceKey)
 		response := &protos.Response{
 			Error: &protos.Error{
 				Code: e.ErrNotFoundCode,
 				Msg:  "route not found",
 				Metadata: map[string]string{
-					"route": rt.Short(),
+					"route": serviceKey,
 				},
 			},
 		}

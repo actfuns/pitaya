@@ -186,6 +186,12 @@ func (builder *Builder) AddPostBuildHook(hook func(app Pitaya)) {
 
 // Build returns a valid App instance
 func (builder *Builder) Build() Pitaya {
+	taskService, err := service.NewTaskService(builder.Config.Task.Size,
+		builder.Config.Task.WorkerChanCap,
+		builder.Config.Task.ExpiryDurationSecond)
+	if err != nil {
+		panic(err)
+	}
 	handlerPool := service.NewHandlerPool()
 	var remoteService *service.RemoteService
 	if builder.ServerMode == Standalone {
@@ -212,6 +218,7 @@ func (builder *Builder) Build() Pitaya {
 			builder.RemoteHooks,
 			builder.HandlerHooks,
 			handlerPool,
+			taskService,
 		)
 
 		builder.RPCServer.SetPitayaServer(remoteService)
@@ -232,15 +239,13 @@ func (builder *Builder) Build() Pitaya {
 	handlerService := service.NewHandlerService(
 		builder.PacketDecoder,
 		builder.Serializer,
-		builder.Config.Buffer.Handler.LocalProcess,
-		builder.Config.Buffer.Handler.RemoteProcess,
 		builder.Server,
 		remoteService,
 		agentFactory,
 		builder.MetricsReporters,
 		builder.HandlerHooks,
 		handlerPool,
-		builder.Config.Concurrency.Handler.Dispatch,
+		taskService,
 	)
 
 	app := NewApp(

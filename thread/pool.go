@@ -78,7 +78,7 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 		allDone:        make(chan struct{}),
 		lock:           syncx.NewSpinLock(),
 		once:           &sync.Once{},
-		workers:        newWorkerStack(size),
+		workers:        newWorkerStack(0),
 		taskWorders:    make(map[string]worker),
 		workerChanCap:  workerChanCap,
 		expiryDuration: expiryDuration,

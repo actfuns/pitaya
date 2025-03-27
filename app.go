@@ -52,7 +52,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/serialize"
 	"github.com/topfreegames/pitaya/v2/service"
 	"github.com/topfreegames/pitaya/v2/session"
-	"github.com/topfreegames/pitaya/v2/timer"
 	"github.com/topfreegames/pitaya/v2/tracing"
 	"github.com/topfreegames/pitaya/v2/worker"
 )
@@ -127,6 +126,7 @@ type Pitaya interface {
 	GetModule(name string) (interfaces.Module, error)
 
 	GetNumberOfConnectedClients() int64
+	SubmitTask(id string, fn func()) error
 }
 
 // App is the base app struct
@@ -150,6 +150,7 @@ type App struct {
 	worker            *worker.Worker
 	remoteService     *service.RemoteService
 	handlerService    *service.HandlerService
+	taskService       *service.TaskService
 	handlerComp       []regComp
 	remoteComp        []regComp
 	modulesMap        map[string]interfaces.Module
@@ -320,7 +321,6 @@ func (app *App) Start() {
 	app.listen()
 
 	defer func() {
-		timer.GlobalTicker.Stop()
 		app.running = false
 	}()
 
@@ -375,18 +375,12 @@ func (app *App) Start() {
 	app.sessionPool.CloseAll()
 	app.shutdownModules()
 	app.shutdownComponents()
+	app.taskService.Shutdown()
 }
 
 func (app *App) listen() {
 	app.startupComponents()
-	// create global ticker instance, timer precision could be customized
-	// by SetTimerPrecision
-	timer.GlobalTicker = time.NewTicker(timer.Precision)
-
 	logger.Log.Infof("starting server %s:%s", app.server.Type, app.server.ID)
-	for i := 0; i < app.config.Concurrency.Handler.Dispatch; i++ {
-		go app.handlerService.Dispatch(i)
-	}
 	for _, acc := range app.acceptors {
 		a := acc
 		go func() {
@@ -559,4 +553,9 @@ func (app *App) RegisterRPCJob(rpcJob worker.RPCJob) error {
 // GetNumberOfConnectedClients returns the number of connected clients
 func (app *App) GetNumberOfConnectedClients() int64 {
 	return app.sessionPool.GetSessionCount()
+}
+
+// SubmitTask submits a task to be executed
+func (app *App) SubmitTask(id string, task func()) error {
+	return app.taskService.Submit(id, task)
 }

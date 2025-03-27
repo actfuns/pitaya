@@ -116,7 +116,7 @@ func (h *HandlerPool) ProcessHandlerMessage(
 }
 
 func (h *HandlerPool) getHandler(rt *route.Route) (*component.Handler, error) {
-	handler, ok := h.handlers[rt.Short()]
+	handler, ok := h.handlers[rt.ServiceKey()]
 	if !ok {
 		e := fmt.Errorf("pitaya/handler: %s not found", rt.String())
 		return nil, e

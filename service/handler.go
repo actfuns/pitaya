@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,7 +51,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/serialize"
 	"github.com/topfreegames/pitaya/v2/session"
-	"github.com/topfreegames/pitaya/v2/timer"
 	"github.com/topfreegames/pitaya/v2/tracing"
 )
 
@@ -62,9 +62,7 @@ type (
 	// HandlerService service
 	HandlerService struct {
 		baseService
-		chLocalProcess   []chan unhandledMessage // channel of messages that will be processed locally
-		chRemoteProcess  []chan unhandledMessage // channel of messages that will be processed remotely
-		decoder          codec.PacketDecoder     // binary decoder
+		decoder          codec.PacketDecoder // binary decoder
 		remoteService    *RemoteService
 		serializer       serialize.Serializer          // message serializer
 		server           *cluster.Server               // server obj
@@ -73,14 +71,7 @@ type (
 		agentFactory     agent.AgentFactory
 		handlerPool      *HandlerPool
 		handlers         map[string]*component.Handler // all handler method
-		concurrencyCount int64
-	}
-
-	unhandledMessage struct {
-		ctx   context.Context
-		agent agent.Agent
-		route *route.Route
-		msg   *message.Message
+		taskService      *TaskService
 	}
 )
 
@@ -88,20 +79,16 @@ type (
 func NewHandlerService(
 	packetDecoder codec.PacketDecoder,
 	serializer serialize.Serializer,
-	localProcessBufferSize int,
-	remoteProcessBufferSize int,
 	server *cluster.Server,
 	remoteService *RemoteService,
 	agentFactory agent.AgentFactory,
 	metricsReporters []metrics.Reporter,
 	handlerHooks *pipeline.HandlerHooks,
 	handlerPool *HandlerPool,
-	concurrencyCount int,
+	taskService *TaskService,
 ) *HandlerService {
 	h := &HandlerService{
 		services:         make(map[string]*component.Service),
-		chLocalProcess:   make([]chan unhandledMessage, 0),
-		chRemoteProcess:  make([]chan unhandledMessage, 0),
 		decoder:          packetDecoder,
 		serializer:       serializer,
 		server:           server,
@@ -110,45 +97,12 @@ func NewHandlerService(
 		metricsReporters: metricsReporters,
 		handlerPool:      handlerPool,
 		handlers:         make(map[string]*component.Handler),
-		concurrencyCount: int64(concurrencyCount),
+		taskService:      taskService,
 	}
 
 	h.handlerHooks = handlerHooks
 
-	for range h.concurrencyCount {
-		h.chLocalProcess = append(h.chLocalProcess, make(chan unhandledMessage, localProcessBufferSize))
-		h.chRemoteProcess = append(h.chRemoteProcess, make(chan unhandledMessage, remoteProcessBufferSize))
-	}
-
 	return h
-}
-
-// Dispatch message to corresponding logic handler
-func (h *HandlerService) Dispatch(thread int) {
-	// TODO: This timer is being stopped multiple times, it probably doesn't need to be stopped here
-	defer timer.GlobalTicker.Stop()
-
-	for {
-		// Calls to remote servers block calls to local server
-		select {
-		case lm := <-h.chLocalProcess[thread]:
-			metrics.ReportMessageProcessDelayFromCtx(lm.ctx, h.metricsReporters, "local")
-			h.localProcess(lm.ctx, lm.agent, lm.route, lm.msg)
-
-		case rm := <-h.chRemoteProcess[thread]:
-			metrics.ReportMessageProcessDelayFromCtx(rm.ctx, h.metricsReporters, "remote")
-			h.remoteService.remoteProcess(rm.ctx, nil, rm.agent, rm.route, rm.msg)
-
-		case <-timer.GlobalTicker.C: // execute cron task
-			timer.Cron()
-
-		case t := <-timer.Manager.ChCreatedTimer: // new Timers
-			timer.AddTimer(t)
-
-		case id := <-timer.Manager.ChClosingTimer: // closing Timers
-			timer.RemoveTimer(id)
-		}
-	}
 }
 
 // Register registers components
@@ -324,21 +278,24 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		r.SvType = h.server.Type
 	}
 
-	message := unhandledMessage{
-		ctx:   ctx,
-		agent: a,
-		route: r,
-		msg:   msg,
+	if r.Instance == "" {
+		r.SetInstance(strconv.FormatInt(session.ID(), 10))
 	}
-	idx := session.ID() % h.concurrencyCount
-	if r.SvType == h.server.Type {
-		h.chLocalProcess[idx] <- message
-	} else {
-		if h.remoteService != nil {
-			h.chRemoteProcess[idx] <- message
+
+	if err := h.taskService.Submit(r.Service, func() {
+		if r.SvType == h.server.Type {
+			metrics.ReportMessageProcessDelayFromCtx(ctx, h.metricsReporters, "local")
+			h.localProcess(ctx, a, r, msg)
 		} else {
-			logger.Log.Warnf("request made to another server type but no remoteService running")
+			if h.remoteService != nil {
+				metrics.ReportMessageProcessDelayFromCtx(ctx, h.metricsReporters, "remote")
+				h.remoteService.remoteProcess(ctx, nil, a, r, msg)
+			} else {
+				logger.Log.Warnf("request made to another server type but no remoteService running")
+			}
 		}
+	}); err != nil {
+		logger.Log.Errorf("Failed to submit task: %s", err.Error())
 	}
 }
 
