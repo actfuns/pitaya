@@ -52,6 +52,9 @@ func SetLogger(l interfaces.Logger) {
 
 // WithCtx returns a logger with the context
 func WithCtx(ctx context.Context) interfaces.Logger {
+	if ctx == nil {
+		return Log
+	}
 	l := ctx.Value(constants.LoggerCtxKey)
 	if l == nil {
 		return Log
