@@ -175,9 +175,8 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 			} else {
 				dispatchId = r.router.Dispatch(rt, nil)
 			}
-			r.taskSevice.Submit(dispatchId, func(taskId string) {
-				c = pcontext.AddToPropagateCtx(c, constants.TaskIDKey, taskId)
-				result <- processRemoteMessage(c, req, r, rt)
+			r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
+				result <- processRemoteMessage(tctx, req, r, rt)
 			})
 		}()
 

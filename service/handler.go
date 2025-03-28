@@ -278,15 +278,14 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		r.SvType = h.server.Type
 	}
 
-	if err := h.taskService.Submit(strconv.FormatInt(session.ID(), 10), func(taskId string) {
-		ctx = pcontext.AddToPropagateCtx(ctx, constants.TaskIDKey, taskId)
+	if err := h.taskService.Submit(ctx, strconv.FormatInt(session.ID(), 10), func(tctx context.Context) {
 		if r.SvType == h.server.Type {
-			metrics.ReportMessageProcessDelayFromCtx(ctx, h.metricsReporters, "local")
-			h.localProcess(ctx, a, r, msg)
+			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
+			h.localProcess(tctx, a, r, msg)
 		} else {
 			if h.remoteService != nil {
-				metrics.ReportMessageProcessDelayFromCtx(ctx, h.metricsReporters, "remote")
-				h.remoteService.remoteProcess(ctx, nil, a, r, msg)
+				metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "remote")
+				h.remoteService.remoteProcess(tctx, nil, a, r, msg)
 			} else {
 				logger.Log.Warnf("request made to another server type but no remoteService running")
 			}

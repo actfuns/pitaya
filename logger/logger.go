@@ -21,7 +21,10 @@
 package logger
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
+	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
 )
@@ -45,4 +48,14 @@ func SetLogger(l interfaces.Logger) {
 	if l != nil {
 		Log = l
 	}
+}
+
+// WithCtx returns a logger with the context
+func WithCtx(ctx context.Context) interfaces.Logger {
+	l := ctx.Value(constants.LoggerCtxKey)
+	if l == nil {
+		return Log
+	}
+
+	return l.(interfaces.Logger)
 }

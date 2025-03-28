@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
 	"time"
 
+	"github.com/topfreegames/pitaya/v2/constants"
+	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/thread"
 )
@@ -21,8 +24,17 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 	}, nil
 }
 
-func (c *TaskService) Submit(id string, task func(string)) error {
-	return c.pool.Submit(id, task)
+func (c *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {
+	taskIdVal := pcontext.GetFromPropagateCtx(ctx, constants.TaskIDKey)
+	if taskIdVal != nil && taskIdVal.(string) == id {
+		logger.WithCtx(ctx).Warnf("task %s already submitted", id)
+		thread.RunSafe(func() { task(ctx) })
+		return nil
+	}
+	return c.pool.Submit(id, func(s string) {
+		ctx = pcontext.AddToPropagateCtx(ctx, constants.TaskIDKey, id)
+		task(ctx)
+	})
 }
 
 func (c *TaskService) Shutdown() {

@@ -102,6 +102,22 @@ func GetSessionFromCtx(ctx context.Context) session.Session {
 	return sessionVal.(session.Session)
 }
 
+func GetTaskIDFromCtx(ctx context.Context) string {
+	taskIDVal := ctx.Value(constants.TaskIDKey)
+	if taskIDVal == nil {
+		return ""
+	}
+	return taskIDVal.(string)
+}
+
+func GetInstanceFromCtx(ctx context.Context) string {
+	instanceVal := ctx.Value(constants.RequestInstanceKey)
+	if instanceVal == nil {
+		return ""
+	}
+	return instanceVal.(string)
+}
+
 func Start() {
 	DefaultApp.Start()
 }
