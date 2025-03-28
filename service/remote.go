@@ -168,13 +168,15 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 				result <- response
 				return
 			}
+			c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
 			var dispatchId string
 			if req.Type == protos.RPCType_Sys {
 				dispatchId = r.router.Dispatch(rt, req.GetSession())
 			} else {
 				dispatchId = r.router.Dispatch(rt, nil)
 			}
-			r.taskSevice.Submit(dispatchId, func() {
+			r.taskSevice.Submit(dispatchId, func(taskId string) {
+				c = pcontext.AddToPropagateCtx(c, constants.TaskIDKey, taskId)
 				result <- processRemoteMessage(c, req, r, rt)
 			})
 		}()

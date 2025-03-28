@@ -86,7 +86,7 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 	p.workerCache.New = func() any {
 		return &goWorker{
 			pool: p,
-			task: make(chan func(), workerChanCap),
+			task: make(chan func(string), workerChanCap),
 		}
 	}
 	p.cond = sync.NewCond(p.lock)
@@ -96,7 +96,7 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 	return p, nil
 }
 
-func (p *Pool) Submit(id string, task func()) error {
+func (p *Pool) Submit(id string, task func(string)) error {
 	if p.IsClosed() {
 		return ErrPoolClosed
 	}

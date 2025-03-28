@@ -13,7 +13,7 @@ type worker interface {
 	setId(string)
 	run()
 	finish()
-	inputFunc(func())
+	inputFunc(func(string))
 	getRef() int32
 	addRef(int32) int32
 	lastUsedTime() time.Time
@@ -25,7 +25,7 @@ type goWorker struct {
 	ref int32
 
 	pool     *Pool
-	task     chan func()
+	task     chan func(string)
 	lastUsed time.Time
 }
 
@@ -58,14 +58,14 @@ func (w *goWorker) run() {
 	}()
 }
 
-func (w *goWorker) safe(fn func()) (ok bool) {
+func (w *goWorker) safe(fn func(string)) (ok bool) {
 	defer func() {
 		if p := recover(); p != nil {
 			logger.Log.Errorf("worker exits from panic: %v\n%s\n", p, debug.Stack())
 		}
 		ok = w.pool.revertWorker(w)
 	}()
-	fn()
+	fn(w.id)
 	return
 }
 
@@ -97,6 +97,6 @@ func (w *goWorker) setLastUsedTime(t time.Time) {
 	w.lastUsed = t
 }
 
-func (w *goWorker) inputFunc(fn func()) {
+func (w *goWorker) inputFunc(fn func(string)) {
 	w.task <- fn
 }

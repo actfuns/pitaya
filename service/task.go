@@ -21,7 +21,7 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 	}, nil
 }
 
-func (c *TaskService) Submit(id string, task func()) error {
+func (c *TaskService) Submit(id string, task func(string)) error {
 	return c.pool.Submit(id, task)
 }
 

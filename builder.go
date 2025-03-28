@@ -261,6 +261,7 @@ func (builder *Builder) Build() Pitaya {
 		builder.ServiceDiscovery,
 		remoteService,
 		handlerService,
+		taskService,
 		builder.Groups,
 		builder.SessionPool,
 		builder.MetricsReporters,

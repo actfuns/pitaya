@@ -71,6 +71,12 @@ var StartTimeKey = "req-start-time"
 // RequestIDKey is the key holding the request id to be sent over the context
 var RequestIDKey = "request.id"
 
+// RequestInstanceKey is the key holding the request instance to be sent over the context
+var RequestInstanceKey = "request.instance"
+
+// TaskIDKey is the key holding the request task id to be sent over the context
+var TaskIDKey = "task.id"
+
 // RouteKey is the key holding the request route to be sent over the context
 var RouteKey = "req-route"
 
