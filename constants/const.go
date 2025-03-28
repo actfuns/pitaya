@@ -74,8 +74,10 @@ var RequestIDKey = "request.id"
 // RequestInstanceKey is the key holding the request instance to be sent over the context
 var RequestInstanceKey = "request.instance"
 
+type taskIdKey struct{}
+
 // TaskIDKey is the key holding the request task id to be sent over the context
-var TaskIDKey = "task.id"
+var TaskIDKey = taskIdKey{}
 
 // RouteKey is the key holding the request route to be sent over the context
 var RouteKey = "req-route"

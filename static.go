@@ -110,14 +110,6 @@ func GetTaskIDFromCtx(ctx context.Context) string {
 	return taskIDVal.(string)
 }
 
-func GetInstanceFromCtx(ctx context.Context) string {
-	instanceVal := ctx.Value(constants.RequestInstanceKey)
-	if instanceVal == nil {
-		return ""
-	}
-	return instanceVal.(string)
-}
-
 func Start() {
 	DefaultApp.Start()
 }
