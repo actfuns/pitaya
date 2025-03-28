@@ -82,6 +82,7 @@ type Pitaya interface {
 	Start()
 	SetDictionary(dict map[string]uint16) error
 	AddRoute(serverType string, routingFunction router.RoutingFunc) error
+	SetDispatch(router.DispatchFunc) error
 	Shutdown()
 	StartWorker()
 	RegisterRPCJob(rpcJob worker.RPCJob) error
@@ -436,6 +437,19 @@ func (app *App) AddRoute(
 			return constants.ErrChangeRouteWhileRunning
 		}
 		app.router.AddRoute(serverType, routingFunction)
+	} else {
+		return constants.ErrRouterNotInitialized
+	}
+	return nil
+}
+
+// SetDispatch sets the dispatch function
+func (app *App) SetDispatch(dispatchFunc router.DispatchFunc) error {
+	if app.router != nil {
+		if app.running {
+			return constants.ErrChangeRouteWhileRunning
+		}
+		app.router.SetDispatch(dispatchFunc)
 	} else {
 		return constants.ErrRouterNotInitialized
 	}

@@ -22,6 +22,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -37,6 +38,7 @@ import (
 type Router struct {
 	serviceDiscovery cluster.ServiceDiscovery
 	routesMap        map[string]RoutingFunc
+	dispatch         DispatchFunc
 }
 
 // RoutingFunc defines a routing function
@@ -46,6 +48,12 @@ type RoutingFunc func(
 	payload []byte,
 	servers map[string]*cluster.Server,
 ) (*cluster.Server, error)
+
+type Session interface {
+	GetId() int64
+	GetUid() string
+}
+type DispatchFunc func(route *route.Route, session Session) string
 
 // New returns the router
 func New() *Router {
@@ -109,4 +117,22 @@ func (r *Router) AddRoute(
 		logger.Log.Warnf("overriding the route to svType %s", serverType)
 	}
 	r.routesMap[serverType] = routingFunction
+}
+
+// defaultDispatch returns a random dispatch id
+func (r *Router) defaultDispatch() string {
+	return fmt.Sprintf("%d", rand.Int63n(1000000))
+}
+
+// Dispatch gets the right server to use in the call
+func (r *Router) Dispatch(route *route.Route, session Session) string {
+	if r.dispatch != nil {
+		return r.dispatch(route, session)
+	}
+	return r.defaultDispatch()
+}
+
+// SetDispatch sets the dispatch function
+func (r *Router) SetDispatch(dispatchFunc DispatchFunc) {
+	r.dispatch = dispatchFunc
 }
