@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 
@@ -278,11 +277,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		r.SvType = h.server.Type
 	}
 
-	if r.Instance == "" {
-		r.SetInstance(strconv.FormatInt(session.ID(), 10))
-	}
-
-	if err := h.taskService.Submit(r.Service, func() {
+	if err := h.taskService.Submit(fmt.Sprintf("session@%d", session.ID()), func() {
 		if r.SvType == h.server.Type {
 			metrics.ReportMessageProcessDelayFromCtx(ctx, h.metricsReporters, "local")
 			h.localProcess(ctx, a, r, msg)
