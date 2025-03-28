@@ -127,7 +127,7 @@ type Pitaya interface {
 	GetModule(name string) (interfaces.Module, error)
 
 	GetNumberOfConnectedClients() int64
-	SubmitTask(id string, fn func()) error
+	SubmitTask(id string, fn func(string)) error
 }
 
 // App is the base app struct
@@ -572,6 +572,6 @@ func (app *App) GetNumberOfConnectedClients() int64 {
 }
 
 // SubmitTask submits a task to be executed
-func (app *App) SubmitTask(id string, task func()) error {
+func (app *App) SubmitTask(id string, task func(string)) error {
 	return app.taskService.Submit(id, task)
 }
