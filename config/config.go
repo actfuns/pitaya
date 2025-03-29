@@ -89,7 +89,7 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 			Messages: struct {
 				Compression bool `mapstructure:"compression"`
 			}{
-				Compression: true,
+				Compression: false,
 			},
 		},
 		Buffer: struct {
