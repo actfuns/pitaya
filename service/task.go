@@ -40,4 +40,5 @@ func (c *TaskService) Shutdown() {
 	if err := c.pool.ReleaseTimeout(time.Second * 30); err != nil {
 		logger.Log.Errorf("task service shutdown error:%v", err)
 	}
+	logger.Log.Infof("taskService stopped!")
 }
