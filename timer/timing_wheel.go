@@ -11,8 +11,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/thread"
 )
 
-const drainWorkers = 8
-
 var (
 	ErrClosed   = errors.New("TimingWheel is closed already")
 	ErrArgument = errors.New("incorrect task argument")
