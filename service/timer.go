@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"sync/atomic"
 	"time"
 
@@ -36,6 +37,9 @@ func NewTimerService(interval time.Duration, numSlots int, taskService *TaskServ
 }
 
 func (ts *TimerService) SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error) {
+	if counter == 0 {
+		return 0, errors.New("counter cannot be 0")
+	}
 	timerId := atomic.AddUint64(&ts.id, 1)
 	if err := ts.timingWheel.SetTimer(timerId, &timerEntity{
 		taskid:  taskid,
