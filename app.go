@@ -128,6 +128,8 @@ type Pitaya interface {
 
 	GetNumberOfConnectedClients() int64
 	SubmitTask(ctx context.Context, id string, task func(context.Context)) error
+	SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error)
+	ClearInterval(timerId uint64) error
 }
 
 // App is the base app struct
@@ -152,6 +154,7 @@ type App struct {
 	remoteService     *service.RemoteService
 	handlerService    *service.HandlerService
 	taskService       *service.TaskService
+	timerService      *service.TimerService
 	handlerComp       []regComp
 	remoteComp        []regComp
 	modulesMap        map[string]interfaces.Module
@@ -176,6 +179,7 @@ func NewApp(
 	remoteService *service.RemoteService,
 	handlerService *service.HandlerService,
 	taskService *service.TaskService,
+	timerService *service.TimerService,
 	groups groups.GroupService,
 	sessionPool session.SessionPool,
 	metricsReporters []metrics.Reporter,
@@ -191,6 +195,7 @@ func NewApp(
 		remoteService:     remoteService,
 		handlerService:    handlerService,
 		taskService:       taskService,
+		timerService:      timerService,
 		groups:            groups,
 		debug:             false,
 		startAt:           time.Now(),
@@ -378,6 +383,7 @@ func (app *App) Start() {
 	app.sessionPool.CloseAll()
 	app.shutdownModules()
 	app.shutdownComponents()
+	app.timerService.Shutdown()
 	app.taskService.Shutdown()
 }
 
@@ -574,4 +580,14 @@ func (app *App) GetNumberOfConnectedClients() int64 {
 // SubmitTask submits a task to be executed
 func (app *App) SubmitTask(ctx context.Context, id string, task func(context.Context)) error {
 	return app.taskService.Submit(ctx, id, task)
+}
+
+// SetInterval sets an interval
+func (app *App) SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error) {
+	return app.timerService.SetInterval(taskid, delay, counter, fn)
+}
+
+// ClearInterval clears an interval
+func (app *App) ClearInterval(timerId uint64) error {
+	return app.timerService.ClearInterval(timerId)
 }

@@ -40,6 +40,10 @@ type PitayaConfig struct {
 		WorkerChanCap        int `mapstructure:"workerChanCap"`
 		ExpiryDurationSecond int `mapstructure:"expiryDurationSecond"`
 	}
+	Timer struct {
+		Interval time.Duration `mapstructure:"interval"`
+		NumSlots int           `mapstructure:"numslots"`
+	}
 	Session struct {
 		Unique bool `mapstructure:"unique"`
 		Drain  struct {
@@ -125,6 +129,13 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 			Size:                 1 << 20,
 			WorkerChanCap:        10,
 			ExpiryDurationSecond: 5,
+		},
+		Timer: struct {
+			Interval time.Duration `mapstructure:"interval"`
+			NumSlots int           `mapstructure:"numslots"`
+		}{
+			time.Millisecond * 10,
+			10,
 		},
 		Session: struct {
 			Unique bool `mapstructure:"unique"`

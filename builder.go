@@ -192,6 +192,10 @@ func (builder *Builder) Build() Pitaya {
 	if err != nil {
 		panic(err)
 	}
+	timerService, err := service.NewTimerService(builder.Config.Timer.Interval, builder.Config.Timer.NumSlots, taskService)
+	if err != nil {
+		panic(err)
+	}
 	handlerPool := service.NewHandlerPool()
 	var remoteService *service.RemoteService
 	if builder.ServerMode == Standalone {
@@ -262,6 +266,7 @@ func (builder *Builder) Build() Pitaya {
 		remoteService,
 		handlerService,
 		taskService,
+		timerService,
 		builder.Groups,
 		builder.SessionPool,
 		builder.MetricsReporters,

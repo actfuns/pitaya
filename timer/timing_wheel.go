@@ -8,9 +8,7 @@ import (
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/lang"
-	// "github.com/zeromicro/go-zero/core/lang"
-	// "github.com/zeromicro/go-zero/core/threading"
-	// "github.com/zeromicro/go-zero/core/timex"
+	"github.com/topfreegames/pitaya/v2/thread"
 )
 
 const drainWorkers = 8
@@ -164,7 +162,7 @@ func (tw *TimingWheel) Stop() {
 }
 
 func (tw *TimingWheel) drainAll(fn func(key, value any)) {
-	runner := threading.NewTaskRunner(drainWorkers)
+	runner := thread.NewTaskRunner(drainWorkers)
 	for _, slot := range tw.slots {
 		for e := slot.Front(); e != nil; {
 			task := e.Value.(*timingEntry)
@@ -202,7 +200,7 @@ func (tw *TimingWheel) moveTask(task baseEntry) {
 
 	timer := val.(*positionEntry)
 	if task.delay < tw.interval {
-		threading.GoSafe(func() {
+		thread.GoSafe(func() {
 			tw.execute(timer.item.key, timer.item.value)
 		})
 		return
@@ -271,7 +269,7 @@ func (tw *TimingWheel) runTasks(tasks []timingTask) {
 
 	go func() {
 		for i := range tasks {
-			threading.RunSafe(func() {
+			thread.RunSafe(func() {
 				tw.execute(tasks[i].key, tasks[i].value)
 			})
 		}

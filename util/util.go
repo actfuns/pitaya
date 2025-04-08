@@ -228,3 +228,16 @@ func GetContextFromRequest(req *protos.Request, serverID string) (context.Contex
 	ctx = CtxWithDefaultLogger(ctx, route, "")
 	return ctx, nil
 }
+
+// Recover is used with defer to do cleanup on panics.
+// Use it like:
+//
+//	defer Recover(func() {})
+func Recover(cleanups ...func()) {
+	for _, cleanup := range cleanups {
+		cleanup()
+	}
+	if p := recover(); p != nil {
+		logger.Log.Errorf("%s", string(debug.Stack()))
+	}
+}
