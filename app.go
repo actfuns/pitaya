@@ -130,6 +130,7 @@ type Pitaya interface {
 	SubmitTask(ctx context.Context, id string, task func(context.Context)) error
 	SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error)
 	ClearInterval(timerId uint64) error
+	UpdateServerMetadata(metadata map[string]string) error
 }
 
 // App is the base app struct
@@ -590,4 +591,9 @@ func (app *App) SetInterval(taskid string, delay time.Duration, counter int32, f
 // ClearInterval clears an interval
 func (app *App) ClearInterval(timerId uint64) error {
 	return app.timerService.ClearInterval(timerId)
+}
+
+// UpdateServerMetadata updates the server metadata
+func (app *App) UpdateServerMetadata(metadata map[string]string) error {
+	return app.serviceDiscovery.UpdateMetadata(metadata)
 }

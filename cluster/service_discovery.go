@@ -29,5 +29,6 @@ type ServiceDiscovery interface {
 	GetServers() []*Server
 	SyncServers(firstSync bool) error
 	AddListener(listener SDListener)
+	UpdateMetadata(metadata map[string]string) error
 	interfaces.Module
 }

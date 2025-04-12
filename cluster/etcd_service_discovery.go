@@ -520,6 +520,20 @@ func (p *parallelGetter) addWork(serverType, serverID string) {
 	}
 }
 
+// UpdateMetadata updates the metadata of the server
+func (sd *etcdServiceDiscovery) UpdateMetadata(metadata map[string]string) error {
+	if metadata == nil {
+		metadata = make(map[string]string)
+	}
+	for k, v := range sd.server.Metadata {
+		if _, ok := metadata[k]; !ok {
+			metadata[k] = v
+		}
+	}
+	sd.server.Metadata = metadata
+	return sd.addServerIntoEtcd(sd.server)
+}
+
 // SyncServers gets all servers from etcd
 func (sd *etcdServiceDiscovery) SyncServers(firstSync bool) error {
 	sd.syncServersRunning <- true
@@ -640,6 +654,15 @@ func (sd *etcdServiceDiscovery) addServer(sv *Server) {
 		})
 		if sv.ID != sd.server.ID {
 			sd.notifyListeners(ADD, sv)
+		}
+	} else {
+		sd.mapByTypeLock.RLock()
+		defer sd.mapByTypeLock.RUnlock()
+		if mapSvByType, ok := sd.serverMapByType[sv.Type]; ok {
+			osv := mapSvByType[sv.ID]
+			if osv != nil {
+				osv.Metadata = sv.Metadata
+			}
 		}
 	}
 }
