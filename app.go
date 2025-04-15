@@ -128,7 +128,7 @@ type Pitaya interface {
 
 	GetNumberOfConnectedClients() int64
 	SubmitTask(ctx context.Context, id string, task func(context.Context)) error
-	SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error)
+	SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error)
 	ClearInterval(timerId uint64) error
 	UpdateServerMetadata(metadata map[string]string) error
 }
@@ -584,7 +584,7 @@ func (app *App) SubmitTask(ctx context.Context, id string, task func(context.Con
 }
 
 // SetInterval sets an interval
-func (app *App) SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error) {
+func (app *App) SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error) {
 	return app.timerService.SetInterval(taskid, delay, counter, fn)
 }
 
