@@ -43,6 +43,7 @@ type (
 		value   any
 		circle  int
 		diff    int
+		counter int
 		removed bool
 	}
 
@@ -137,9 +138,15 @@ func (tw *TimingWheel) RemoveTimer(key any) error {
 }
 
 // SetTimer sets the task value with the given key to the delay.
-func (tw *TimingWheel) SetTimer(key, value any, delay time.Duration) error {
+func (tw *TimingWheel) SetTimer(key, value any, delay time.Duration, counter int) error {
 	if delay <= 0 || key == nil {
 		return ErrArgument
+	}
+	if counter == 0 {
+		return ErrArgument
+	}
+	if counter < 0 {
+		counter = -1
 	}
 
 	select {
@@ -148,7 +155,8 @@ func (tw *TimingWheel) SetTimer(key, value any, delay time.Duration) error {
 			delay: delay,
 			key:   key,
 		},
-		value: value,
+		counter: counter,
+		value:   value,
 	}:
 		return nil
 	case <-tw.stopChannel:
@@ -267,18 +275,16 @@ func (tw *TimingWheel) runTasks(tasks []timingTask) {
 		return
 	}
 
-	go func() {
-		for i := range tasks {
-			thread.RunSafe(func() {
-				tw.execute(tasks[i].key, tasks[i].value)
-			})
-		}
-	}()
+	for i := range tasks {
+		thread.RunSafe(func() {
+			tw.execute(tasks[i].key, tasks[i].value)
+		})
+	}
 }
 
 func (tw *TimingWheel) scanAndRunTasks(l *list.List) {
 	var tasks []timingTask
-
+	var resetTasks []*timingEntry
 	for e := l.Front(); e != nil; {
 		task := e.Value.(*timingEntry)
 		if task.removed {
@@ -307,12 +313,23 @@ func (tw *TimingWheel) scanAndRunTasks(l *list.List) {
 			key:   task.key,
 			value: task.value,
 		})
+		if task.counter != -1 {
+			task.counter--
+			if task.counter == 0 {
+				task.removed = true
+			}
+		}
 		next := e.Next()
 		l.Remove(e)
 		tw.timers.Delete(task.key)
+		if !task.removed {
+			resetTasks = append(resetTasks, task)
+		}
 		e = next
 	}
-
+	for _, task := range resetTasks {
+		tw.setTask(task)
+	}
 	tw.runTasks(tasks)
 }
 

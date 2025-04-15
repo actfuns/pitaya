@@ -11,11 +11,17 @@ func TestSetTimer(t *testing.T) {
 	taskService, _ := NewTaskService(1, 1, 1)
 	timerService, _ := NewTimerService(time.Millisecond*10, 1000, taskService)
 	last := time.Now().UnixMilli()
-	timerService.SetInterval("test", time.Millisecond*400, -1, func(ctx context.Context) {
+	timerId, _ := timerService.SetInterval("test", time.Millisecond*400, -1, func(ctx context.Context) {
 		now := time.Now().UnixMilli()
 		fmt.Printf("%d\n", now-last)
 		last = now
+
 	})
+	go func() {
+		time.Sleep(time.Second * 1)
+		timerService.ClearInterval(timerId)
+	}()
+
 	// go func() {
 	// 	t := time.NewTicker(time.Millisecond * 400)
 	// 	last := time.Now().UnixMilli()

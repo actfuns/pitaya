@@ -155,3 +155,17 @@ func (mr *MockServiceDiscoveryMockRecorder) SyncServers(firstSync interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SyncServers", reflect.TypeOf((*MockServiceDiscovery)(nil).SyncServers), firstSync)
 }
+
+// UpdateMetadata mocks base method.
+func (m *MockServiceDiscovery) UpdateMetadata(metadata map[string]string) error{
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMetadata", metadata)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateMetadata indicates an expected call of UpdateMetadata.
+func (mr *MockServiceDiscoveryMockRecorder) UpdateMetadata(metadata map[string]string) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetadata", reflect.TypeOf((*MockServiceDiscovery)(nil).UpdateMetadata), metadata)
+}

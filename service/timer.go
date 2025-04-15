@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"sync/atomic"
 	"time"
 
@@ -11,10 +10,8 @@ import (
 )
 
 type timerEntity struct {
-	taskid  string
-	counter int32
-	fn      func(context.Context)
-	delay   time.Duration
+	taskid string
+	fn     func(context.Context)
 }
 
 type TimerService struct {
@@ -36,17 +33,15 @@ func NewTimerService(interval time.Duration, numSlots int, taskService *TaskServ
 	return &ts, nil
 }
 
-func (ts *TimerService) SetInterval(taskid string, delay time.Duration, counter int32, fn func(context.Context)) (uint64, error) {
+func (ts *TimerService) SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error) {
 	if counter == 0 {
-		return 0, errors.New("counter cannot be 0")
+		return 0, timer.ErrArgument
 	}
 	timerId := atomic.AddUint64(&ts.id, 1)
 	if err := ts.timingWheel.SetTimer(timerId, &timerEntity{
-		taskid:  taskid,
-		fn:      fn,
-		counter: counter,
-		delay:   delay,
-	}, delay); err != nil {
+		taskid: taskid,
+		fn:     fn,
+	}, delay, int(counter)); err != nil {
 		return 0, err
 	}
 	return timerId, nil
@@ -59,13 +54,6 @@ func (ts *TimerService) ClearInterval(timerId uint64) error {
 func (ts *TimerService) execute(key, value any) {
 	task := value.(*timerEntity)
 	ts.taskService.Submit(context.Background(), task.taskid, task.fn)
-	if task.counter != -1 {
-		newCounter := atomic.AddInt32(&task.counter, -1)
-		if newCounter == 0 {
-			return
-		}
-	}
-	ts.timingWheel.SetTimer(key, task, task.delay)
 }
 
 func (ts *TimerService) Shutdown() {
