@@ -171,9 +171,22 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 			c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
 			var dispatchId string
 			if req.Type == protos.RPCType_Sys {
-				dispatchId = r.router.Dispatch(rt, req.GetSession())
+				dispatchId, err = r.router.Dispatch(rt, req.GetSession(), req.Msg.Data)
 			} else {
-				dispatchId = r.router.Dispatch(rt, nil)
+				dispatchId, err = r.router.Dispatch(rt, nil, req.Msg.Data)
+			}
+			if err != nil {
+				response := &protos.Response{
+					Error: &protos.Error{
+						Code: e.ErrBadRequestCode,
+						Msg:  "cannot decode dispatch",
+						Metadata: map[string]string{
+							"route": req.GetMsg().GetRoute(),
+						},
+					},
+				}
+				result <- response
+				return
 			}
 			r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
 				result <- processRemoteMessage(tctx, req, r, rt)

@@ -131,6 +131,7 @@ type Pitaya interface {
 	SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error)
 	ClearInterval(timerId uint64) error
 	UpdateServerMetadata(metadata map[string]string) error
+	GetSerializer() serialize.Serializer
 }
 
 // App is the base app struct
@@ -596,4 +597,9 @@ func (app *App) ClearInterval(timerId uint64) error {
 // UpdateServerMetadata updates the server metadata
 func (app *App) UpdateServerMetadata(metadata map[string]string) error {
 	return app.serviceDiscovery.UpdateMetadata(metadata)
+}
+
+// GetSerializer gets the serializer instance
+func (app *App) GetSerializer() serialize.Serializer {
+	return app.serializer
 }

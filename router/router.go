@@ -53,7 +53,7 @@ type Session interface {
 	GetId() int64
 	GetUid() string
 }
-type DispatchFunc func(route *route.Route, session Session) string
+type DispatchFunc func(route *route.Route, session Session, data []byte) (string, error)
 
 // New returns the router
 func New() *Router {
@@ -120,14 +120,14 @@ func (r *Router) AddRoute(
 }
 
 // defaultDispatch returns a random dispatch id
-func (r *Router) defaultDispatch() string {
-	return fmt.Sprintf("%d", rand.Int63n(1000000))
+func (r *Router) defaultDispatch() (string, error) {
+	return fmt.Sprintf("%d", rand.Int63n(1000000)), nil
 }
 
 // Dispatch gets the right server to use in the call
-func (r *Router) Dispatch(route *route.Route, session Session) string {
+func (r *Router) Dispatch(route *route.Route, session Session, data []byte) (string, error) {
 	if r.dispatch != nil {
-		return r.dispatch(route, session)
+		return r.dispatch(route, session, data)
 	}
 	return r.defaultDispatch()
 }
