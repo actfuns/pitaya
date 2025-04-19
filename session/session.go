@@ -126,6 +126,7 @@ type Session interface {
 	ResponseMID(ctx context.Context, mid uint, v interface{}, err ...bool) error
 	ID() int64
 	UID() string
+	FrontendID() string
 	GetData() map[string]interface{}
 	SetData(data map[string]interface{}) error
 	GetDataEncoded() []byte
@@ -375,6 +376,11 @@ func (s *sessionImpl) ID() int64 {
 // UID returns uid that bind to current session
 func (s *sessionImpl) UID() string {
 	return s.uid
+}
+
+// FrontendID returns the frontend id
+func (a *sessionImpl) FrontendID() string {
+	return a.frontendID
 }
 
 // GetData gets the data
