@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	nats "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
@@ -42,6 +41,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/route"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestNewNatsRPCClient(t *testing.T) {

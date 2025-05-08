@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	nats "github.com/nats-io/nats.go"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -34,12 +33,14 @@ import (
 	"github.com/topfreegames/pitaya/v2/constants"
 	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/errors"
+	e "github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/metrics"
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/session"
 	"github.com/topfreegames/pitaya/v2/tracing"
+	"google.golang.org/protobuf/proto"
 )
 
 // NatsRPCClient struct
@@ -213,7 +214,7 @@ func (ns *NatsRPCClient) Call(
 	m, err = ns.conn.Request(getChannel(server.Type, server.ID), marshalledData, timeout)
 	if err != nil {
 		if err == nats.ErrTimeout {
-			err = errors.NewError(constants.ErrRPCRequestTimeout, "PIT-408", map[string]string{
+			err = errors.NewError(constants.ErrRPCRequestTimeout, e.ErrRequestTimeout, map[string]string{
 				"timeout": timeout.String(),
 				"route":   route.String(),
 				"server":  ns.server.ID,
@@ -230,7 +231,7 @@ func (ns *NatsRPCClient) Call(
 	}
 
 	if res.Error != nil {
-		if res.Error.Code == "" {
+		if res.Error.Code == 0 {
 			res.Error.Code = errors.ErrUnknownCode
 		}
 		err = &errors.Error{

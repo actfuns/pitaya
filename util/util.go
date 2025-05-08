@@ -133,9 +133,9 @@ func GetErrorPayload(serializer serialize.Serializer, err error) ([]byte, error)
 	code := e.ErrUnknownCode
 	msg := err.Error()
 	metadata := map[string]string{}
-	if val, ok := err.(*e.Error); ok {
-		code = val.Code
-		metadata = val.Metadata
+	if val, ok := err.(e.PitayaError); ok {
+		code = val.GetCode()
+		metadata = val.GetMetadata()
 	}
 	errPayload := &protos.Error{
 		Code: code,

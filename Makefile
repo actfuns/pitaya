@@ -34,7 +34,7 @@ setup-ci:
 
 setup-protobuf-macos:
 	@brew install protobuf
-	@go get github.com/golang/protobuf/protoc-gen-go
+	@go get google.golang.org/protobuf/protoc-gen-go
 
 run-jaeger-aio:
 	@docker compose -f ./examples/testing/docker-compose-jaeger.yml up -d
@@ -88,7 +88,6 @@ protos-compile-demo:
 protos-compile:
 	@cd benchmark/testdata && ./gen_proto.sh
 	@protoc -I pitaya-protos/ pitaya-protos/*.proto --go_out=plugins=grpc:protos
-	@protoc -I pitaya-protos/test pitaya-protos/test/*.proto --go_out=protos/test
 
 rm-test-temp-files:
 	@rm -f cluster/127.0.0.1* 127.0.0.1*

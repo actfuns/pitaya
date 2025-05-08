@@ -23,6 +23,7 @@ package metrics
 import (
 	"context"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/constants"
@@ -49,7 +50,7 @@ func ReportTimingFromCtx(ctx context.Context, reporters []Reporter, typ string, 
 			"route":  route.(string),
 			"status": status,
 			"type":   typ,
-			"code":   code,
+			"code":   strconv.FormatInt(int64(code), 10),
 		})
 		for _, r := range reporters {
 			r.ReportSummary(ResponseTime, tags, float64(elapsed.Nanoseconds()))

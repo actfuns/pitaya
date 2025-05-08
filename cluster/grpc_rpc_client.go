@@ -148,7 +148,7 @@ func (gs *GRPCClient) Call(
 		return nil, err
 	}
 	if res.Error != nil {
-		if res.Error.Code == "" {
+		if res.Error.Code == 0 {
 			res.Error.Code = pitErrors.ErrUnknownCode
 		}
 		err = &pitErrors.Error{

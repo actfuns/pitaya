@@ -31,14 +31,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/sirupsen/logrus"
 	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/protos"
+	"google.golang.org/protobuf/proto"
+	protobuf "google.golang.org/protobuf/types/descriptorpb"
 )
 
 // Command struct. Save the input and output type and proto descriptor for each

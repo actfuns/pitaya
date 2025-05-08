@@ -30,7 +30,6 @@ import (
 
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/topfreegames/pitaya/v2/acceptor"
 	"github.com/topfreegames/pitaya/v2/cluster"
@@ -54,6 +53,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/session"
 	"github.com/topfreegames/pitaya/v2/tracing"
 	"github.com/topfreegames/pitaya/v2/worker"
+	"google.golang.org/protobuf/proto"
 )
 
 // ServerMode represents a server mode
@@ -476,7 +476,7 @@ func (app *App) Shutdown() {
 }
 
 // Error creates a new error with a code, message and metadata
-func Error(err error, code string, metadata ...map[string]string) *errors.Error {
+func Error(err error, code int32, metadata ...map[string]string) *errors.Error {
 	return errors.NewError(err, code, metadata...)
 }
 

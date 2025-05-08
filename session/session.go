@@ -30,12 +30,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	nats "github.com/nats-io/nats.go"
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/networkentity"
 	"github.com/topfreegames/pitaya/v2/protos"
+	"google.golang.org/protobuf/proto"
 )
 
 type sessionPoolImpl struct {

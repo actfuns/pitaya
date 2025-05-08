@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	nats "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/config"
@@ -39,6 +38,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/protos"
 	protosmocks "github.com/topfreegames/pitaya/v2/protos/mocks"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"google.golang.org/protobuf/proto"
 )
 
 type funcPtrMatcher struct {

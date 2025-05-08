@@ -24,7 +24,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/pitaya/v2/cluster"
 	"github.com/topfreegames/pitaya/v2/component"
@@ -35,6 +34,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/router"
 	"github.com/topfreegames/pitaya/v2/session"
 	"github.com/topfreegames/pitaya/v2/worker"
+	"google.golang.org/protobuf/proto"
 )
 
 var DefaultApp Pitaya

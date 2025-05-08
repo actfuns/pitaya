@@ -40,6 +40,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/conn/codec"
 	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/conn/packet"
+	e "github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/logger"
 	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
 	"github.com/topfreegames/pitaya/v2/session"
@@ -214,7 +215,7 @@ func (c *Client) pendingRequestsReaper() {
 				}
 			}
 			for _, pendingReq := range toDelete {
-				err := pitaya.Error(errors.New("request timeout"), "PIT-504")
+				err := pitaya.Error(errors.New("request timeout"), e.ErrGatewayTimeout)
 				errMarshalled, _ := json.Marshal(err)
 				// send a timeout to incoming msg chan
 				m := &message.Message{

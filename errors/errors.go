@@ -20,36 +20,51 @@
 
 package errors
 
-import "errors"
+import (
+	"errors"
+)
 
 // ErrUnknownCode is a string code representing an unknown error
 // This will be used when no error code is sent by the handler
-const ErrUnknownCode = "PIT-000"
+const ErrUnknownCode int32 = 999
 
 // ErrInternalCode is a string code representing an internal Pitaya error
-const ErrInternalCode = "PIT-500"
+const ErrInternalCode int32 = 500
 
 // ErrNotFoundCode is a string code representing a not found related error
-const ErrNotFoundCode = "PIT-404"
+const ErrNotFoundCode int32 = 404
 
 // ErrBadRequestCode is a string code representing a bad request related error
-const ErrBadRequestCode = "PIT-400"
+const ErrBadRequestCode int32 = 400
 
 // ErrClientClosedRequest is a string code representing the client closed request error
-const ErrClientClosedRequest = "PIT-499"
+const ErrClientClosedRequest int32 = 499
 
 // ErrClosedRequest is a string code representing the closed request error
-const ErrClosedRequest = "PIT-498"
+const ErrClosedRequest int32 = 498
+
+// ErrRequestTimeout is a string code representing the request timeout error
+const ErrRequestTimeout int32 = 408
+
+// ErrGatewayTimeout is a string code representing the gateway timeout error
+const ErrGatewayTimeout int32 = 504
+
+type PitayaError interface {
+	Error() string
+	GetCode() int32
+	GetMessage() string
+	GetMetadata() map[string]string
+}
 
 // Error is an error with a code, message and metadata
 type Error struct {
-	Code     string
+	Code     int32
 	Message  string
 	Metadata map[string]string
 }
 
 // NewError ctor
-func NewError(err error, code string, metadata ...map[string]string) *Error {
+func NewError(err error, code int32, metadata ...map[string]string) *Error {
 	var pitayaErr *Error
 	if ok := errors.As(err, &pitayaErr); ok {
 		if len(metadata) > 0 {
@@ -67,6 +82,18 @@ func NewError(err error, code string, metadata ...map[string]string) *Error {
 	}
 	return e
 
+}
+
+func (e *Error) GetCode() int32 {
+	return e.Code
+}
+
+func (e *Error) GetMessage() string {
+	return e.Message
+}
+
+func (e *Error) GetMetadata() map[string]string {
+	return e.Metadata
 }
 
 func (e *Error) Error() string {
@@ -87,19 +114,19 @@ func mergeMetadatas(pitayaErr *Error, metadata map[string]string) {
 // CodeFromError returns the code of error.
 // If error is nil, return empty string.
 // If error is not a pitaya error, returns unkown code
-func CodeFromError(err error) string {
+func CodeFromError(err error) int32 {
 	if err == nil {
-		return ""
+		return 0
 	}
 
-	pitayaErr, ok := err.(*Error)
+	pitayaErr, ok := err.(PitayaError)
 	if !ok {
 		return ErrUnknownCode
 	}
 
 	if pitayaErr == nil {
-		return ""
+		return 0
 	}
 
-	return pitayaErr.Code
+	return pitayaErr.GetCode()
 }

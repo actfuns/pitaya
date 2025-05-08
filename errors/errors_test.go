@@ -31,17 +31,17 @@ import (
 func TestNewError(t *testing.T) {
 	t.Parallel()
 
-	const code = "code"
+	const code = 0
 
 	type (
 		input struct {
 			err      error
-			code     string
+			code     int32
 			metadata map[string]string
 		}
 
 		expected struct {
-			code     string
+			code     int32
 			metadata map[string]string
 		}
 	)
@@ -66,7 +66,7 @@ func TestNewError(t *testing.T) {
 		{"pitaya_error",
 			input{
 				err:      NewError(errors.New(uuid.New().String()), code, map[string]string{"key1": "value1", "key2": "value2"}),
-				code:     "another-code",
+				code:     123,
 				metadata: map[string]string{"key1": "new-value1", "key3": "value3"},
 			},
 			expected{code: code, metadata: map[string]string{"key1": "new-value1", "key2": "value2", "key3": "value3"}},
@@ -74,7 +74,7 @@ func TestNewError(t *testing.T) {
 		{"pitaya_error_nil_metadata",
 			input{
 				err:      NewError(errors.New(uuid.New().String()), code),
-				code:     "another-code",
+				code:     123,
 				metadata: map[string]string{"key1": "value1", "key2": "value2"},
 			},
 			expected{code: code, metadata: map[string]string{"key1": "value1", "key2": "value2"}},
@@ -101,7 +101,7 @@ func TestErrorError(t *testing.T) {
 	t.Parallel()
 
 	sourceErr := errors.New(uuid.New().String())
-	err := NewError(sourceErr, uuid.New().String())
+	err := NewError(sourceErr, 6666)
 
 	errStr := err.Error()
 	assert.Equal(t, sourceErr.Error(), errStr)
@@ -111,15 +111,15 @@ func TestCodeFromError(t *testing.T) {
 	t.Parallel()
 
 	errTest := errors.New("error")
-	codeNotFound := "GAME-404"
+	var codeNotFound int32 = 404
 
 	tables := map[string]struct {
 		err  error
-		code string
+		code int32
 	}{
 		"test_not_error": {
 			err:  nil,
-			code: "",
+			code: 0,
 		},
 
 		"test_not_pitaya_error": {
@@ -129,7 +129,7 @@ func TestCodeFromError(t *testing.T) {
 
 		"test_nil_pitaya_error": {
 			err:  func() *Error { var err *Error; return err }(),
-			code: "",
+			code: 0,
 		},
 
 		"test_pitaya_error": {

@@ -27,7 +27,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/topfreegames/pitaya/v2/agent"
 	"github.com/topfreegames/pitaya/v2/cluster"
@@ -51,6 +51,7 @@ import (
 
 // RemoteService struct
 type RemoteService struct {
+	protos.UnimplementedPitayaServer
 	baseService
 	rpcServer              cluster.RPCServer
 	serviceDiscovery       cluster.ServiceDiscovery

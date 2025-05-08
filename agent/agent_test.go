@@ -28,6 +28,7 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -949,9 +950,9 @@ func TestAgentAnswerWithError(t *testing.T) {
 		},
 		{
 			name:        "should return custom code for pitaya error and JSON serializer",
-			answeredErr: e.NewError(assert.AnError, "CUSTOM-123"),
+			answeredErr: e.NewError(assert.AnError, 123),
 			serializer:  jsonSerializer,
-			expectedErr: e.NewError(assert.AnError, "CUSTOM-123"),
+			expectedErr: e.NewError(assert.AnError, 123),
 		},
 		{
 			name:        "should return unknown code for generic error and Protobuf serializer",
@@ -961,9 +962,9 @@ func TestAgentAnswerWithError(t *testing.T) {
 		},
 		{
 			name:        "should return custom code for pitaya error and Protobuf serializer",
-			answeredErr: e.NewError(assert.AnError, "CUSTOM-123"),
+			answeredErr: e.NewError(assert.AnError, 123),
 			serializer:  protobufSerializer,
-			expectedErr: e.NewError(assert.AnError, "CUSTOM-123"),
+			expectedErr: e.NewError(assert.AnError, 123),
 		},
 		{
 			name:        "should return unknown code for generic error and custom serializer",
@@ -973,9 +974,9 @@ func TestAgentAnswerWithError(t *testing.T) {
 		},
 		{
 			name:        "should return custom code for pitaya error and custom serializer",
-			answeredErr: e.NewError(assert.AnError, "CUSTOM-123"),
+			answeredErr: e.NewError(assert.AnError, 123),
 			serializer:  customSerializer,
-			expectedErr: e.NewError(assert.AnError, "CUSTOM-123"),
+			expectedErr: e.NewError(assert.AnError, 123),
 		},
 	}
 
@@ -1270,7 +1271,7 @@ func TestAgentWriteChSendWriteError(t *testing.T) {
 	errorTags["route"] = "route"
 	errorTags["status"] = "failed"
 	errorTags["type"] = "handler"
-	errorTags["code"] = e.ErrClosedRequest
+	errorTags["code"] = strconv.FormatInt(int64(e.ErrClosedRequest), 10)
 
 	mockMetricsReporter.EXPECT().ReportGauge(metrics.ConnectedClients, gomock.Any(), gomock.Any())
 	mockMetricsReporter.EXPECT().ReportSummary(metrics.ResponseTime, errorTags, gomock.Any())

@@ -29,7 +29,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	agentmocks "github.com/topfreegames/pitaya/v2/agent/mocks"
@@ -49,6 +48,7 @@ import (
 	serializemocks "github.com/topfreegames/pitaya/v2/serialize/mocks"
 	"github.com/topfreegames/pitaya/v2/session"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"google.golang.org/protobuf/proto"
 )
 
 const ctxModifiedResponse = "response"

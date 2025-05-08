@@ -23,13 +23,13 @@ package pitaya
 import (
 	"context"
 	"errors"
-	"github.com/topfreegames/pitaya/v2/constants"
 	"math"
 	"testing"
 	"time"
 
+	"github.com/topfreegames/pitaya/v2/constants"
+
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -43,6 +43,7 @@ import (
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
 	"github.com/topfreegames/pitaya/v2/worker"
 	workermocks "github.com/topfreegames/pitaya/v2/worker/mocks"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/runtime/protoiface"
 )
 
