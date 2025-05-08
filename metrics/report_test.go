@@ -23,6 +23,7 @@ package metrics
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 	"time"
 
@@ -119,7 +120,7 @@ func TestReportTimingFromCtx(t *testing.T) {
 		originalTs := time.Now().UnixNano()
 		expectedRoute := uuid.New().String()
 		expectedType := uuid.New().String()
-		code := "GAME-404"
+		var code int32 = 404
 		expectedErr := e.NewError(errors.New("error"), code)
 		ctx := pcontext.AddToPropagateCtx(context.Background(), constants.StartTimeKey, originalTs)
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, expectedRoute)
@@ -128,7 +129,7 @@ func TestReportTimingFromCtx(t *testing.T) {
 			"route":  expectedRoute,
 			"status": "failed",
 			"type":   expectedType,
-			"code":   code,
+			"code":   strconv.FormatInt(int64(code), 10),
 		}, gomock.Any())
 
 		ReportTimingFromCtx(ctx, []Reporter{mockMetricsReporter}, expectedType, expectedErr)
@@ -150,7 +151,7 @@ func TestReportTimingFromCtx(t *testing.T) {
 			"route":  expectedRoute,
 			"status": "failed",
 			"type":   expectedType,
-			"code":   e.ErrUnknownCode,
+			"code":   strconv.FormatInt(int64(e.ErrUnknownCode), 10),
 		}, gomock.Any())
 
 		ReportTimingFromCtx(ctx, []Reporter{mockMetricsReporter}, expectedType, expectedErr)
