@@ -421,11 +421,9 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 				Msg:  err.Error(),
 			},
 		}
-		if val, ok := err.(*e.Error); ok {
-			response.Error.Code = val.Code
-			if val.Metadata != nil {
-				response.Error.Metadata = val.Metadata
-			}
+		if val, ok := err.(e.PitayaError); ok {
+			response.Error.Code = val.GetCode()
+			response.Error.Metadata = val.GetMetadata()
 		}
 		return response
 	}
@@ -493,11 +491,9 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 				Msg:  err.Error(),
 			},
 		}
-		if val, ok := err.(*e.Error); ok {
-			response.Error.Code = val.Code
-			if val.Metadata != nil {
-				response.Error.Metadata = val.Metadata
-			}
+		if val, ok := err.(e.PitayaError); ok {
+			response.Error.Code = val.GetCode()
+			response.Error.Metadata = val.GetMetadata()
 		}
 	} else {
 		response = &protos.Response{Data: ret}
