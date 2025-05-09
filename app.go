@@ -91,6 +91,8 @@ type Pitaya interface {
 
 	RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error
 	RPCTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error
+	RPCHandle(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error
+	RPCHandleTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error
 	ReliableRPC(
 		routeStr string,
 		metadata map[string]interface{},

@@ -58,10 +58,10 @@ func unmarshalHandlerArg(handler *component.Handler, serializer serialize.Serial
 	return arg, nil
 }
 
-func unmarshalRemoteArg(remote *component.Remote, payload []byte) (interface{}, error) {
+func unmarshalRemoteArg(typ reflect.Type, payload []byte) (interface{}, error) {
 	var arg interface{}
-	if remote.Type != nil {
-		arg = reflect.New(remote.Type.Elem()).Interface()
+	if typ != nil {
+		arg = reflect.New(typ.Elem()).Interface()
 		pb, ok := arg.(proto.Message)
 		if !ok {
 			return nil, constants.ErrWrongValueType

@@ -266,6 +266,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	}
 	ctx = tracing.StartSpan(ctx, msg.Route, tags)
 	ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
+	ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestUidKey, session.UID())
 
 	r, err := route.Decode(msg.Route)
 	if err != nil {

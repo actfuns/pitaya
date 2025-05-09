@@ -53,7 +53,7 @@ type Session interface {
 	GetId() int64
 	GetUid() string
 }
-type DispatchFunc func(route *route.Route, session Session, data []byte) (string, error)
+type DispatchFunc func(route *route.Route, data []byte) (string, error)
 
 // New returns the router
 func New() *Router {
@@ -125,9 +125,9 @@ func (r *Router) defaultDispatch() (string, error) {
 }
 
 // Dispatch gets the right server to use in the call
-func (r *Router) Dispatch(route *route.Route, session Session, data []byte) (string, error) {
+func (r *Router) Dispatch(route *route.Route, data []byte) (string, error) {
 	if r.dispatch != nil {
-		return r.dispatch(route, session, data)
+		return r.dispatch(route, data)
 	}
 	return r.defaultDispatch()
 }

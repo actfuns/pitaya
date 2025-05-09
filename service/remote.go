@@ -170,12 +170,7 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 				return
 			}
 			c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
-			var dispatchId string
-			if req.Type == protos.RPCType_Sys {
-				dispatchId, err = r.router.Dispatch(rt, req.GetSession(), req.Msg.Data)
-			} else {
-				dispatchId, err = r.router.Dispatch(rt, nil, req.Msg.Data)
-			}
+			dispatchId, err := r.router.Dispatch(rt, req.Msg.Data)
 			if err != nil {
 				response := &protos.Response{
 					Error: &protos.Error{
@@ -322,6 +317,42 @@ func (r *RemoteService) RPC(ctx context.Context, serverID string, route *route.R
 	return nil
 }
 
+func (r *RemoteService) RPCHandle(ctx context.Context, serverID string, route *route.Route, reply proto.Message, arg proto.Message) error {
+	var data []byte
+	var err error
+	if arg != nil {
+		data, err = proto.Marshal(arg)
+		if err != nil {
+			return err
+		}
+	}
+	msg := &message.Message{
+		Type:  message.Request,
+		Route: route.Short(),
+		Data:  data,
+	}
+	res, err := r.remoteCall(ctx, nil, protos.RPCType_Handle, route, nil, msg)
+	if err != nil {
+		return err
+	}
+
+	if res.Error != nil {
+		return &e.Error{
+			Code:     res.Error.Code,
+			Message:  res.Error.Msg,
+			Metadata: res.Error.Metadata,
+		}
+	}
+
+	if reply != nil {
+		err = proto.Unmarshal(res.GetData(), reply)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Register registers components
 func (r *RemoteService) Register(comp component.Component, opts []component.Option) error {
 	s := component.NewService(comp, opts)
@@ -349,6 +380,8 @@ func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteSer
 		return r.handleRPCSys(ctx, req, rt)
 	case req.Type == protos.RPCType_User:
 		return r.handleRPCUser(ctx, req, rt)
+	case req.Type == protos.RPCType_Handle:
+		return r.handleRPCHandle(ctx, req, rt)
 	default:
 		return &protos.Response{
 			Error: &protos.Error{
@@ -384,7 +417,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 	var err error
 
 	if remote.HasArgs {
-		arg, err = unmarshalRemoteArg(remote, req.GetMsg().GetData())
+		arg, err = unmarshalRemoteArg(remote.Type, req.GetMsg().GetData())
 		if err != nil {
 			response := &protos.Response{
 				Error: &protos.Error{
@@ -498,6 +531,95 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 	} else {
 		response = &protos.Response{Data: ret}
 	}
+	return response
+}
+
+func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request, rt *route.Route) *protos.Response {
+	serviceKey := rt.ServiceKey()
+	handler, ok := r.handlerPool.handlers[serviceKey]
+	if !ok {
+		logger.Log.Warnf("pitaya/handler: %s not found", serviceKey)
+		response := &protos.Response{
+			Error: &protos.Error{
+				Code: e.ErrNotFoundCode,
+				Msg:  "route not found",
+				Metadata: map[string]string{
+					"route": serviceKey,
+				},
+			},
+		}
+		return response
+	}
+
+	var ret interface{}
+	var arg interface{}
+	var err error
+
+	arg, err = unmarshalRemoteArg(handler.Type, req.GetMsg().GetData())
+	if err != nil {
+		response := &protos.Response{
+			Error: &protos.Error{
+				Code: e.ErrBadRequestCode,
+				Msg:  err.Error(),
+			},
+		}
+		return response
+	}
+
+	ctx, arg, err = r.handlerHooks.BeforeHandler.ExecuteBeforePipeline(ctx, arg)
+	if err != nil {
+		response := &protos.Response{
+			Error: &protos.Error{
+				Code: e.ErrInternalCode,
+				Msg:  err.Error(),
+			},
+		}
+		return response
+	}
+
+	params := []reflect.Value{handler.Receiver, reflect.ValueOf(ctx)}
+	params = append(params, reflect.ValueOf(arg))
+	ret, err = util.Pcall(handler.Method, params)
+	ret, err = r.handlerHooks.AfterHandler.ExecuteAfterPipeline(ctx, ret, err)
+	if err != nil {
+		response := &protos.Response{
+			Error: &protos.Error{
+				Code: e.ErrUnknownCode,
+				Msg:  err.Error(),
+			},
+		}
+		if val, ok := err.(e.PitayaError); ok {
+			response.Error.Code = val.GetCode()
+			response.Error.Metadata = val.GetMetadata()
+		}
+		return response
+	}
+
+	var b []byte
+	if ret != nil {
+		pb, ok := ret.(proto.Message)
+		if !ok {
+			response := &protos.Response{
+				Error: &protos.Error{
+					Code: e.ErrUnknownCode,
+					Msg:  constants.ErrWrongValueType.Error(),
+				},
+			}
+			return response
+		}
+		if b, err = proto.Marshal(pb); err != nil {
+			response := &protos.Response{
+				Error: &protos.Error{
+					Code: e.ErrUnknownCode,
+					Msg:  err.Error(),
+				},
+			}
+			return response
+		}
+	}
+
+	response := &protos.Response{}
+	response.Data = b
 	return response
 }
 
