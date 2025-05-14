@@ -331,7 +331,16 @@ func (r *RemoteService) RPCHandle(ctx context.Context, serverID string, route *r
 		Route: route.Short(),
 		Data:  data,
 	}
-	res, err := r.remoteCall(ctx, nil, protos.RPCType_Handle, route, nil, msg)
+
+	var server *cluster.Server
+	if serverID != "" {
+		server, _ = r.serviceDiscovery.GetServer(serverID)
+		if server == nil {
+			return constants.ErrServerNotFound
+		}
+	}
+
+	res, err := r.remoteCall(ctx, server, protos.RPCType_Handle, route, nil, msg)
 	if err != nil {
 		return err
 	}
