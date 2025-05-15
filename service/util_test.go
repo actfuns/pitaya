@@ -137,7 +137,7 @@ func TestUnmarshalRemoteArg(t *testing.T) {
 				Type: reflect.TypeOf(&test.SomeStruct{}),
 			}
 
-			arg, err := unmarshalRemoteArg(remote, payload)
+			arg, err := unmarshalRemoteArg(remote.Type, payload)
 			assert.NoError(t, err)
 			assert.Equal(t, table.arg, arg)
 		})
@@ -149,7 +149,7 @@ func TestUnmarshalRemoteArgErr(t *testing.T) {
 	remote := &component.Remote{
 		Type: reflect.TypeOf(&test.SomeStruct{}),
 	}
-	args, err := unmarshalRemoteArg(remote, []byte("arg"))
+	args, err := unmarshalRemoteArg(remote.Type, []byte("arg"))
 	assert.Empty(t, args)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot parse invalid wire-format data")

@@ -38,6 +38,10 @@ func (m *MockSession) EXPECT() *MockSessionMockRecorder {
 	return m.recorder
 }
 
+func (m *MockSession) FrontendID() string {
+	return ""
+}
+
 // Bind mocks base method.
 func (m *MockSession) Bind(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()

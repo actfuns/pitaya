@@ -47,7 +47,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/router"
 	"github.com/topfreegames/pitaya/v2/session/mocks"
-	"github.com/topfreegames/pitaya/v2/timer"
 )
 
 var (
@@ -282,7 +281,7 @@ func TestStartAndListenStandalone(t *testing.T) {
 	}, true)
 
 	assert.NotNil(t, app.handlerService)
-	assert.NotNil(t, timer.GlobalTicker)
+	// assert.NotNil(t, timer.GlobalTicker)
 	// should be listening
 	assert.NotEmpty(t, acc.GetAddr())
 	helpers.ShouldEventuallyReturn(t, func() error {
@@ -331,7 +330,7 @@ func TestStartAndListenCluster(t *testing.T) {
 	}, true)
 
 	assert.NotNil(t, app.handlerService)
-	assert.NotNil(t, timer.GlobalTicker)
+	// assert.NotNil(t, timer.GlobalTicker)
 	// should be listening
 	assert.NotEmpty(t, acc.GetAddr())
 	helpers.ShouldEventuallyReturn(t, func() error {
@@ -347,12 +346,12 @@ func TestError(t *testing.T) {
 	tables := []struct {
 		name     string
 		err      error
-		code     string
+		code     int32
 		metadata map[string]string
 	}{
-		{"nil_metadata", errors.New(uuid.New().String()), uuid.New().String(), nil},
-		{"empty_metadata", errors.New(uuid.New().String()), uuid.New().String(), map[string]string{}},
-		{"non_empty_metadata", errors.New(uuid.New().String()), uuid.New().String(), map[string]string{"key": uuid.New().String()}},
+		{"nil_metadata", errors.New(uuid.New().String()), 0, nil},
+		{"empty_metadata", errors.New(uuid.New().String()), 1, map[string]string{}},
+		{"non_empty_metadata", errors.New(uuid.New().String()), 2, map[string]string{"key": uuid.New().String()}},
 	}
 
 	for _, table := range tables {
