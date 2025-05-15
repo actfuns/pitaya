@@ -18,7 +18,8 @@ import (
 	router "github.com/topfreegames/pitaya/v2/router"
 	session "github.com/topfreegames/pitaya/v2/session"
 	worker "github.com/topfreegames/pitaya/v2/worker"
-	protoiface "google.golang.org/protobuf/runtime/protoiface"
+	proto "google.golang.org/protobuf/proto"
+	"github.com/topfreegames/pitaya/v2/serialize"
 )
 
 // MockPitaya is a mock of Pitaya interface.
@@ -388,7 +389,7 @@ func (mr *MockPitayaMockRecorder) IsRunning() *gomock.Call {
 }
 
 // RPC mocks base method.
-func (m *MockPitaya) RPC(arg0 context.Context, arg1 string, arg2, arg3 protoiface.MessageV1) error {
+func (m *MockPitaya) RPC(arg0 context.Context, arg1 string, arg2, arg3 proto.Message) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RPC", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
@@ -402,7 +403,7 @@ func (mr *MockPitayaMockRecorder) RPC(arg0, arg1, arg2, arg3 interface{}) *gomoc
 }
 
 // RPCTo mocks base method.
-func (m *MockPitaya) RPCTo(arg0 context.Context, arg1, arg2 string, arg3, arg4 protoiface.MessageV1) error {
+func (m *MockPitaya) RPCTo(arg0 context.Context, arg1, arg2 string, arg3, arg4 proto.Message) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RPCTo", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -506,7 +507,7 @@ func (mr *MockPitayaMockRecorder) RegisterRemote(arg0 interface{}, arg1 ...inter
 }
 
 // ReliableRPC mocks base method.
-func (m *MockPitaya) ReliableRPC(arg0 string, arg1 map[string]interface{}, arg2, arg3 protoiface.MessageV1) (string, error) {
+func (m *MockPitaya) ReliableRPC(arg0 string, arg1 map[string]interface{}, arg2, arg3 proto.Message) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReliableRPC", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
@@ -521,7 +522,7 @@ func (mr *MockPitayaMockRecorder) ReliableRPC(arg0, arg1, arg2, arg3 interface{}
 }
 
 // ReliableRPCWithOptions mocks base method.
-func (m *MockPitaya) ReliableRPCWithOptions(arg0 string, arg1 map[string]interface{}, arg2, arg3 protoiface.MessageV1, arg4 *config.EnqueueOpts) (string, error) {
+func (m *MockPitaya) ReliableRPCWithOptions(arg0 string, arg1 map[string]interface{}, arg2, arg3 proto.Message, arg4 *config.EnqueueOpts) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReliableRPCWithOptions", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(string)
@@ -637,4 +638,36 @@ func (m *MockPitaya) StartWorker() {
 func (mr *MockPitayaMockRecorder) StartWorker() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartWorker", reflect.TypeOf((*MockPitaya)(nil).StartWorker))
+}
+
+func (m *MockPitaya) SubmitTask(ctx context.Context, id string, task func(context.Context)) error{
+	return nil
+}
+
+func (m *MockPitaya) SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error){
+	return 0,nil
+}
+
+func (m *MockPitaya) ClearInterval(timerId uint64) error{
+	return nil
+}
+
+func (m *MockPitaya) UpdateServerMetadata(metadata map[string]string) error{
+	return nil
+}
+
+func (m *MockPitaya) GetSerializer() serialize.Serializer{
+	return nil
+}
+
+func (m *MockPitaya) RPCHandle(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error{
+	return nil
+}
+
+func (m *MockPitaya) RPCHandleTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error{
+	return nil
+}
+
+func (m *MockPitaya) SetDispatch(router.DispatchFunc) error{
+	return nil
 }

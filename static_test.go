@@ -44,7 +44,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/worker"
 	workermocks "github.com/topfreegames/pitaya/v2/worker/mocks"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/runtime/protoiface"
 )
 
 func TestStaticConfigure(t *testing.T) {
@@ -345,8 +344,8 @@ func TestStaticIsRunning(t *testing.T) {
 func TestStaticRPC(t *testing.T) {
 	ctx := context.Background()
 	routeStr := "route"
-	var reply protoiface.MessageV1
-	var arg protoiface.MessageV1
+	var reply proto.Message
+	var arg proto.Message
 
 	tables := []struct {
 		name     string
@@ -373,8 +372,8 @@ func TestStaticRPCTo(t *testing.T) {
 	ctx := context.Background()
 	routeStr := "route"
 	serverId := uuid.New().String()
-	var reply protoiface.MessageV1
-	var arg protoiface.MessageV1
+	var reply proto.Message
+	var arg proto.Message
 
 	tables := []struct {
 		name     string
