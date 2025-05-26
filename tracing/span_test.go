@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	closer, _ = jaeger.Configure(jaeger.Options{ServiceName: "spanTest"})
+	closer, _ = jaeger.Configure(jaeger.JaegerConfig{ServiceName: "spanTest"})
 }
 
 func shutdown() {

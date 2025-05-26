@@ -29,7 +29,7 @@ import (
 )
 
 func TestConfigure(t *testing.T) {
-	closer, err := Configure(Options{ServiceName: "test-svc"})
+	closer, err := Configure(JaegerConfig{ServiceName: "test-svc"})
 	assert.NoError(t, err)
 	tracer := opentracing.GlobalTracer()
 	assert.NotNil(t, tracer)

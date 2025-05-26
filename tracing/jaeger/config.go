@@ -24,29 +24,56 @@ package jaeger
 
 import (
 	"io"
+	"time"
 
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 )
 
-// Options holds configuration options for Jaeger
-type Options struct {
-	Disabled    bool
-	Probability float64
-	ServiceName string
+// JaegerConfig holds configuration options for Jaeger
+type JaegerConfig struct {
+	ServiceName       string  `yaml:"serviceName"`
+	CollectorEndpoint string  `yaml:"collectorEndpoint"`
+	User              string  `yaml:"user,omitempty"`
+	Password          string  `yaml:"password,omitempty"`
+	Disabled          bool    `yaml:"disabled"`
+	SamplerType       string  `yaml:"samplerType"`
+	SamplerParam      float64 `yaml:"samplerParam"`
+	FlushInterval     int     `yaml:"flushInterval"`
+}
+
+func NewDefaultJaegerConfig() JaegerConfig {
+	return JaegerConfig{
+		CollectorEndpoint: "http://localhost:14268/api/traces",
+		User:              "",
+		Password:          "",
+		Disabled:          true,
+		SamplerType:       jaeger.SamplerTypeProbabilistic,
+		SamplerParam:      0.1,
+		FlushInterval:     10,
+	}
 }
 
 // Configure configures a global Jaeger tracer
-func Configure(options Options) (io.Closer, error) {
-	logger.Log.Infof("Configuring Jaeger with options: %+v", options)
+func Configure(opt JaegerConfig) (io.Closer, error) {
+	logger.Log.Infof("Configuring Jaeger with options: %+v", opt)
+
 	cfg := config.Configuration{
-		Disabled: options.Disabled,
+		ServiceName: opt.ServiceName,
+		Disabled:    opt.Disabled,
 		Sampler: &config.SamplerConfig{
-			Type:  jaeger.SamplerTypeProbabilistic,
-			Param: options.Probability,
+			Type:  opt.SamplerType,
+			Param: opt.SamplerParam,
+		},
+		Reporter: &config.ReporterConfig{
+			LogSpans:            true,
+			CollectorEndpoint:   opt.CollectorEndpoint,
+			User:                opt.User,
+			Password:            opt.Password,
+			BufferFlushInterval: time.Duration(opt.FlushInterval) * time.Second,
 		},
 	}
 
-	return cfg.InitGlobalTracer(options.ServiceName)
+	return cfg.InitGlobalTracer(opt.ServiceName)
 }
