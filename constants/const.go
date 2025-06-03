@@ -85,6 +85,9 @@ var TaskIDKey = taskIdKey{}
 // RouteKey is the key holding the request route to be sent over the context
 var RouteKey = "req-route"
 
+// RouteCustomKey is the key holding the request route custom to be sent over the context
+var RouteCustomKey = "req-route-custom"
+
 // MetricTagsKey is the key holding request tags to be sent over the context
 // to be reported
 var MetricTagsKey = "metric-tags"

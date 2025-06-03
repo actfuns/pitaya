@@ -29,6 +29,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/cluster"
 	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/constants"
+	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/route"
@@ -96,8 +97,11 @@ func (r *Router) Route(
 		return nil, err
 	}
 	if rpcType == protos.RPCType_User {
-		server := r.defaultRoute(serversOfType)
-		return server, nil
+		val := pcontext.GetFromPropagateCtx(ctx, constants.RouteCustomKey)
+		if val == nil {
+			server := r.defaultRoute(serversOfType)
+			return server, nil
+		}
 	}
 	routeFunc, ok := r.routesMap[svType]
 	if !ok {
