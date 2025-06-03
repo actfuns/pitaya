@@ -575,6 +575,9 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 		return response
 	}
 
+	val := pcontext.GetFromPropagateCtx(ctx, constants.RequestUidKey)
+	uid, _ := val.(string)
+	ctx = util.CtxWithDefaultLogger(ctx, rt.String(), uid)
 	ctx, arg, err = r.handlerHooks.BeforeHandler.ExecuteBeforePipeline(ctx, arg)
 	if err != nil {
 		response := &protos.Response{
