@@ -1,7 +1,9 @@
 package thread
 
 import (
-	"runtime/debug"
+	"fmt"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/logger"
@@ -20,15 +22,24 @@ func RunSafe(fn func()) {
 	fn()
 }
 
-// SafeRunWithTimeout executes a function and catches panics and timeouts
-func SafeRunWithTimeout(fn func(), timeout time.Duration) {
+// RunSafeWithTimeout executes a function and catches panics and timeouts
+func RunSafeWithTimeout(fn func(), timeout time.Duration) {
+	if fn == nil {
+		return
+	}
 	defer util.Recover()
 
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
 		if elapsed > timeout {
-			logger.Log.Warnf("[DELAY] task timeout: took %v > %v\n%s", elapsed, timeout, debug.Stack())
+			fnName := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
+			_, file, line, ok := runtime.Caller(2)
+			callerInfo := "unknown"
+			if ok {
+				callerInfo = fmt.Sprintf("%s:%d", file, line)
+			}
+			logger.Log.Warnf("[DELAY] safe run task timeout. elapsed: %v, timeout: %v, fn: %s, caller: %s", elapsed, timeout, fnName, callerInfo)
 		}
 	}()
 
