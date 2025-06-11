@@ -52,7 +52,7 @@ const ErrGatewayTimeout int32 = 504
 type PitayaError interface {
 	Error() string
 	GetCode() int32
-	GetMessage() string
+	GetMsg() string
 	GetMetadata() map[string]string
 }
 
@@ -88,7 +88,7 @@ func (e *Error) GetCode() int32 {
 	return e.Code
 }
 
-func (e *Error) GetMessage() string {
+func (e *Error) GetMsg() string {
 	return e.Message
 }
 
