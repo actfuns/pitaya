@@ -267,7 +267,7 @@ func (r *RemoteService) KickUser(ctx context.Context, kick *protos.KickMsg) (*pr
 }
 
 // DoRPC do rpc and get answer
-func (r *RemoteService) DoRPC(ctx context.Context, serverID string, route *route.Route, protoData []byte) (*protos.Response, error) {
+func (r *RemoteService) DoRPC(ctx context.Context, rpcType protos.RPCType, serverID string, route *route.Route, protoData []byte) (*protos.Response, error) {
 	msg := &message.Message{
 		Type:  message.Request,
 		Route: route.String(),
@@ -275,11 +275,11 @@ func (r *RemoteService) DoRPC(ctx context.Context, serverID string, route *route
 	}
 
 	if ((route.SvType == r.server.Type && serverID == "") || serverID == r.server.ID) && r.server.IsLoopbackEnabled() {
-		return r.Loopback(ctx, route, msg)
+		return r.Loopback(ctx, rpcType, route, msg)
 	}
 
 	if serverID == "" {
-		return r.remoteCall(ctx, nil, protos.RPCType_User, route, nil, msg)
+		return r.remoteCall(ctx, nil, rpcType, route, nil, msg)
 	}
 
 	target, _ := r.serviceDiscovery.GetServer(serverID)
@@ -287,11 +287,11 @@ func (r *RemoteService) DoRPC(ctx context.Context, serverID string, route *route
 		return nil, constants.ErrServerNotFound
 	}
 
-	return r.remoteCall(ctx, target, protos.RPCType_User, route, nil, msg)
+	return r.remoteCall(ctx, target, rpcType, route, nil, msg)
 }
 
 // RPC makes rpcs
-func (r *RemoteService) RPC(ctx context.Context, serverID string, route *route.Route, reply proto.Message, arg proto.Message) error {
+func (r *RemoteService) RPC(ctx context.Context, rpcType protos.RPCType, serverID string, route *route.Route, reply proto.Message, arg proto.Message) error {
 	var data []byte
 	var err error
 	if arg != nil {
@@ -300,7 +300,7 @@ func (r *RemoteService) RPC(ctx context.Context, serverID string, route *route.R
 			return err
 		}
 	}
-	res, err := r.DoRPC(ctx, serverID, route, data)
+	res, err := r.DoRPC(ctx, rpcType, serverID, route, data)
 	if err != nil {
 		return err
 	}
@@ -322,8 +322,8 @@ func (r *RemoteService) RPC(ctx context.Context, serverID string, route *route.R
 	return nil
 }
 
-func (r *RemoteService) Loopback(ctx context.Context, route *route.Route, msg *message.Message) (*protos.Response, error) {
-	req, err := cluster.BuildRequest(ctx, protos.RPCType_User, route, nil, msg, r.server)
+func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, route *route.Route, msg *message.Message) (*protos.Response, error) {
+	req, err := cluster.BuildRequest(ctx, rpcType, route, nil, msg, r.server)
 	if err != nil {
 		return nil, err
 	}
@@ -350,28 +350,6 @@ func (r *RemoteService) Loopback(ctx context.Context, route *route.Route, msg *m
 		logger.Log.Warnf("[remote] failed to retrieve parent span: %s", err.Error())
 	}
 
-	return processRemoteMessage(ctx, &req, r, route), nil
-}
-
-// LocalHandle
-func (r *RemoteService) LocalHandle(ctx context.Context, route *route.Route, reply proto.Message, arg proto.Message) error {
-	var err error
-	var data []byte
-	if arg != nil {
-		data, err = proto.Marshal(arg)
-		if err != nil {
-			return err
-		}
-	}
-
-	req := &protos.Request{
-		Msg: &protos.Msg{
-			Type:  protos.MsgType_MsgRequest,
-			Route: route.String(),
-			Data:  data,
-		},
-	}
-
 	result := make(chan *protos.Response, 1)
 	go func() {
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestInstanceKey, route.Instance)
@@ -390,71 +368,12 @@ func (r *RemoteService) LocalHandle(ctx context.Context, route *route.Route, rep
 			return
 		}
 		r.taskSevice.Submit(ctx, dispatchId, func(tctx context.Context) {
-			result <- r.handleRPCHandle(ctx, req, route)
+			result <- processRemoteMessage(ctx, &req, r, route)
 		})
 	}()
 
 	res := <-result
-	if res.Error != nil {
-		return &e.Error{
-			Code:     res.Error.Code,
-			Message:  res.Error.Msg,
-			Metadata: res.Error.Metadata,
-		}
-	}
-
-	if reply != nil {
-		err = proto.Unmarshal(res.GetData(), reply)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *RemoteService) RPCHandle(ctx context.Context, serverID string, route *route.Route, reply proto.Message, arg proto.Message) error {
-	var data []byte
-	var err error
-	if arg != nil {
-		data, err = proto.Marshal(arg)
-		if err != nil {
-			return err
-		}
-	}
-	msg := &message.Message{
-		Type:  message.Request,
-		Route: route.String(),
-		Data:  data,
-	}
-
-	var server *cluster.Server
-	if serverID != "" {
-		server, _ = r.serviceDiscovery.GetServer(serverID)
-		if server == nil {
-			return constants.ErrServerNotFound
-		}
-	}
-
-	res, err := r.remoteCall(ctx, server, protos.RPCType_Handle, route, nil, msg)
-	if err != nil {
-		return err
-	}
-
-	if res.Error != nil {
-		return &e.Error{
-			Code:     res.Error.Code,
-			Message:  res.Error.Msg,
-			Metadata: res.Error.Metadata,
-		}
-	}
-
-	if reply != nil {
-		err = proto.Unmarshal(res.GetData(), reply)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return res, nil
 }
 
 // Register registers components

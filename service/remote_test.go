@@ -806,7 +806,7 @@ func TestRemoteServiceRPC(t *testing.T) {
 				assert.NoError(t, err)
 				mockRPCClient.EXPECT().Call(ctx, protos.RPCType_User, rt, gomock.Any(), expectedMsg, gomock.Any()).Return(&protos.Response{Data: b}, table.err)
 			}
-			err := svc.RPC(ctx, table.serverID, rt, table.reply, table.arg)
+			err := svc.RPC(ctx, protos.RPCType_User, table.serverID, rt, table.reply, table.arg)
 			assert.Equal(t, table.err, err)
 			if table.reply != nil {
 				assert.Equal(t, table.reply, expected)

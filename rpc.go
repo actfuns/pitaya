@@ -26,6 +26,7 @@ import (
 
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/constants"
+	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/route"
 	"google.golang.org/protobuf/proto"
 )
@@ -93,7 +94,7 @@ func (app *App) doSendRPC(ctx context.Context, serverID, routeStr string, reply 
 		return constants.ErrNonsenseRPC
 	}
 
-	return app.remoteService.RPC(ctx, serverID, r, reply, arg)
+	return app.remoteService.RPC(ctx, protos.RPCType_User, serverID, r, reply, arg)
 }
 
 func (app *App) doSendRPCHandle(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error {
@@ -114,13 +115,9 @@ func (app *App) doSendRPCHandle(ctx context.Context, serverID, routeStr string, 
 		return constants.ErrNoServerTypeChosenForRPC
 	}
 
-	if r.SvType == app.server.Type && serverID == "" {
+	if ((r.SvType == app.server.Type && serverID == "") || serverID == app.server.ID) && !app.server.IsLoopbackEnabled() {
 		return constants.ErrNonsenseRPC
 	}
 
-	if serverID == app.server.ID {
-		return app.remoteService.LocalHandle(ctx, r, reply, arg)
-	}
-
-	return app.remoteService.RPCHandle(ctx, serverID, r, reply, arg)
+	return app.remoteService.RPC(ctx, protos.RPCType_Handle, serverID, r, reply, arg)
 }
