@@ -230,7 +230,7 @@ func TestKickNetworkErrors(t *testing.T) {
 	table := []struct {
 		name          string
 		writeError    error
-		expectedError string
+		expectedError int32
 	}{
 		{
 			name:          "net.ErrClosed should return ErrClientClosedRequest",
