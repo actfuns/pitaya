@@ -114,8 +114,12 @@ func (app *App) doSendRPCHandle(ctx context.Context, serverID, routeStr string, 
 		return constants.ErrNoServerTypeChosenForRPC
 	}
 
-	if (r.SvType == app.server.Type && serverID == "") || serverID == app.server.ID {
+	if r.SvType == app.server.Type && serverID == "" {
 		return constants.ErrNonsenseRPC
+	}
+
+	if serverID == app.server.ID {
+		return app.remoteService.LocalHandle(ctx, r, reply, arg)
 	}
 
 	return app.remoteService.RPCHandle(ctx, serverID, r, reply, arg)

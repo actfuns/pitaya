@@ -114,7 +114,7 @@ func processHandlerMessage(
 		ctx = context.Background()
 	}
 	ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
-	ctx = util.CtxWithDefaultLogger(ctx, rt.String(), session.UID())
+	ctx = util.CtxWithDefaultLogger(ctx, rt.Short(), session.UID())
 
 	msgType, err := getMsgType(msgTypeIface)
 	if err != nil {

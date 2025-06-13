@@ -269,7 +269,7 @@ func (r *RemoteService) KickUser(ctx context.Context, kick *protos.KickMsg) (*pr
 func (r *RemoteService) DoRPC(ctx context.Context, serverID string, route *route.Route, protoData []byte) (*protos.Response, error) {
 	msg := &message.Message{
 		Type:  message.Request,
-		Route: route.Short(),
+		Route: route.String(),
 		Data:  protoData,
 	}
 
@@ -317,6 +317,65 @@ func (r *RemoteService) RPC(ctx context.Context, serverID string, route *route.R
 	return nil
 }
 
+// LocalHandle
+func (r *RemoteService) LocalHandle(ctx context.Context, route *route.Route, reply proto.Message, arg proto.Message) error {
+	var err error
+	var data []byte
+	if arg != nil {
+		data, err = proto.Marshal(arg)
+		if err != nil {
+			return err
+		}
+	}
+
+	req := &protos.Request{
+		Msg: &protos.Msg{
+			Type:  protos.MsgType_MsgRequest,
+			Route: route.String(),
+			Data:  data,
+		},
+	}
+
+	result := make(chan *protos.Response, 1)
+	go func() {
+		ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestInstanceKey, route.Instance)
+		dispatchId, err := r.router.Dispatch(route, req.Msg.Data)
+		if err != nil {
+			response := &protos.Response{
+				Error: &protos.Error{
+					Code: e.ErrBadRequestCode,
+					Msg:  "cannot decode dispatch",
+					Metadata: map[string]string{
+						"route": req.GetMsg().GetRoute(),
+					},
+				},
+			}
+			result <- response
+			return
+		}
+		r.taskSevice.Submit(ctx, dispatchId, func(tctx context.Context) {
+			result <- r.handleRPCHandle(ctx, req, route)
+		})
+	}()
+
+	res := <-result
+	if res.Error != nil {
+		return &e.Error{
+			Code:     res.Error.Code,
+			Message:  res.Error.Msg,
+			Metadata: res.Error.Metadata,
+		}
+	}
+
+	if reply != nil {
+		err = proto.Unmarshal(res.GetData(), reply)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *RemoteService) RPCHandle(ctx context.Context, serverID string, route *route.Route, reply proto.Message, arg proto.Message) error {
 	var data []byte
 	var err error
@@ -328,7 +387,7 @@ func (r *RemoteService) RPCHandle(ctx context.Context, serverID string, route *r
 	}
 	msg := &message.Message{
 		Type:  message.Request,
-		Route: route.Short(),
+		Route: route.String(),
 		Data:  data,
 	}
 
@@ -577,7 +636,7 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 
 	val := pcontext.GetFromPropagateCtx(ctx, constants.RequestUidKey)
 	uid, _ := val.(string)
-	ctx = util.CtxWithDefaultLogger(ctx, rt.String(), uid)
+	ctx = util.CtxWithDefaultLogger(ctx, rt.Short(), uid)
 	ctx, arg, err = r.handlerHooks.BeforeHandler.ExecuteBeforePipeline(ctx, arg)
 	if err != nil {
 		response := &protos.Response{
