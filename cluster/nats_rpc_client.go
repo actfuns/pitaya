@@ -202,7 +202,7 @@ func (ns *NatsRPCClient) Call(
 	if ns.metricsReporters != nil {
 		startTime := time.Now()
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.StartTimeKey, startTime.UnixNano())
-		ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, route.String())
+		ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, route.StringNotInst())
 		defer func() {
 			typ := "rpc"
 			metrics.ReportTimingFromCtx(ctx, ns.metricsReporters, typ, err)

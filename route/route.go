@@ -65,6 +65,14 @@ func (r *Route) String() string {
 	return r.Short()
 }
 
+// StringNotInst transforms the route into a string without the instance
+func (r *Route) StringNotInst() string {
+	if r.SvType != "" {
+		return fmt.Sprintf("%s.%s.%s", r.SvType, r.ServiceOri, r.Method)
+	}
+	return r.Short()
+}
+
 // Short transforms the route into a string without the server type
 func (r *Route) Short() string {
 	return fmt.Sprintf("%s.%s", r.Service, r.Method)
