@@ -235,14 +235,14 @@ func GetContextFromRequest(req *protos.Request, serverID string) (context.Contex
 //	defer Recover(func() {})
 func Recover(cleanups ...func()) {
 	if p := recover(); p != nil {
-		logger.Log.Errorf("%s", string(debug.Stack()))
+		logger.Log.Errorf("panic: %s", string(debug.Stack()))
 	}
 
 	for _, cleanup := range cleanups {
 		func() {
 			defer func() {
 				if p := recover(); p != nil {
-					logger.Log.Errorf("cleanup panic: %v\n%s", p, string(debug.Stack()))
+					logger.Log.Errorf("cleanup panic: %s", string(debug.Stack()))
 				}
 			}()
 			cleanup()
