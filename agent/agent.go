@@ -75,7 +75,8 @@ type (
 		chStopHeartbeat    chan struct{}     // stop heartbeats
 		chStopWrite        chan struct{}     // stop writing messages
 		closeMutex         sync.Mutex
-		conn               net.Conn            // low-level conn fd
+		conn               net.Conn // low-level conn fd
+		connWriteMutex     sync.Mutex
 		decoder            codec.PacketDecoder // binary decoder
 		encoder            codec.PacketEncoder // binary encoder
 		heartbeatTimeout   time.Duration
@@ -86,7 +87,6 @@ type (
 		metricsReporters   []metrics.Reporter
 		serializer         serialize.Serializer // message serializer
 		state              int32                // current agent state
-		connWriteMutex     sync.Mutex
 	}
 
 	pendingMessage struct {
