@@ -86,6 +86,7 @@ type (
 		metricsReporters   []metrics.Reporter
 		serializer         serialize.Serializer // message serializer
 		state              int32                // current agent state
+		connWriteMutex     sync.Mutex
 	}
 
 	pendingMessage struct {
@@ -628,6 +629,8 @@ func (a *agentImpl) writeToConnection(ctx context.Context, data []byte) error {
 	defer span.Finish()
 
 	a.conn.SetWriteDeadline(time.Now().Add(a.writeTimeout))
+	a.connWriteMutex.Lock()
+	defer a.connWriteMutex.Unlock()
 	_, writeErr := a.conn.Write(data)
 	if writeErr != nil {
 		tracing.LogError(span, writeErr.Error())
