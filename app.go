@@ -144,7 +144,6 @@ type App struct {
 	debug             bool
 	dieChan           chan bool
 	heartbeat         time.Duration
-	onSessionBind     func(session.Session)
 	router            *router.Router
 	rpcClient         cluster.RPCClient
 	rpcServer         cluster.RPCServer

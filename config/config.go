@@ -44,14 +44,7 @@ type PitayaConfig struct {
 		Interval time.Duration `mapstructure:"interval"`
 		NumSlots int           `mapstructure:"numslots"`
 	}
-	Session struct {
-		Unique bool `mapstructure:"unique"`
-		Drain  struct {
-			Enabled bool          `mapstructure:"enabled"`
-			Timeout time.Duration `mapstructure:"timeout"`
-			Period  time.Duration `mapstructure:"period"`
-		} `mapstructure:"drain"`
-	} `mapstructure:"session"`
+	Session SessionConfig `mapstructure:"session"`
 
 	Acceptor struct {
 		ProxyProtocol bool `mapstructure:"proxyprotocol"`
@@ -137,25 +130,7 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 			time.Millisecond * 10,
 			10,
 		},
-		Session: struct {
-			Unique bool `mapstructure:"unique"`
-			Drain  struct {
-				Enabled bool          `mapstructure:"enabled"`
-				Timeout time.Duration `mapstructure:"timeout"`
-				Period  time.Duration `mapstructure:"period"`
-			} `mapstructure:"drain"`
-		}{
-			Unique: true,
-			Drain: struct {
-				Enabled bool          `mapstructure:"enabled"`
-				Timeout time.Duration `mapstructure:"timeout"`
-				Period  time.Duration `mapstructure:"period"`
-			}{
-				Enabled: false,
-				Timeout: time.Duration(6 * time.Hour),
-				Period:  time.Duration(5 * time.Second),
-			},
-		},
+		Session: *newDefaultSessionConfig(),
 		Metrics: *newDefaultMetricsConfig(),
 		Cluster: *newDefaultClusterConfig(),
 		Groups:  *newDefaultGroupsConfig(),
@@ -386,6 +361,32 @@ func NewCustomMetricsSpec(config *Config) *models.CustomMetricsSpec {
 	}
 
 	return spec
+}
+
+// SessionConfig provides configuration for all sessions
+type SessionConfig struct {
+	Unique bool `mapstructure:"unique"`
+	Drain  struct {
+		Enabled bool          `mapstructure:"enabled"`
+		Timeout time.Duration `mapstructure:"timeout"`
+		Period  time.Duration `mapstructure:"period"`
+	} `mapstructure:"drain"`
+}
+
+// newDefaultSessionConfig provides default configuration for SessionConfig
+func newDefaultSessionConfig() *SessionConfig {
+	return &SessionConfig{
+		Unique: true,
+		Drain: struct {
+			Enabled bool          `mapstructure:"enabled"`
+			Timeout time.Duration `mapstructure:"timeout"`
+			Period  time.Duration `mapstructure:"period"`
+		}{
+			Enabled: false,
+			Timeout: time.Duration(6 * time.Hour),
+			Period:  time.Duration(5 * time.Second),
+		},
+	}
 }
 
 // Metrics provides configuration for all metrics related configurations
