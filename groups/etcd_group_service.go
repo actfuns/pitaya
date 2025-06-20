@@ -6,12 +6,13 @@ import (
 	"sync"
 	"time"
 
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/client/v3/namespace"
-	"go.etcd.io/etcd/api/v3/mvccpb"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/topfreegames/pitaya/v2/util"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/namespace"
 )
 
 var (
@@ -51,9 +52,11 @@ func initClientInstance(config config.EtcdGroupServiceConfig, clientOrNil *clien
 }
 
 func createBaseClient(config config.EtcdGroupServiceConfig) (*clientv3.Client, error) {
-	cli, err := clientv3.New(clientv3.Config{
+	cli, err := util.NewEtcdClient(clientv3.Config{
 		Endpoints:   config.Endpoints,
 		DialTimeout: config.DialTimeout,
+		Username:    config.User,
+		Password:    config.Pass,
 	})
 	if err != nil {
 		return nil, err

@@ -355,7 +355,7 @@ func (sd *etcdServiceDiscovery) InitETCDClient() error {
 		config.Username = sd.etcdUser
 		config.Password = sd.etcdPass
 	}
-	cli, err = clientv3.New(config)
+	cli, err = util.NewEtcdClient(config)
 	if err != nil {
 		logger.Log.Errorf("error initializing etcd client: %s", err.Error())
 		return err

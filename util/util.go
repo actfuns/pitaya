@@ -28,6 +28,7 @@ import (
 	"reflect"
 	"runtime/debug"
 	"strconv"
+	"time"
 
 	"github.com/nats-io/nuid"
 
@@ -42,6 +43,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/tracing"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func getLoggerFromArgs(args []reflect.Value) interfaces.Logger {
@@ -248,4 +250,22 @@ func Recover(cleanups ...func()) {
 			cleanup()
 		}()
 	}
+}
+
+func NewEtcdClient(cfg clientv3.Config) (*clientv3.Client, error) {
+	cli, err := clientv3.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ep := range cli.Endpoints() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_, err := cli.Status(ctx, ep)
+		cancel()
+
+		if err != nil {
+			return nil, fmt.Errorf("etcd endpoint %s is unreachable: %w", ep, err)
+		}
+	}
+	return cli, nil
 }

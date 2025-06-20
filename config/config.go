@@ -565,6 +565,8 @@ func newDefaultMemoryGroupConfig() *MemoryGroupConfig {
 type EtcdGroupServiceConfig struct {
 	DialTimeout        time.Duration `mapstructure:"dialtimeout"`
 	Endpoints          []string      `mapstructure:"endpoints"`
+	User               string        `mapstructure:"user"`
+	Pass               string        `mapstructure:"pass"`
 	Prefix             string        `mapstructure:"prefix"`
 	TransactionTimeout time.Duration `mapstructure:"transactiontimeout"`
 }
@@ -605,6 +607,8 @@ func newDefaultGroupsConfig() *GroupsConfig {
 type ETCDBindingConfig struct {
 	DialTimeout time.Duration `mapstructure:"dialtimeout"`
 	Endpoints   []string      `mapstructure:"endpoints"`
+	User        string        `mapstructure:"user"`
+	Pass        string        `mapstructure:"pass"`
 	Prefix      string        `mapstructure:"prefix"`
 	LeaseTTL    time.Duration `mapstructure:"leasettl"`
 }

@@ -25,13 +25,14 @@ import (
 	"fmt"
 	"time"
 
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/client/v3/namespace"
 	"github.com/topfreegames/pitaya/v2/cluster"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/session"
+	"github.com/topfreegames/pitaya/v2/util"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/namespace"
 )
 
 // ETCDBindingStorage module that uses etcd to keep in which frontend server each user is bound
@@ -41,6 +42,8 @@ type ETCDBindingStorage struct {
 	etcdEndpoints   []string
 	etcdPrefix      string
 	etcdDialTimeout time.Duration
+	etcdUser        string
+	etcdPass        string
 	leaseTTL        time.Duration
 	leaseID         clientv3.LeaseID
 	thisServer      *cluster.Server
@@ -58,6 +61,8 @@ func NewETCDBindingStorage(server *cluster.Server, sessionPool session.SessionPo
 	b.etcdDialTimeout = conf.DialTimeout
 	b.etcdEndpoints = conf.Endpoints
 	b.etcdPrefix = conf.Prefix
+	b.etcdUser = conf.User
+	b.etcdPass = conf.Pass
 	b.leaseTTL = conf.LeaseTTL
 	return b
 }
@@ -156,9 +161,11 @@ func (b *ETCDBindingStorage) Init() error {
 	var cli *clientv3.Client
 	var err error
 	if b.cli == nil {
-		cli, err = clientv3.New(clientv3.Config{
+		cli, err = util.NewEtcdClient(clientv3.Config{
 			Endpoints:   b.etcdEndpoints,
 			DialTimeout: b.etcdDialTimeout,
+			Username:    b.etcdUser,
+			Password:    b.etcdPass,
 		})
 		if err != nil {
 			return err
