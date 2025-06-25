@@ -115,7 +115,9 @@ func (gs *GRPCClient) Call(
 		"peer.id":         server.ID,
 	}
 	ctx = tracing.StartSpan(ctx, "GRPC RPC Call", tags, parent)
-	defer tracing.FinishSpan(ctx, err)
+	defer func() {
+		tracing.FinishSpan(ctx, err)
+	}()
 
 	if session != nil {
 		requestID := uuid.New().String()
@@ -140,7 +142,9 @@ func (gs *GRPCClient) Call(
 		startTime := time.Now()
 		ctxT = pcontext.AddToPropagateCtx(ctxT, constants.StartTimeKey, startTime.UnixNano())
 		ctxT = pcontext.AddToPropagateCtx(ctxT, constants.RouteKey, route.StringNotInst())
-		defer metrics.ReportTimingFromCtx(ctxT, gs.metricsReporters, "rpc", err)
+		defer func() {
+			metrics.ReportTimingFromCtx(ctxT, gs.metricsReporters, "rpc", err)
+		}()
 	}
 
 	res, err := c.(*grpcClient).call(ctxT, &req)
