@@ -58,7 +58,7 @@ func TestParsedRPCJob(t *testing.T) {
 			}(),
 			mocks: func() {
 				mockRPCJob.EXPECT().
-					GetArgReply(route).
+					GetArgReply(route, nil).
 					Return(nil, nil, testErr)
 			},
 			assert: func(f func(*workers.Msg), m *workers.Msg) {
@@ -78,7 +78,7 @@ func TestParsedRPCJob(t *testing.T) {
 			}(),
 			mocks: func() {
 				mockRPCJob.EXPECT().
-					GetArgReply(route).
+					GetArgReply(route, nil).
 					Return(&fakeProtoMessage{}, &fakeProtoMessage{}, nil)
 			},
 			assert: func(f func(*workers.Msg), m *workers.Msg) {
@@ -99,10 +99,10 @@ func TestParsedRPCJob(t *testing.T) {
 			}(),
 			mocks: func() {
 				mockRPCJob.EXPECT().
-					GetArgReply(route).
+					GetArgReply(route, nil).
 					Return(&fakeProtoMessage{}, &fakeProtoMessage{}, nil)
 				mockRPCJob.EXPECT().
-					ServerDiscovery(route, map[string]interface{}{"stack": "a"}).
+					ServerDiscovery(route, map[string]interface{}{"stack": "a"}, nil).
 					Return("", testErr)
 			},
 			assert: func(f func(*workers.Msg), m *workers.Msg) {
@@ -123,13 +123,13 @@ func TestParsedRPCJob(t *testing.T) {
 			}(),
 			mocks: func() {
 				mockRPCJob.EXPECT().
-					GetArgReply(route).
+					GetArgReply(route, nil).
 					Return(&fakeProtoMessage{}, &fakeProtoMessage{}, nil)
 				mockRPCJob.EXPECT().
-					ServerDiscovery(route, map[string]interface{}{"stack": "a"}).
+					ServerDiscovery(route, map[string]interface{}{"stack": "a"}, nil).
 					Return(serverID, nil)
 				mockRPCJob.EXPECT().
-					RPC(ctx, serverID, route, &fakeProtoMessage{}, &fakeProtoMessage{Field: "string"}).
+					RPC(ctx, serverID, route, &fakeProtoMessage{}, &fakeProtoMessage{Field: "string"}, nil).
 					Return(testErr)
 			},
 			assert: func(f func(*workers.Msg), m *workers.Msg) {
@@ -150,13 +150,13 @@ func TestParsedRPCJob(t *testing.T) {
 			}(),
 			mocks: func() {
 				mockRPCJob.EXPECT().
-					GetArgReply(route).
+					GetArgReply(route, nil).
 					Return(&fakeProtoMessage{}, &fakeProtoMessage{}, nil)
 				mockRPCJob.EXPECT().
-					ServerDiscovery(route, map[string]interface{}{"stack": "a"}).
+					ServerDiscovery(route, map[string]interface{}{"stack": "a"}, nil).
 					Return(serverID, nil)
 				mockRPCJob.EXPECT().
-					RPC(ctx, serverID, route, &fakeProtoMessage{}, &fakeProtoMessage{Field: "string"})
+					RPC(ctx, serverID, route, &fakeProtoMessage{}, &fakeProtoMessage{Field: "string"}, nil)
 			},
 			assert: func(f func(*workers.Msg), m *workers.Msg) {
 				assert.NotPanics(t, func() { f(m) })

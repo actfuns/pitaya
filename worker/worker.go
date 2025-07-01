@@ -136,7 +136,7 @@ func (w *Worker) parsedRPCJob(rpcJob RPCJob) func(*workers.Msg) {
 		}
 
 		logger.Log.Debug("getting route arg and reply")
-		arg, reply, err := rpcJob.GetArgReply(rpcRoute.Route)
+		arg, reply, err := rpcJob.GetArgReply(rpcRoute.Route, rpcRoute.Metadata)
 		if err != nil {
 			logger.Log.Errorf("failed to get methods arg and reply: %q", err)
 			panic(err)
@@ -163,7 +163,7 @@ func (w *Worker) parsedRPCJob(rpcJob RPCJob) func(*workers.Msg) {
 		ctx := context.Background()
 
 		logger.Log.Debugf("executing rpc func to %s", rpcInfo.Route)
-		err = rpcJob.RPC(ctx, serverID, rpcInfo.Route, reply, arg)
+		err = rpcJob.RPC(ctx, serverID, rpcInfo.Route, reply, arg, rpcInfo.Metadata)
 		if err != nil {
 			logger.Log.Errorf("failed make rpc: %q", err)
 			panic(err)

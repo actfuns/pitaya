@@ -6,9 +6,10 @@ package mocks
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	proto "google.golang.org/protobuf/proto"
-	reflect "reflect"
 )
 
 // MockRPCJob is a mock of RPCJob interface
@@ -35,8 +36,8 @@ func (m *MockRPCJob) EXPECT() *MockRPCJobMockRecorder {
 }
 
 // GetArgReply mocks base method
-func (m *MockRPCJob) GetArgReply(arg0 string) (proto.Message, proto.Message, error) {
-	ret := m.ctrl.Call(m, "GetArgReply", arg0)
+func (m *MockRPCJob) GetArgReply(arg0 string, arg1 map[string]interface{}) (proto.Message, proto.Message, error) {
+	ret := m.ctrl.Call(m, "GetArgReply", arg0, arg1)
 	ret0, _ := ret[0].(proto.Message)
 	ret1, _ := ret[1].(proto.Message)
 	ret2, _ := ret[2].(error)
@@ -44,20 +45,20 @@ func (m *MockRPCJob) GetArgReply(arg0 string) (proto.Message, proto.Message, err
 }
 
 // GetArgReply indicates an expected call of GetArgReply
-func (mr *MockRPCJobMockRecorder) GetArgReply(arg0 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArgReply", reflect.TypeOf((*MockRPCJob)(nil).GetArgReply), arg0)
+func (mr *MockRPCJobMockRecorder) GetArgReply(arg0 interface{}, arg1 map[string]interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArgReply", reflect.TypeOf((*MockRPCJob)(nil).GetArgReply), arg0, arg1)
 }
 
 // RPC mocks base method
-func (m *MockRPCJob) RPC(arg0 context.Context, arg1, arg2 string, arg3, arg4 proto.Message) error {
-	ret := m.ctrl.Call(m, "RPC", arg0, arg1, arg2, arg3, arg4)
+func (m *MockRPCJob) RPC(arg0 context.Context, arg1, arg2 string, arg3, arg4 proto.Message, arg5 map[string]interface{}) error {
+	ret := m.ctrl.Call(m, "RPC", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RPC indicates an expected call of RPC
-func (mr *MockRPCJobMockRecorder) RPC(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPC", reflect.TypeOf((*MockRPCJob)(nil).RPC), arg0, arg1, arg2, arg3, arg4)
+func (mr *MockRPCJobMockRecorder) RPC(arg0, arg1, arg2, arg3, arg4 interface{}, arg5 map[string]interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPC", reflect.TypeOf((*MockRPCJob)(nil).RPC), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // ServerDiscovery mocks base method
@@ -69,6 +70,6 @@ func (m *MockRPCJob) ServerDiscovery(arg0 string, arg1 map[string]interface{}) (
 }
 
 // ServerDiscovery indicates an expected call of ServerDiscovery
-func (mr *MockRPCJobMockRecorder) ServerDiscovery(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServerDiscovery", reflect.TypeOf((*MockRPCJob)(nil).ServerDiscovery), arg0, arg1)
+func (mr *MockRPCJobMockRecorder) ServerDiscovery(arg0, arg1 interface{}, arg2 map[string]interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServerDiscovery", reflect.TypeOf((*MockRPCJob)(nil).ServerDiscovery), arg0, arg1, arg2)
 }

@@ -30,5 +30,6 @@ type rpcInfo struct {
 }
 
 type rpcRoute struct {
-	Route string
+	Route    string
+	Metadata map[string]interface{}
 }

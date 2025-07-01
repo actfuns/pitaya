@@ -42,9 +42,10 @@ type RPCJob interface {
 		ctx context.Context,
 		serverID, routeStr string,
 		reply, arg proto.Message,
+		rpcMetadata map[string]interface{},
 	) error
 
 	// GetArgReply returns the arg and reply of the
 	// method
-	GetArgReply(route string) (arg, reply proto.Message, err error)
+	GetArgReply(route string, rpcMetadata map[string]interface{}) (arg, reply proto.Message, err error)
 }
