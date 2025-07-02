@@ -507,6 +507,7 @@ type WorkerConfig struct {
 		ServerURL string `mapstructure:"serverurl"`
 		Pool      string `mapstructure:"pool"`
 		Password  string `mapstructure:"password"`
+		Database  int    `mapstructure:"database"`
 	} `mapstructure:"redis"`
 	Namespace   string      `mapstructure:"namespace"`
 	Concurrency int         `mapstructure:"concurrency"`
@@ -520,6 +521,7 @@ func newDefaultWorkerConfig() *WorkerConfig {
 			ServerURL string `mapstructure:"serverurl"`
 			Pool      string `mapstructure:"pool"`
 			Password  string `mapstructure:"password"`
+			Database  int    `mapstructure:"database"`
 		}{
 			ServerURL: "localhost:6379",
 			Pool:      "10",

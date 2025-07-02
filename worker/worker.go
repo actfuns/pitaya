@@ -23,6 +23,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -57,6 +58,7 @@ func NewWorker(config config.WorkerConfig, opts config.EnqueueOpts) (*Worker, er
 	workers.Configure(workers.Options{
 		Address:   config.Redis.ServerURL,
 		Password:  config.Redis.Password,
+		Database:  fmt.Sprintf("%d", config.Redis.Database),
 		Namespace: config.Namespace,
 		ProcessID: hostname,
 		PoolSize:  poolSize,
