@@ -312,7 +312,15 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route 
 	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false)
 	if msg.Type != message.Notify {
 		if err != nil {
-			logger.Log.Errorf("Failed to process handler message: %s", err.Error())
+			logLevel := 0
+			if val, ok := err.(e.PitayaError); ok {
+				logLevel = int(val.GetLevel())
+			}
+			if logLevel == 0 {
+				logger.Log.Errorf("Failed to process handler message: %s", err.Error())
+			} else {
+				logger.Log.Warnf("Failed to process handler message: %s", err.Error())
+			}
 			a.AnswerWithError(ctx, mid, err)
 		} else {
 			err := a.GetSession().ResponseMID(ctx, mid, ret)

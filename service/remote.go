@@ -472,14 +472,23 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 	ret, err = r.remoteHooks.AfterHandler.ExecuteAfterPipeline(ctx, ret, err)
 	if err != nil {
 		response := &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrUnknownCode,
-				Msg:  err.Error(),
-			},
+			Error: &protos.Error{},
 		}
+		logLevel := 0
+		code := e.ErrUnknownCode
+		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
-			response.Error.Code = val.GetCode()
+			logLevel = val.GetLevel()
+			code = val.GetCode()
+			msg = val.GetMsg()
 			response.Error.Metadata = val.GetMetadata()
+		}
+		response.Error.Code = code
+		response.Error.Msg = msg
+		if logLevel == 0 {
+			logger.Log.Errorf("Failed to process rpc message: %s", err.Error())
+		} else {
+			logger.Log.Errorf("Failed to process rpc message: %s", err.Error())
 		}
 		return response
 	}
@@ -540,16 +549,24 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 
 	ret, err := r.handlerPool.ProcessHandlerMessage(ctx, rt, r.serializer, r.handlerHooks, a.Session, req.GetMsg().GetData(), req.GetMsg().GetType(), true)
 	if err != nil {
-		logger.Log.Warnf(err.Error())
 		response = &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrUnknownCode,
-				Msg:  err.Error(),
-			},
+			Error: &protos.Error{},
 		}
+		logLevel := 0
+		code := e.ErrUnknownCode
+		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
-			response.Error.Code = val.GetCode()
+			logLevel = val.GetLevel()
+			code = val.GetCode()
+			msg = val.GetMsg()
 			response.Error.Metadata = val.GetMetadata()
+		}
+		response.Error.Code = code
+		response.Error.Msg = msg
+		if logLevel == 0 {
+			logger.Log.Errorf("Failed to process remote handler message: %s", err.Error())
+		} else {
+			logger.Log.Errorf("Failed to process remote handler message: %s", err.Error())
 		}
 	} else {
 		response = &protos.Response{Data: ret}
@@ -609,14 +626,23 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 	ret, err = r.handlerHooks.AfterHandler.ExecuteAfterPipeline(ctx, ret, err)
 	if err != nil {
 		response := &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrUnknownCode,
-				Msg:  err.Error(),
-			},
+			Error: &protos.Error{},
 		}
+		logLevel := 0
+		code := e.ErrUnknownCode
+		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
-			response.Error.Code = val.GetCode()
+			logLevel = val.GetLevel()
+			code = val.GetCode()
+			msg = val.GetMsg()
 			response.Error.Metadata = val.GetMetadata()
+		}
+		response.Error.Code = code
+		response.Error.Msg = msg
+		if logLevel == 0 {
+			logger.Log.Errorf("Failed to process rpc handler message: %s", err.Error())
+		} else {
+			logger.Log.Errorf("Failed to process rpc handler message: %s", err.Error())
 		}
 		return response
 	}

@@ -138,6 +138,7 @@ func GetErrorPayload(serializer serialize.Serializer, err error) ([]byte, error)
 	if val, ok := err.(e.PitayaError); ok {
 		code = val.GetCode()
 		metadata = val.GetMetadata()
+		msg = val.GetMsg()
 	}
 	errPayload := &protos.Error{
 		Code: code,

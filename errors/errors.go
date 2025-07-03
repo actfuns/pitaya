@@ -53,12 +53,14 @@ type PitayaError interface {
 	Error() string
 	GetCode() int32
 	GetMsg() string
+	GetLevel() int
 	GetMetadata() map[string]string
 }
 
 // Error is an error with a code, message and metadata
 type Error struct {
 	Code     int32
+	Level    int
 	Message  string
 	Metadata map[string]string
 }
@@ -75,6 +77,7 @@ func NewError(err error, code int32, metadata ...map[string]string) *Error {
 
 	e := &Error{
 		Code:    code,
+		Level:   0,
 		Message: err.Error(),
 	}
 	if len(metadata) > 0 {
@@ -90,6 +93,10 @@ func (e *Error) GetCode() int32 {
 
 func (e *Error) GetMsg() string {
 	return e.Message
+}
+
+func (e *Error) GetLevel() int {
+	return e.Level
 }
 
 func (e *Error) GetMetadata() map[string]string {
