@@ -486,9 +486,9 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		response.Error.Code = code
 		response.Error.Msg = msg
 		if logLevel == 0 {
-			logger.Log.Errorf("Failed to process rpc message: %s", err.Error())
+			logger.Log.Errorf("RPC %s failed to process message: %s", rt.String(), err.Error())
 		} else {
-			logger.Log.Warnf("Failed to process rpc message: %s", err.Error())
+			logger.Log.Warnf("RPC %s encountered an issue processing message: %s", rt.String(), err.Error())
 		}
 		return response
 	}
@@ -564,9 +564,9 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 		response.Error.Code = code
 		response.Error.Msg = msg
 		if logLevel == 0 {
-			logger.Log.Errorf("Failed to process remote handler message: %s", err.Error())
+			logger.Log.Errorf("Remote handler %s failed to process message: %s", rt.String(), err.Error())
 		} else {
-			logger.Log.Warnf("Failed to process remote handler message: %s", err.Error())
+			logger.Log.Warnf("Remote handler %s encountered an issue processing message: %s", rt.String(), err.Error())
 		}
 	} else {
 		response = &protos.Response{Data: ret}
@@ -640,9 +640,9 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 		response.Error.Code = code
 		response.Error.Msg = msg
 		if logLevel == 0 {
-			logger.Log.Errorf("Failed to process rpc handler message: %s", err.Error())
+			logger.Log.Errorf("RPC handler %s failed to process message: %s", rt.String(), err.Error())
 		} else {
-			logger.Log.Warnf("Failed to process rpc handler message: %s", err.Error())
+			logger.Log.Warnf("RPC handler %s encountered a warning while processing message: %s", rt.String(), err.Error())
 		}
 		return response
 	}

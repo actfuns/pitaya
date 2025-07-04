@@ -317,9 +317,9 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route 
 				logLevel = int(val.GetLevel())
 			}
 			if logLevel == 0 {
-				logger.Log.Errorf("Failed to process handler message: %s", err.Error())
+				logger.Log.Errorf("handler %s failed to process message: %s", route.String(), err.Error())
 			} else {
-				logger.Log.Warnf("Failed to process handler message: %s", err.Error())
+				logger.Log.Warnf("handler %s encountered a warning while processing message: %s", route.String(), err.Error())
 			}
 			a.AnswerWithError(ctx, mid, err)
 		} else {
