@@ -31,6 +31,12 @@ var (
 	ErrTaskIdEmpty       = errors.New("task id empty")
 )
 
+var resultChanPool = sync.Pool{
+	New: func() any {
+		return make(chan error, 1)
+	},
+}
+
 type submitRequest struct {
 	id     string
 	task   func(string)
@@ -119,22 +125,24 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration, submit
 }
 
 func (p *Pool) SubmitWithTimeout(id string, timeout time.Duration, task func(string)) error {
+	result := resultChanPool.Get().(chan error)
 	req := submitRequest{
 		id:     id,
 		task:   task,
-		result: make(chan error, 1),
+		result: result,
 	}
 	select {
 	case p.chSubmit <- req:
 		select {
 		case err := <-req.result:
+			resultChanPool.Put(req.result)
 			return err
 		case <-time.After(timeout):
-			p.dumpGoroutines(id)
+			p.dumpGoroutines(id, timeout)
 			return fmt.Errorf("submit task '%s' timeout after %v", id, timeout)
 		}
 	case <-time.After(timeout):
-		p.dumpGoroutines(id)
+		p.dumpGoroutines(id, timeout)
 		return fmt.Errorf("submit task '%s' timeout (send request) after %v", id, timeout)
 	}
 }
@@ -425,7 +433,7 @@ func (p *Pool) submit() {
 	}
 }
 
-func (p *Pool) dumpGoroutines(id string) {
+func (p *Pool) dumpGoroutines(id string, timeout time.Duration) {
 	now := time.Now().Unix()
 	last := atomic.LoadInt64(&p.dumplastTime)
 	if now-last < int64(p.dumpMiniInterval.Seconds()) {
@@ -436,5 +444,5 @@ func (p *Pool) dumpGoroutines(id string) {
 	}
 	buf := make([]byte, 1<<20)
 	n := runtime.Stack(buf, true)
-	logger.Log.Errorf("=== Goroutine Dump Start (taskId=%s) ===\n%s\n=== Goroutine Dump End ===", id, buf[:n])
+	logger.Log.Errorf("=== Goroutine Dump Start (taskId=%s,timeout:%v) ===\n%s\n=== Goroutine Dump End ===", id, timeout, buf[:n])
 }
