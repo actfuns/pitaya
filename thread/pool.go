@@ -3,12 +3,14 @@ package thread
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/topfreegames/pitaya/v2/logger"
 	syncx "github.com/topfreegames/pitaya/v2/sync"
 )
 
@@ -94,6 +96,23 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 	p.goTicktock()
 
 	return p, nil
+}
+
+func (p *Pool) SubmitWithTimeout(id string, timeout time.Duration, task func(string)) error {
+	result := make(chan error, 1)
+
+	go func() {
+		err := p.Submit(id, task)
+		result <- err
+	}()
+
+	select {
+	case err := <-result:
+		return err
+	case <-time.After(timeout):
+		logger.Log.Errorf("submit task timeout, id=%s, timeout=%v", id, timeout)
+		return fmt.Errorf("submit timeout after %v", timeout)
+	}
 }
 
 func (p *Pool) Submit(id string, task func(string)) error {

@@ -30,7 +30,7 @@ func (c *TaskService) Submit(ctx context.Context, id string, task func(context.C
 		thread.RunSafe(func() { task(ctx) })
 		return nil
 	}
-	return c.pool.Submit(id, func(s string) {
+	return c.pool.SubmitWithTimeout(id, time.Second, func(s string) {
 		ctx = context.WithValue(ctx, constants.TaskIDKey, s)
 		task(ctx)
 	})
