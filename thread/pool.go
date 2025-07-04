@@ -57,6 +57,9 @@ type Pool struct {
 
 	workerChanCap  int32
 	expiryDuration time.Duration
+
+	lastDumpTime    int64         // 记录上次 dump 时间（Unix秒）
+	minDumpInterval time.Duration // 最小打印间隔
 }
 
 func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool, error) {
@@ -76,14 +79,15 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 		expiryDuration = DefaultCleanIntervalTime
 	}
 	p := &Pool{
-		capacity:       int32(size),
-		allDone:        make(chan struct{}),
-		lock:           syncx.NewSpinLock(),
-		once:           &sync.Once{},
-		workers:        newWorkerStack(0),
-		taskWorders:    make(map[string]worker),
-		workerChanCap:  workerChanCap,
-		expiryDuration: expiryDuration,
+		capacity:        int32(size),
+		allDone:         make(chan struct{}),
+		lock:            syncx.NewSpinLock(),
+		once:            &sync.Once{},
+		workers:         newWorkerStack(0),
+		taskWorders:     make(map[string]worker),
+		workerChanCap:   workerChanCap,
+		expiryDuration:  expiryDuration,
+		minDumpInterval: time.Second,
 	}
 	p.workerCache.New = func() any {
 		return &goWorker{
@@ -110,7 +114,7 @@ func (p *Pool) SubmitWithTimeout(id string, timeout time.Duration, task func(str
 	case err := <-result:
 		return err
 	case <-time.After(timeout):
-		logger.Log.Errorf("submit task timeout, id=%s, timeout=%v", id, timeout)
+		p.dumpGoroutines(id)
 		return fmt.Errorf("submit timeout after %v", timeout)
 	}
 }
@@ -370,4 +374,18 @@ func (p *Pool) revertWorker(worker worker) bool {
 	p.lock.Unlock()
 
 	return true
+}
+
+func (p *Pool) dumpGoroutines(id string) {
+	now := time.Now().Unix()
+	last := atomic.LoadInt64(&p.lastDumpTime)
+	if now-last < int64(p.minDumpInterval.Seconds()) {
+		return
+	}
+	if !atomic.CompareAndSwapInt64(&p.lastDumpTime, last, now) {
+		return
+	}
+	buf := make([]byte, 1<<20)
+	n := runtime.Stack(buf, true)
+	logger.Log.Errorf("=== Goroutine Dump Start (taskId=%s) ===\n%s\n=== Goroutine Dump End ===", id, buf[:n])
 }
