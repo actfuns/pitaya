@@ -1,13 +1,14 @@
 package thread
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestPool(t *testing.T) {
-	pool, _ := NewPool(2, 0, 0)
+	pool, _ := NewPool(2, 0, 0, 10, 10)
 	defer pool.Release()
 
 	var wg sync.WaitGroup
@@ -30,7 +31,7 @@ func TestPool(t *testing.T) {
 }
 
 func TestPoolCapacity(t *testing.T) {
-	pool, _ := NewPool(5, 0, 0)
+	pool, _ := NewPool(5, 0, 0, 10, 10)
 	defer pool.Release()
 
 	var wg sync.WaitGroup
@@ -58,7 +59,7 @@ func TestPoolCapacity(t *testing.T) {
 }
 
 func TestPoolRelease(t *testing.T) {
-	pool, _ := NewPool(2, 0, 0)
+	pool, _ := NewPool(2, 0, 0, 10, 10)
 
 	// 提交任务
 	pool.Submit("1", func(id string) {
@@ -77,4 +78,33 @@ func TestPoolRelease(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error when submitting task to released pool")
 	}
+}
+
+func TestPoolTimeOut(t *testing.T) {
+	// 创建一个 Pool，提交通道缓冲 10，派发1个提交协程
+	p, err := NewPool(1, 0, time.Second, 1, 1)
+	if err != nil {
+		t.Fatalf("NewPool error: %v", err)
+	}
+
+	defer p.Release()
+
+	taskID := "timeoutTask"
+
+	// 提交一个会“卡住”的任务（模拟耗时超过timeout）
+	longRunningTask := func(id string) {
+		// 阻塞任务，超过timeout让SubmitWithTimeout超时返回
+		fmt.Printf("11111111111\n")
+		time.Sleep(time.Second * 1)
+	}
+
+	// 设置超时时间为 500ms，明显小于任务运行时间
+	timeout := 500 * time.Millisecond
+	for range 10 {
+		if err := p.SubmitWithTimeout(taskID, timeout, longRunningTask); err != nil {
+			fmt.Printf("expected timeout error, got nil\n")
+		}
+	}
+
+	time.Sleep(time.Second * 180)
 }

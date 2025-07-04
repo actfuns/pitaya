@@ -31,6 +31,12 @@ var (
 	ErrTaskIdEmpty       = errors.New("task id empty")
 )
 
+type submitRequest struct {
+	id     string
+	task   func(string)
+	result chan error
+}
+
 type Pool struct {
 	capacity int32
 	running  int32
@@ -58,11 +64,17 @@ type Pool struct {
 	workerChanCap  int32
 	expiryDuration time.Duration
 
-	lastDumpTime    int64         // 记录上次 dump 时间（Unix秒）
-	minDumpInterval time.Duration // 最小打印间隔
+	dumplastTime     int64         // 记录上次 dump 时间（Unix秒）
+	dumpMiniInterval time.Duration // 最小打印间隔
+	chSubmit         chan submitRequest
+	submitBufferSize int
+	submitDispatch   int
+	submitDone       int32
+	submitCtx        context.Context
+	stopSubmit       context.CancelFunc
 }
 
-func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool, error) {
+func NewPool(size int, workerChanCap int32, expiryDuration time.Duration, submitBufferSize int, submitDispatch int) (*Pool, error) {
 	if size <= 0 {
 		size = -1
 	}
@@ -79,15 +91,18 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 		expiryDuration = DefaultCleanIntervalTime
 	}
 	p := &Pool{
-		capacity:        int32(size),
-		allDone:         make(chan struct{}),
-		lock:            syncx.NewSpinLock(),
-		once:            &sync.Once{},
-		workers:         newWorkerStack(0),
-		taskWorders:     make(map[string]worker),
-		workerChanCap:   workerChanCap,
-		expiryDuration:  expiryDuration,
-		minDumpInterval: time.Second,
+		capacity:         int32(size),
+		allDone:          make(chan struct{}),
+		lock:             syncx.NewSpinLock(),
+		once:             &sync.Once{},
+		workers:          newWorkerStack(0),
+		taskWorders:      make(map[string]worker),
+		workerChanCap:    workerChanCap,
+		expiryDuration:   expiryDuration,
+		dumpMiniInterval: time.Minute,
+		submitBufferSize: submitBufferSize,
+		chSubmit:         make(chan submitRequest, submitBufferSize),
+		submitDispatch:   submitDispatch,
 	}
 	p.workerCache.New = func() any {
 		return &goWorker{
@@ -98,24 +113,29 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 	p.cond = sync.NewCond(p.lock)
 	p.goPurge()
 	p.goTicktock()
+	p.goSubmit()
 
 	return p, nil
 }
 
 func (p *Pool) SubmitWithTimeout(id string, timeout time.Duration, task func(string)) error {
-	result := make(chan error, 1)
-
-	go func() {
-		err := p.Submit(id, task)
-		result <- err
-	}()
-
+	req := submitRequest{
+		id:     id,
+		task:   task,
+		result: make(chan error, 1),
+	}
 	select {
-	case err := <-result:
-		return err
+	case p.chSubmit <- req:
+		select {
+		case err := <-req.result:
+			return err
+		case <-time.After(timeout):
+			p.dumpGoroutines(id)
+			return fmt.Errorf("submit task '%s' timeout after %v", id, timeout)
+		}
 	case <-time.After(timeout):
 		p.dumpGoroutines(id)
-		return fmt.Errorf("submit timeout after %v", timeout)
+		return fmt.Errorf("submit task '%s' timeout (send request) after %v", id, timeout)
 	}
 }
 
@@ -163,6 +183,10 @@ func (p *Pool) Release() {
 		p.stopTicktock()
 		p.stopTicktock = nil
 	}
+	if p.stopSubmit != nil {
+		p.stopSubmit()
+		p.stopSubmit = nil
+	}
 
 	p.lock.Lock()
 	p.workers.reset()
@@ -196,7 +220,7 @@ func (p *Pool) ReleaseTimeout(timeout time.Duration) error {
 			<-p.ticktockCtx.Done()
 			if p.Running() == 0 &&
 				(atomic.LoadInt32(&p.purgeDone) == 1) &&
-				atomic.LoadInt32(&p.ticktockDone) == 1 {
+				atomic.LoadInt32(&p.ticktockDone) == 1 && atomic.LoadInt32(&p.submitDone) == 0 {
 				return nil
 			}
 		}
@@ -209,6 +233,8 @@ func (p *Pool) Reboot() {
 		p.goPurge()
 		atomic.StoreInt32(&p.ticktockDone, 0)
 		p.goTicktock()
+		atomic.StoreInt32(&p.submitDone, 0)
+		p.goSubmit()
 		p.allDone = make(chan struct{})
 		p.once = &sync.Once{}
 	}
@@ -376,13 +402,36 @@ func (p *Pool) revertWorker(worker worker) bool {
 	return true
 }
 
+func (p *Pool) goSubmit() {
+	p.submitCtx, p.stopSubmit = context.WithCancel(context.Background())
+	for i := 0; i < p.submitDispatch; i++ {
+		atomic.AddInt32(&p.submitDone, 1)
+		go p.submit()
+	}
+}
+
+func (p *Pool) submit() {
+	defer func() {
+		atomic.AddInt32(&p.submitDone, -1)
+	}()
+	for {
+		select {
+		case req := <-p.chSubmit:
+			err := p.Submit(req.id, req.task)
+			req.result <- err
+		case <-p.submitCtx.Done():
+			return
+		}
+	}
+}
+
 func (p *Pool) dumpGoroutines(id string) {
 	now := time.Now().Unix()
-	last := atomic.LoadInt64(&p.lastDumpTime)
-	if now-last < int64(p.minDumpInterval.Seconds()) {
+	last := atomic.LoadInt64(&p.dumplastTime)
+	if now-last < int64(p.dumpMiniInterval.Seconds()) {
 		return
 	}
-	if !atomic.CompareAndSwapInt64(&p.lastDumpTime, last, now) {
+	if !atomic.CompareAndSwapInt64(&p.dumplastTime, last, now) {
 		return
 	}
 	buf := make([]byte, 1<<20)
