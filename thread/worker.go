@@ -13,7 +13,7 @@ type worker interface {
 	setId(string)
 	run()
 	finish()
-	inputFunc(func(string))
+	inputFunc(func(string)) error
 	getRef() int32
 	addRef(int32) int32
 	lastUsedTime() time.Time
@@ -59,12 +59,18 @@ func (w *goWorker) run() {
 }
 
 func (w *goWorker) safe(fn func(string)) (ok bool) {
+	start := time.Now()
 	defer func() {
+		elapsed := time.Since(start)
+		if elapsed > 5*time.Second {
+			logger.Log.Warnf("worker [%s] task execution took too long: %v", w.id, elapsed)
+		}
 		if p := recover(); p != nil {
 			logger.Log.Errorf("worker exits from panic: %v\n%s\n", p, debug.Stack())
 		}
 		ok = w.pool.revertWorker(w)
 	}()
+
 	fn(w.id)
 	return
 }
@@ -97,6 +103,14 @@ func (w *goWorker) setLastUsedTime(t time.Time) {
 	w.lastUsed = t
 }
 
-func (w *goWorker) inputFunc(fn func(string)) {
-	w.task <- fn
+func (w *goWorker) inputFunc(fn func(string)) error {
+	select {
+	case w.task <- fn:
+		return nil
+	case <-time.After(3 * time.Second):
+		logger.Log.Errorf("inputFunc timeout: task queue for worker [%s] is full or worker goroutine is stuck", w.id)
+		w.pool.dumpGoroutines(w.id, 3*time.Second)
+		w.pool.dumpWorkerStatus()
+		return ErrTaskRunnerBusy
+	}
 }

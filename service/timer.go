@@ -53,7 +53,9 @@ func (ts *TimerService) ClearInterval(timerId uint64) error {
 
 func (ts *TimerService) execute(key, value any) {
 	task := value.(*timerEntity)
-	ts.taskService.Submit(context.Background(), task.taskid, task.fn)
+	if err := ts.taskService.Submit(context.Background(), task.taskid, task.fn); err != nil {
+		logger.Log.Errorf("timerService task %s execute error: %v", task.taskid, err)
+	}
 }
 
 func (ts *TimerService) Shutdown() {

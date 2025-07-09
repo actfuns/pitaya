@@ -49,6 +49,9 @@ const ErrRequestTimeout int32 = 408
 // ErrGatewayTimeout is a string code representing the gateway timeout error
 const ErrGatewayTimeout int32 = 504
 
+// ErrTaskRunnerBusy is a string code representing the task runner busy error
+const ErrTaskRunnerBusy int32 = 503
+
 type PitayaError interface {
 	Error() string
 	GetCode() int32

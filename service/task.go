@@ -14,7 +14,7 @@ type TaskService struct {
 }
 
 func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*TaskService, error) {
-	pool, err := thread.NewPool(size, int32(workerChanCap), time.Duration(expiryDurationSecond)*time.Second, 20, 10)
+	pool, err := thread.NewPool(size, int32(workerChanCap), time.Duration(expiryDurationSecond)*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (c *TaskService) Submit(ctx context.Context, id string, task func(context.C
 		thread.RunSafe(func() { task(ctx) })
 		return nil
 	}
-	return c.pool.SubmitWithTimeout(id, 10*time.Second, func(s string) {
+	return c.pool.Submit(id, func(s string) {
 		ctx = context.WithValue(ctx, constants.TaskIDKey, s)
 		task(ctx)
 	})

@@ -185,9 +185,20 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 				result <- response
 				return
 			}
-			r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
+			if err := r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
 				result <- processRemoteMessage(tctx, req, r, rt)
-			})
+			}); err != nil {
+				response := &protos.Response{
+					Error: &protos.Error{
+						Code: e.ErrTaskRunnerBusy,
+						Msg:  err.Error(),
+						Metadata: map[string]string{
+							"route": req.GetMsg().GetRoute(),
+						},
+					},
+				}
+				result <- response
+			}
 		}()
 
 		reqTimeout := pcontext.GetFromPropagateCtx(ctx, constants.RequestTimeout)
@@ -367,9 +378,20 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 			result <- response
 			return
 		}
-		r.taskSevice.Submit(ctx, dispatchId, func(tctx context.Context) {
+		if err := r.taskSevice.Submit(ctx, dispatchId, func(tctx context.Context) {
 			result <- processRemoteMessage(ctx, &req, r, route)
-		})
+		}); err != nil {
+			response := &protos.Response{
+				Error: &protos.Error{
+					Code: e.ErrTaskRunnerBusy,
+					Msg:  err.Error(),
+					Metadata: map[string]string{
+						"route": req.GetMsg().GetRoute(),
+					},
+				},
+			}
+			result <- response
+		}
 	}()
 
 	res := <-result

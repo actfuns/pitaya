@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -30,18 +31,6 @@ var (
 	ErrTimeout           = errors.New("operation timed out")
 	ErrTaskIdEmpty       = errors.New("task id empty")
 )
-
-var resultChanPool = sync.Pool{
-	New: func() any {
-		return make(chan error, 1)
-	},
-}
-
-type submitRequest struct {
-	id     string
-	task   func(string)
-	result chan error
-}
 
 type Pool struct {
 	capacity int32
@@ -69,18 +58,9 @@ type Pool struct {
 
 	workerChanCap  int32
 	expiryDuration time.Duration
-
-	dumplastTime     int64         // 记录上次 dump 时间（Unix秒）
-	dumpMiniInterval time.Duration // 最小打印间隔
-	chSubmit         chan submitRequest
-	submitBufferSize int
-	submitDispatch   int
-	submitDone       int32
-	submitCtx        context.Context
-	stopSubmit       context.CancelFunc
 }
 
-func NewPool(size int, workerChanCap int32, expiryDuration time.Duration, submitBufferSize int, submitDispatch int) (*Pool, error) {
+func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool, error) {
 	if size <= 0 {
 		size = -1
 	}
@@ -97,18 +77,14 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration, submit
 		expiryDuration = DefaultCleanIntervalTime
 	}
 	p := &Pool{
-		capacity:         int32(size),
-		allDone:          make(chan struct{}),
-		lock:             syncx.NewSpinLock(),
-		once:             &sync.Once{},
-		workers:          newWorkerStack(0),
-		taskWorders:      make(map[string]worker),
-		workerChanCap:    workerChanCap,
-		expiryDuration:   expiryDuration,
-		dumpMiniInterval: time.Minute,
-		submitBufferSize: submitBufferSize,
-		chSubmit:         make(chan submitRequest, submitBufferSize),
-		submitDispatch:   submitDispatch,
+		capacity:       int32(size),
+		allDone:        make(chan struct{}),
+		lock:           syncx.NewSpinLock(),
+		once:           &sync.Once{},
+		workers:        newWorkerStack(0),
+		taskWorders:    make(map[string]worker),
+		workerChanCap:  workerChanCap,
+		expiryDuration: expiryDuration,
 	}
 	p.workerCache.New = func() any {
 		return &goWorker{
@@ -119,32 +95,8 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration, submit
 	p.cond = sync.NewCond(p.lock)
 	p.goPurge()
 	p.goTicktock()
-	p.goSubmit()
 
 	return p, nil
-}
-
-func (p *Pool) SubmitWithTimeout(id string, timeout time.Duration, task func(string)) error {
-	result := resultChanPool.Get().(chan error)
-	req := submitRequest{
-		id:     id,
-		task:   task,
-		result: result,
-	}
-	select {
-	case p.chSubmit <- req:
-		select {
-		case err := <-req.result:
-			resultChanPool.Put(req.result)
-			return err
-		case <-time.After(timeout):
-			p.dumpGoroutines(id, timeout)
-			return fmt.Errorf("submit task '%s' timeout after %v", id, timeout)
-		}
-	case <-time.After(timeout):
-		p.dumpGoroutines(id, timeout)
-		return fmt.Errorf("submit task '%s' timeout (send request) after %v", id, timeout)
-	}
 }
 
 func (p *Pool) Submit(id string, task func(string)) error {
@@ -158,7 +110,10 @@ func (p *Pool) Submit(id string, task func(string)) error {
 	if err != nil {
 		return err
 	}
-	worker.inputFunc(task)
+	if err = worker.inputFunc(task); err != nil {
+		worker.addRef(-1)
+		return err
+	}
 	return nil
 }
 
@@ -190,10 +145,6 @@ func (p *Pool) Release() {
 	if p.stopTicktock != nil {
 		p.stopTicktock()
 		p.stopTicktock = nil
-	}
-	if p.stopSubmit != nil {
-		p.stopSubmit()
-		p.stopSubmit = nil
 	}
 
 	p.lock.Lock()
@@ -228,7 +179,7 @@ func (p *Pool) ReleaseTimeout(timeout time.Duration) error {
 			<-p.ticktockCtx.Done()
 			if p.Running() == 0 &&
 				(atomic.LoadInt32(&p.purgeDone) == 1) &&
-				atomic.LoadInt32(&p.ticktockDone) == 1 && atomic.LoadInt32(&p.submitDone) == 0 {
+				atomic.LoadInt32(&p.ticktockDone) == 1 {
 				return nil
 			}
 		}
@@ -241,8 +192,6 @@ func (p *Pool) Reboot() {
 		p.goPurge()
 		atomic.StoreInt32(&p.ticktockDone, 0)
 		p.goTicktock()
-		atomic.StoreInt32(&p.submitDone, 0)
-		p.goSubmit()
 		p.allDone = make(chan struct{})
 		p.once = &sync.Once{}
 	}
@@ -410,39 +359,44 @@ func (p *Pool) revertWorker(worker worker) bool {
 	return true
 }
 
-func (p *Pool) goSubmit() {
-	p.submitCtx, p.stopSubmit = context.WithCancel(context.Background())
-	for i := 0; i < p.submitDispatch; i++ {
-		atomic.AddInt32(&p.submitDone, 1)
-		go p.submit()
-	}
-}
-
-func (p *Pool) submit() {
-	defer func() {
-		atomic.AddInt32(&p.submitDone, -1)
-	}()
-	for {
-		select {
-		case req := <-p.chSubmit:
-			err := p.Submit(req.id, req.task)
-			req.result <- err
-		case <-p.submitCtx.Done():
-			return
-		}
-	}
-}
+var dumplastTime int64
+var dumpMiniInterval = 2 * time.Minute // 你设置的间隔
 
 func (p *Pool) dumpGoroutines(id string, timeout time.Duration) {
 	now := time.Now().Unix()
-	last := atomic.LoadInt64(&p.dumplastTime)
-	if now-last < int64(p.dumpMiniInterval.Seconds()) {
+	last := atomic.LoadInt64(&dumplastTime)
+	if now-last < int64(dumpMiniInterval.Seconds()) {
 		return
 	}
-	if !atomic.CompareAndSwapInt64(&p.dumplastTime, last, now) {
+	if !atomic.CompareAndSwapInt64(&dumplastTime, last, now) {
 		return
 	}
-	buf := make([]byte, 1<<20)
+	buf := make([]byte, 2<<20) // 2MB
 	n := runtime.Stack(buf, true)
-	logger.Log.Errorf("=== Goroutine Dump Start (taskId=%s,timeout:%v) ===\n%s\n=== Goroutine Dump End ===", id, timeout, buf[:n])
+	logger.Log.Errorf("=== Goroutine Dump Start (taskId=%s, timeout=%v) ===\n%s\n=== Goroutine Dump End ===", id, timeout, buf[:n])
+}
+
+func (p *Pool) dumpWorkerStatus() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
+	nowTime := p.nowTime()
+	var sb strings.Builder
+	sb.WriteString("=== Worker Status Dump Start ===\n")
+
+	sb.WriteString(">> [Active Workers]:\n")
+	for id, w := range p.taskWorders {
+		sb.WriteString(fmt.Sprintf("    id=%s, ref=%d, lastUsed=%v ago\n",
+			id, w.getRef(), nowTime.Sub(w.lastUsedTime())))
+	}
+
+	sb.WriteString(">> [Idle Workers]:\n")
+	for _, w := range p.workers.items {
+		sb.WriteString(fmt.Sprintf("    id=%s, ref=%d, lastUsed=%v ago\n",
+			w.getId(), w.getRef(), nowTime.Sub(w.lastUsedTime())))
+	}
+
+	sb.WriteString("=== Worker Status Dump End ===")
+
+	logger.Log.Errorf(sb.String())
 }
