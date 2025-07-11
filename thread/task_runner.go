@@ -1,9 +1,12 @@
 package thread
 
 import (
+	"context"
 	"errors"
 	"sync"
 
+	"github.com/topfreegames/pitaya/v2/constants"
+	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/lang"
 	"github.com/topfreegames/pitaya/v2/util"
 )
@@ -40,6 +43,29 @@ func (rp *TaskRunner) Schedule(task func()) {
 		})
 
 		task()
+	}()
+}
+
+// Schedule schedules a task to run under concurrency control.
+func (rp *TaskRunner) ScheduleWithCtx(ctx context.Context, task func(subCtx context.Context)) {
+	// Why we add waitGroup first, in case of race condition on starting a task and wait returns.
+	// For example, limitChan is full, and the task is scheduled to run, but the waitGroup is not added,
+	// then the wait returns, and the task is then scheduled to run, but caller thinks all tasks are done.
+	// the same reason for ScheduleImmediately.
+	rp.waitGroup.Add(1)
+	rp.limitChan <- lang.Placeholder
+
+	md, _ := pcontext.FromPropagateContext(ctx)
+	go func() {
+		defer util.Recover(func() {
+			<-rp.limitChan
+			rp.waitGroup.Done()
+		})
+
+		subCtx := pcontext.NewPropagateContext(ctx, md)
+		subCtx = context.WithValue(subCtx, constants.TaskIDKey, nil)
+
+		task(subCtx)
 	}()
 }
 
