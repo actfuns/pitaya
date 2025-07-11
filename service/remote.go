@@ -148,74 +148,47 @@ func (r *RemoteService) AddRemoteBindingListener(bindingListener cluster.RemoteB
 
 // Call processes a remote call
 func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.Response, error) {
-	c, err := util.GetContextFromRequest(req, r.server.ID)
-	c = util.StartSpanFromRequest(c, r.server.ID, req.GetMsg().GetRoute())
+	c, rt, err := util.GetContextFromRequest(req, r.server.ID)
+	var rts string
+	if rt != nil {
+		rts = rt.StringNotInst()
+	} else {
+		rts = req.GetMsg().GetRoute()
+	}
+	c = util.StartSpanFromRequest(c, r.server.ID, rts)
 	defer tracing.FinishSpan(c, err)
 	var res *protos.Response
 
 	if err == nil {
-		result := make(chan *protos.Response, 1)
-		go func() {
-			rt, err := route.Decode(req.GetMsg().GetRoute())
-			if err != nil {
-				response := &protos.Response{
-					Error: &protos.Error{
-						Code: e.ErrBadRequestCode,
-						Msg:  "cannot decode route",
-						Metadata: map[string]string{
-							"route": req.GetMsg().GetRoute(),
-						},
-					},
-				}
-				result <- response
-				return
-			}
-			c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
-			dispatchId, err := r.router.Dispatch(rt, req.Msg.Data)
-			if err != nil {
-				response := &protos.Response{
-					Error: &protos.Error{
-						Code: e.ErrBadRequestCode,
-						Msg:  "cannot decode dispatch",
-						Metadata: map[string]string{
-							"route": req.GetMsg().GetRoute(),
-						},
-					},
-				}
-				result <- response
-				return
-			}
-			if err := r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
+		c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
+		var dispatchId string
+		dispatchId, err = r.router.Dispatch(rt, req.Msg.Data)
+		if err == nil {
+			result := make(chan *protos.Response, 1)
+			err = r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
 				result <- processRemoteMessage(tctx, req, r, rt)
-			}); err != nil {
-				response := &protos.Response{
-					Error: &protos.Error{
-						Code: e.ErrTaskRunnerBusy,
-						Msg:  err.Error(),
-						Metadata: map[string]string{
-							"route": req.GetMsg().GetRoute(),
-						},
-					},
-				}
-				result <- response
-			}
-		}()
-
-		reqTimeout := pcontext.GetFromPropagateCtx(ctx, constants.RequestTimeout)
-		if reqTimeout != nil {
-			var timeout time.Duration
-			timeout, err = time.ParseDuration(reqTimeout.(string))
+			})
 			if err == nil {
-				select {
-				case <-time.After(timeout):
-					err = constants.ErrRPCRequestTimeout
-				case res := <-result:
+				reqTimeout := pcontext.GetFromPropagateCtx(c, constants.RequestTimeout)
+				if reqTimeout != nil {
+					var timeout time.Duration
+					timeout, err = time.ParseDuration(reqTimeout.(string))
+					if err == nil {
+						timer := time.NewTimer(timeout)
+						defer timer.Stop()
+
+						select {
+						case <-timer.C:
+							err = constants.ErrRPCRequestTimeout
+						case res = <-result:
+							return res, nil
+						}
+					}
+				} else {
+					res = <-result
 					return res, nil
 				}
 			}
-		} else {
-			res := <-result
-			return res, nil
 		}
 	}
 
@@ -226,10 +199,6 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 				Msg:  err.Error(),
 			},
 		}
-	}
-
-	if res.Error != nil {
-		err = errors.New(res.Error.Msg)
 	}
 
 	return res, err
@@ -339,8 +308,14 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 		return nil, err
 	}
 
-	ctx, err = util.GetContextFromRequest(&req, r.server.ID)
-	ctx = util.StartSpanFromRequest(ctx, r.server.ID, req.GetMsg().GetRoute())
+	ctx, rt, err := util.GetContextFromRequest(&req, r.server.ID)
+	var rts string
+	if rt != nil {
+		rts = rt.StringNotInst()
+	} else {
+		rts = req.GetMsg().GetRoute()
+	}
+	ctx = util.StartSpanFromRequest(ctx, r.server.ID, rts)
 	defer tracing.FinishSpan(ctx, err)
 
 	if err != nil {
@@ -361,41 +336,40 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 		logger.Log.Warnf("[remote] failed to retrieve parent span: %s", err.Error())
 	}
 
-	result := make(chan *protos.Response, 1)
-	go func() {
+	var res *protos.Response
+	if err == nil {
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestInstanceKey, route.Instance)
-		dispatchId, err := r.router.Dispatch(route, req.Msg.Data)
-		if err != nil {
-			response := &protos.Response{
-				Error: &protos.Error{
-					Code: e.ErrBadRequestCode,
-					Msg:  "cannot decode dispatch",
-					Metadata: map[string]string{
-						"route": req.GetMsg().GetRoute(),
-					},
-				},
-			}
-			result <- response
-			return
-		}
-		if err := r.taskSevice.Submit(ctx, dispatchId, func(tctx context.Context) {
-			result <- processRemoteMessage(ctx, &req, r, route)
-		}); err != nil {
-			response := &protos.Response{
-				Error: &protos.Error{
-					Code: e.ErrTaskRunnerBusy,
-					Msg:  err.Error(),
-					Metadata: map[string]string{
-						"route": req.GetMsg().GetRoute(),
-					},
-				},
-			}
-			result <- response
-		}
-	}()
+		var dispatchId string
+		dispatchId, err = r.router.Dispatch(rt, req.Msg.Data)
+		if err == nil {
+			result := make(chan *protos.Response, 1)
+			err = r.taskSevice.Submit(ctx, dispatchId, func(tctx context.Context) {
+				result <- processRemoteMessage(tctx, &req, r, rt)
+			})
+			if err == nil {
+				timer := time.NewTimer(5 * time.Second)
+				defer timer.Stop()
 
-	res := <-result
-	return res, nil
+				select {
+				case <-timer.C:
+					err = constants.ErrRPCRequestTimeout
+				case res = <-result:
+					return res, nil
+				}
+			}
+		}
+	}
+
+	if err != nil {
+		res = &protos.Response{
+			Error: &protos.Error{
+				Code: e.ErrInternalCode,
+				Msg:  err.Error(),
+			},
+		}
+	}
+
+	return res, err
 }
 
 // Register registers components

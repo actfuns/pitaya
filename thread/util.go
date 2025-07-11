@@ -1,12 +1,11 @@
 package thread
 
 import (
-	"fmt"
-	"reflect"
-	"runtime"
-	"time"
+	"context"
+	"maps"
 
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/topfreegames/pitaya/v2/constants"
+	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/util"
 )
 
@@ -22,26 +21,17 @@ func RunSafe(fn func()) {
 	fn()
 }
 
-// RunSafeWithTimeout executes a function and catches panics and timeouts
-func RunSafeWithTimeout(fn func(), timeout time.Duration) {
-	if fn == nil {
-		return
-	}
-	defer util.Recover()
+// GoSafeWithCtx executes a function in a goroutine and catches panics.
+func GoSafeWithCtx(ctx context.Context, fn func(subCtx context.Context)) {
+	m := pcontext.ToMap(ctx)
+	m2 := make(map[string]any, len(m))
+	maps.Copy(m2, m)
 
-	start := time.Now()
-	defer func() {
-		elapsed := time.Since(start)
-		if elapsed > timeout {
-			fnName := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
-			_, file, line, ok := runtime.Caller(2)
-			callerInfo := "unknown"
-			if ok {
-				callerInfo = fmt.Sprintf("%s:%d", file, line)
-			}
-			logger.Log.Warnf("[DELAY] safe run task timeout. elapsed: %v, timeout: %v, fn: %s, caller: %s", elapsed, timeout, fnName, callerInfo)
-		}
+	go func() {
+		defer util.Recover()
+
+		subCtx := context.WithValue(ctx, constants.PropagateCtxKey, m2)
+		subCtx = context.WithValue(subCtx, constants.TaskIDKey, nil)
+		fn(subCtx)
 	}()
-
-	fn()
 }

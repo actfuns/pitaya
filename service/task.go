@@ -25,7 +25,7 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 
 func (c *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {
 	taskIdVal := ctx.Value(constants.TaskIDKey)
-	if taskIdVal != nil && taskIdVal.(string) == id {
+	if taskIdStr, ok := taskIdVal.(string); ok && taskIdStr == id {
 		logger.WithCtx(ctx).Warnf("task %s already submitted", id)
 		thread.RunSafe(func() { task(ctx) })
 		return nil

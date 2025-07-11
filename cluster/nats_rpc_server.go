@@ -277,7 +277,7 @@ func (ns *NatsRPCServer) marshalResponse(res *protos.Response) ([]byte, error) {
 func (ns *NatsRPCServer) processMessages(threadID int) {
 	for ns.requests[threadID] = range ns.GetUnhandledRequestsChannel() {
 		logger.Log.Debugf("(%d) processing message %v", threadID, ns.requests[threadID].GetMsg().GetId())
-		ctx, err := util.GetContextFromRequest(ns.requests[threadID], ns.server.ID)
+		ctx, _, err := util.GetContextFromRequest(ns.requests[threadID], ns.server.ID)
 		if err != nil {
 			ns.responses[threadID] = &protos.Response{
 				Error: &protos.Error{

@@ -103,13 +103,18 @@ func (w *goWorker) setLastUsedTime(t time.Time) {
 	w.lastUsed = t
 }
 
+const timeout = 3 * time.Second
+
 func (w *goWorker) inputFunc(fn func(string)) error {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
 	select {
 	case w.task <- fn:
 		return nil
-	case <-time.After(3 * time.Second):
+	case <-timer.C:
 		logger.Log.Errorf("inputFunc timeout: task queue for worker [%s] is full or worker goroutine is stuck", w.id)
-		w.pool.dumpGoroutines(w.id, 3*time.Second)
+		w.pool.dumpGoroutines(w.id, timeout)
 		w.pool.dumpWorkerStatus()
 		return ErrTaskRunnerBusy
 	}

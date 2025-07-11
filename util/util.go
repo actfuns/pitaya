@@ -39,6 +39,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 	"github.com/topfreegames/pitaya/v2/protos"
+	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/serialize"
 	"github.com/topfreegames/pitaya/v2/tracing"
 
@@ -211,13 +212,13 @@ func StartSpanFromRequest(
 }
 
 // GetContextFromRequest gets the context from a request
-func GetContextFromRequest(req *protos.Request, serverID string) (context.Context, error) {
+func GetContextFromRequest(req *protos.Request, serverID string) (context.Context, *route.Route, error) {
 	ctx, err := pcontext.Decode(req.GetMetadata())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if ctx == nil {
-		return nil, constants.ErrNoContextFound
+		return nil, nil, constants.ErrNoContextFound
 	}
 
 	requestID := pcontext.GetFromPropagateCtx(ctx, constants.RequestIDKey)
@@ -226,10 +227,15 @@ func GetContextFromRequest(req *protos.Request, serverID string) (context.Contex
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestIDKey, requestID)
 	}
 
-	route := req.GetMsg().GetRoute()
-	ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, route)
-	ctx = CtxWithDefaultLogger(ctx, route, "")
-	return ctx, nil
+	rts := req.GetMsg().GetRoute()
+	rt, err := route.Decode(rts)
+	if err != nil {
+		return nil, nil, errors.New("cannot decode route")
+	}
+
+	ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, rt.StringNotInst())
+	ctx = CtxWithDefaultLogger(ctx, rts, "")
+	return ctx, rt, nil
 }
 
 // Recover is used with defer to do cleanup on panics.
