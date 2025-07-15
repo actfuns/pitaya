@@ -26,6 +26,7 @@ var (
 
 	routingFunction = func(
 		ctx context.Context,
+		rpcType protos.RPCType,
 		route *route.Route,
 		payload []byte,
 		servers map[string]*cluster.Server,

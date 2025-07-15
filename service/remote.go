@@ -199,6 +199,7 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 				Msg:  err.Error(),
 			},
 		}
+		logger.Log.Errorf("[remote] failed to process remote message for route '%s': %v", req.GetMsg().GetRoute(), err)
 	}
 
 	return res, err
@@ -374,6 +375,7 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 				Msg:  err.Error(),
 			},
 		}
+		logger.Log.Errorf("[remote] failed to process loopback message for route '%s': %v", req.GetMsg().GetRoute(), err)
 	}
 
 	return res, err

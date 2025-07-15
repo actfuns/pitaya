@@ -45,6 +45,7 @@ type Router struct {
 // RoutingFunc defines a routing function
 type RoutingFunc func(
 	ctx context.Context,
+	rpcType protos.RPCType,
 	route *route.Route,
 	payload []byte,
 	servers map[string]*cluster.Server,
@@ -109,7 +110,7 @@ func (r *Router) Route(
 		server := r.defaultRoute(serversOfType)
 		return server, nil
 	}
-	return routeFunc(ctx, route, msg.Data, serversOfType)
+	return routeFunc(ctx, rpcType, route, msg.Data, serversOfType)
 }
 
 // AddRoute adds a routing function to a server type

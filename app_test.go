@@ -47,6 +47,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/internal/testing/assertions"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/logger/logrus"
+	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/router"
 	"github.com/topfreegames/pitaya/v2/session/mocks"
@@ -175,19 +176,19 @@ func TestAddRoute(t *testing.T) {
 	builderConfig := config.NewDefaultPitayaConfig()
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *builderConfig).(*App)
 	app.router = nil
-	err := app.AddRoute("somesv", func(ctx context.Context, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
+	err := app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
 		return nil, nil
 	})
 	assert.EqualError(t, constants.ErrRouterNotInitialized, err.Error())
 
 	app.router = router.New()
-	err = app.AddRoute("somesv", func(ctx context.Context, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
+	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
 		return nil, nil
 	})
 	assert.NoError(t, err)
 
 	app.running = true
-	err = app.AddRoute("somesv", func(ctx context.Context, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
+	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
 		return nil, nil
 	})
 	assert.EqualError(t, constants.ErrChangeRouteWhileRunning, err.Error())
