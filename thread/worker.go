@@ -114,8 +114,10 @@ func (w *goWorker) inputFunc(fn func(string)) error {
 		return nil
 	case <-timer.C:
 		logger.Log.Errorf("inputFunc timeout: task queue for worker [%s] is full or worker goroutine is stuck", w.id)
-		w.pool.dumpGoroutines(w.id, timeout)
-		w.pool.dumpWorkerStatus()
+		if w.pool.checkDump() {
+			w.pool.dumpGoroutines(w.id, timeout)
+			w.pool.dumpWorkerStatus()
+		}
 		return ErrTaskRunnerBusy
 	}
 }

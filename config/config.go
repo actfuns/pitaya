@@ -120,7 +120,7 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 			ExpiryDurationSecond int `mapstructure:"expiryDurationSecond"`
 		}{
 			Size:                 1 << 20,
-			WorkerChanCap:        10,
+			WorkerChanCap:        20,
 			ExpiryDurationSecond: 5,
 		},
 		Timer: struct {

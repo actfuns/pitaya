@@ -362,15 +362,19 @@ func (p *Pool) revertWorker(worker worker) bool {
 var dumplastTime int64
 var dumpMiniInterval = 2 * time.Minute // 你设置的间隔
 
-func (p *Pool) dumpGoroutines(id string, timeout time.Duration) {
+func (p *Pool) checkDump() bool {
 	now := time.Now().Unix()
 	last := atomic.LoadInt64(&dumplastTime)
 	if now-last < int64(dumpMiniInterval.Seconds()) {
-		return
+		return false
 	}
 	if !atomic.CompareAndSwapInt64(&dumplastTime, last, now) {
-		return
+		return false
 	}
+	return true
+}
+
+func (p *Pool) dumpGoroutines(id string, timeout time.Duration) {
 	buf := make([]byte, 2<<20) // 2MB
 	n := runtime.Stack(buf, true)
 	logger.Log.Errorf("=== Goroutine Dump Start (taskId=%s, timeout=%v) ===\n%s\n=== Goroutine Dump End ===", id, timeout, buf[:n])
@@ -386,14 +390,24 @@ func (p *Pool) dumpWorkerStatus() {
 
 	sb.WriteString(">> [Active Workers]:\n")
 	for id, w := range p.taskWorders {
-		sb.WriteString(fmt.Sprintf("    id=%s, ref=%d, lastUsed=%v ago\n",
-			id, w.getRef(), nowTime.Sub(w.lastUsedTime())))
+		var chanCap, chanLen int
+		if gw, ok := w.(*goWorker); ok {
+			chanCap = cap(gw.task)
+			chanLen = len(gw.task)
+		}
+		sb.WriteString(fmt.Sprintf("    id=%s, ref=%d, lastUsed=%v ago,chanUsage=%d/%d\n",
+			id, w.getRef(), nowTime.Sub(w.lastUsedTime()), chanCap, chanLen))
 	}
 
 	sb.WriteString(">> [Idle Workers]:\n")
 	for _, w := range p.workers.items {
-		sb.WriteString(fmt.Sprintf("    id=%s, ref=%d, lastUsed=%v ago\n",
-			w.getId(), w.getRef(), nowTime.Sub(w.lastUsedTime())))
+		var chanCap, chanLen int
+		if gw, ok := w.(*goWorker); ok {
+			chanCap = cap(gw.task)
+			chanLen = len(gw.task)
+		}
+		sb.WriteString(fmt.Sprintf("    id=%s, ref=%d, lastUsed=%v ago, chanUsage=%d/%d\n",
+			w.getId(), w.getRef(), nowTime.Sub(w.lastUsedTime()), chanCap, chanLen))
 	}
 
 	sb.WriteString("=== Worker Status Dump End ===")
