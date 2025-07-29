@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 
 	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/logger"
 )
 
 // AddToPropagateCtx adds a key and value that will be propagated through RPC calls
@@ -44,25 +43,23 @@ func GetFromPropagateCtx(ctx context.Context, key string) interface{} {
 	return nil
 }
 
+// FromPropagateContext get the propagate map
 func FromPropagateContext(ctx context.Context) (map[string]interface{}, bool) {
 	if ctx == nil {
 		return nil, false
 	}
-	p, ok := ctx.Value(constants.PropagateCtxKey).(map[string]interface{})
+	md, ok := ctx.Value(constants.PropagateCtxKey).(map[string]interface{})
 	if !ok {
 		return nil, false
 	}
-	out := make(map[string]interface{}, len(p))
-	for k, v := range p {
-		if !isSafeToCopy(v) {
-			logger.WithCtx(ctx).Warnf("propagate key %s is not safe to copy", k)
-			continue
-		}
+	out := make(map[string]interface{}, len(md))
+	for k, v := range md {
 		out[k] = v
 	}
 	return out, true
 }
 
+// NewPropagateContext create new propagate context
 func NewPropagateContext(ctx context.Context, md map[string]interface{}) context.Context {
 	if md == nil {
 		return ctx
@@ -108,18 +105,4 @@ func Decode(m []byte) (context.Context, error) {
 		return nil, err
 	}
 	return FromMap(mp), nil
-}
-
-func isSafeToCopy(v interface{}) bool {
-	switch v.(type) {
-	case string,
-		int, int8, int16, int32, int64,
-		uint, uint8, uint16, uint32, uint64, uintptr,
-		float32, float64,
-		complex64, complex128,
-		bool, nil:
-		return true
-	default:
-		return false
-	}
 }

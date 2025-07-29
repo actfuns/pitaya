@@ -43,8 +43,10 @@ const (
 	KickRoute = "sys.kick"
 )
 
+type sessionKey struct{}
+
 // SessionCtxKey is the context key where the session will be set
-var SessionCtxKey = "session"
+var SessionCtxKey = sessionKey{}
 
 // LoggerCtxKey is the context key where the default logger will be set
 var LoggerCtxKey = "default-logger"

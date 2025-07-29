@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/topfreegames/pitaya/v2/constants"
+	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/logger"
 	syncx "github.com/topfreegames/pitaya/v2/sync"
 )
@@ -30,6 +32,7 @@ var (
 	ErrPoolClosed        = errors.New("this pool has been closed")
 	ErrTimeout           = errors.New("operation timed out")
 	ErrTaskIdEmpty       = errors.New("task id empty")
+	ErrTaskEmpty         = errors.New("task empty")
 )
 
 type Pool struct {
@@ -89,7 +92,7 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 	p.workerCache.New = func() any {
 		return &goWorker{
 			pool: p,
-			task: make(chan func(string), workerChanCap),
+			task: make(chan *TaskEntry, workerChanCap),
 		}
 	}
 	p.cond = sync.NewCond(p.lock)
@@ -99,18 +102,28 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 	return p, nil
 }
 
-func (p *Pool) Submit(id string, task func(string)) error {
+func (p *Pool) Submit(ctx context.Context, taskId string, task func(ctx context.Context)) error {
 	if p.IsClosed() {
 		return ErrPoolClosed
 	}
-	if id == "" {
+	if taskId == "" {
 		return ErrTaskIdEmpty
 	}
-	worker, err := p.retrieveWorker(id)
+	if task == nil {
+		return ErrTaskEmpty
+	}
+	taskIdVal := ctx.Value(constants.TaskIDKey)
+	if taskIdVal != nil && taskIdVal.(string) == taskId {
+		RunSafe(func() { task(ctx) })
+		return nil
+	}
+	worker, err := p.retrieveWorker(taskId)
 	if err != nil {
 		return err
 	}
-	if err = worker.inputFunc(task); err != nil {
+	md, _ := pcontext.FromPropagateContext(ctx)
+	subCtx := pcontext.NewPropagateContext(ctx, md)
+	if err = worker.inputFunc(&TaskEntry{Task: task, Ctx: subCtx}); err != nil {
 		worker.addRef(-1)
 		return err
 	}

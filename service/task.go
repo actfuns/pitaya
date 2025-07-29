@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/thread"
 )
@@ -24,16 +23,7 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 }
 
 func (c *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {
-	taskIdVal := ctx.Value(constants.TaskIDKey)
-	if taskIdStr, ok := taskIdVal.(string); ok && taskIdStr == id {
-		logger.WithCtx(ctx).Warnf("task %s already submitted", id)
-		thread.RunSafe(func() { task(ctx) })
-		return nil
-	}
-	return c.pool.Submit(id, func(s string) {
-		ctx = context.WithValue(ctx, constants.TaskIDKey, s)
-		task(ctx)
-	})
+	return c.pool.Submit(ctx, id, task)
 }
 
 func (c *TaskService) Shutdown() {
