@@ -282,16 +282,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		r.SvType = h.server.Type
 	}
 
-	taskId := fmt.Sprintf("handler:%d", session.ID())
-	if err := h.taskService.Submit(ctx, taskId, func(tctx context.Context) {
-		start := time.Now()
-		defer func() {
-			elapsed := time.Since(start)
-			if elapsed > 5*time.Second {
-				logger.Log.WithField("requestId", requestID).WithField("route", msg.Route).WithField("userId", session.UID()).
-					Warnf("handler [%s] task execution took too long: %v", taskId, elapsed)
-			}
-		}()
+	if err := h.taskService.Submit(ctx, fmt.Sprintf("handler:%d", session.ID()), func(tctx context.Context) {
 		if r.SvType == h.server.Type {
 			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
 			h.localProcess(tctx, a, r, msg)
