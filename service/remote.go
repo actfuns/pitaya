@@ -22,7 +22,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -121,7 +120,7 @@ func (r *RemoteService) remoteProcess(
 	switch msg.Type {
 	case message.Request:
 		if err != nil {
-			logger.Log.Errorf("Failed to process remote server: %s", err.Error())
+			// logger.Log.Errorf("Failed to process remote server: %s", err.Error())
 			a.AnswerWithError(ctx, msg.ID, err)
 			return
 		}
@@ -132,12 +131,12 @@ func (r *RemoteService) remoteProcess(
 		}
 	case message.Notify:
 		defer tracing.FinishSpan(ctx, err)
-		if err == nil && res.Error != nil {
-			err = errors.New(res.Error.GetMsg())
-		}
-		if err != nil {
-			logger.Log.Errorf("error while sending a notify to server: %s", err.Error())
-		}
+		// if err == nil && res.Error != nil {
+		// 	err = errors.New(res.Error.GetMsg())
+		// }
+		// if err != nil {
+		// 	logger.Log.Errorf("error while sending a notify to server: %s", err.Error())
+		// }
 	}
 }
 
@@ -479,7 +478,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		response := &protos.Response{
 			Error: &protos.Error{},
 		}
-		logLevel := 0
+		var logLevel int32
 		code := e.ErrUnknownCode
 		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
@@ -490,6 +489,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
+		response.Error.Level = int32(logLevel)
 		if logLevel == 0 {
 			logger.Log.Errorf("RPC %s failed to process message: %s", rt.String(), err.Error())
 		} else {
@@ -557,7 +557,7 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 		response = &protos.Response{
 			Error: &protos.Error{},
 		}
-		logLevel := 0
+		var logLevel int32
 		code := e.ErrUnknownCode
 		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
@@ -568,6 +568,7 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
+		response.Error.Level = int32(logLevel)
 		if logLevel == 0 {
 			logger.Log.Errorf("Remote handler %s failed to process message: %s", rt.String(), err.Error())
 		} else {
@@ -633,7 +634,7 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 		response := &protos.Response{
 			Error: &protos.Error{},
 		}
-		logLevel := 0
+		var logLevel int32
 		code := e.ErrUnknownCode
 		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
@@ -644,6 +645,7 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
+		response.Error.Level = int32(logLevel)
 		if logLevel == 0 {
 			logger.Log.Errorf("RPC handler %s failed to process message: %s", rt.String(), err.Error())
 		} else {
@@ -703,7 +705,15 @@ func (r *RemoteService) remoteCall(
 
 	res, err := r.rpcClient.Call(ctx, rpcType, route, session, msg, target)
 	if err != nil {
-		logger.Log.Errorf("error making call to target with id %s, route %s and host %s: %s", target.ID, route.String(), target.Hostname, err.Error())
+		var logLevel int32
+		if val, ok := err.(e.PitayaError); ok {
+			logLevel = val.GetLevel()
+		}
+		if logLevel == 0 {
+			logger.Log.Errorf("error making call to target with id %s, route %s and host %s: %s", target.ID, route.String(), target.Hostname, err.Error())
+		} else {
+			logger.Log.Warnf("error making call to target with id %s, route %s and host %s: %s", target.ID, route.String(), target.Hostname, err.Error())
+		}
 		return nil, err
 	}
 	return res, err

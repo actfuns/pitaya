@@ -8,4 +8,5 @@ message Error {
   int32 code = 1;
   string msg = 2;
   map<string, string> metadata = 3;
+  int32 level = 4;
 }

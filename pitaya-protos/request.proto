@@ -10,6 +10,7 @@ import "msg.proto";
 enum RPCType {
   Sys = 0;
   User = 1;
+  Handle = 2;
 }
 
 message Request {

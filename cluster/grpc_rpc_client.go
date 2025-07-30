@@ -157,6 +157,7 @@ func (gs *GRPCClient) Call(
 		}
 		err = &pitErrors.Error{
 			Code:     res.Error.Code,
+			Level:    res.Error.Level,
 			Message:  res.Error.Msg,
 			Metadata: res.Error.Metadata,
 		}
