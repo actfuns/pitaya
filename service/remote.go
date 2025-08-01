@@ -293,6 +293,7 @@ func (r *RemoteService) RPC(ctx context.Context, rpcType protos.RPCType, serverI
 	if res.Error != nil {
 		return &e.Error{
 			Code:     res.Error.Code,
+			Level:    res.Error.Level,
 			Message:  res.Error.Msg,
 			Metadata: res.Error.Metadata,
 		}
