@@ -30,6 +30,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/config"
@@ -68,12 +69,11 @@ type (
 	agentImpl struct {
 		Session            session.Session // session
 		sessionPool        session.SessionPool
-		appDieChan         chan bool               // app die channel
-		chDie              chan struct{}           // wait for close
-		chSend             chan pendingWrite       // push message queue
-		chSendAnswer       chan pendingWriteAnswer // push message queue
-		chStopHeartbeat    chan struct{}           // stop heartbeats
-		chStopWrite        chan struct{}           // stop writing messages
+		appDieChan         chan bool         // app die channel
+		chDie              chan struct{}     // wait for close
+		chSend             chan pendingWrite // push message queue
+		chStopHeartbeat    chan struct{}     // stop heartbeats
+		chStopWrite        chan struct{}     // stop writing messages
 		closeMutex         sync.Mutex
 		conn               net.Conn            // low-level conn fd
 		decoder            codec.PacketDecoder // binary decoder
@@ -86,6 +86,7 @@ type (
 		metricsReporters   []metrics.Reporter
 		serializer         serialize.Serializer // message serializer
 		state              int32                // current agent state
+		writeLock          sync.Mutex
 	}
 
 	pendingMessage struct {
@@ -101,12 +102,6 @@ type (
 		ctx  context.Context
 		data []byte
 		err  error
-	}
-
-	pendingWriteAnswer struct {
-		ctx  context.Context
-		data []byte
-		ret  chan error
 	}
 
 	// Agent corresponds to a user and is used for storing raw Conn information
@@ -211,7 +206,6 @@ func newAgent(
 		appDieChan:         dieChan,
 		chDie:              make(chan struct{}),
 		chSend:             make(chan pendingWrite, messagesBufferSize),
-		chSendAnswer:       make(chan pendingWriteAnswer, messagesBufferSize),
 		chStopHeartbeat:    make(chan struct{}),
 		chStopWrite:        make(chan struct{}),
 		messagesBufferSize: messagesBufferSize,
@@ -432,28 +426,40 @@ func (a *agentImpl) GetStatus() int32 {
 
 // Kick sends a kick packet to a client
 func (a *agentImpl) Kick(ctx context.Context) error {
-	// packet encode
 	p, err := a.encoder.Encode(packet.Kick, nil)
 	if err != nil {
-		return fmt.Errorf("agent kick encoding failed: %w", err)
+		return fmt.Errorf("agent kick failed: %w", err)
 	}
+	if err := a.writeToConnection(ctx, p); err != nil {
+		// 1. Check for a closed connection (most likely scenario for a "dead connection")
+		if e.Is(err, net.ErrClosed) {
+			// Handle specifically: connection was already closed
+			// This could mean the client disconnected before the kick.
+			return errors.NewError(fmt.Errorf("agent kick failed: %w", err), errors.ErrClientClosedRequest)
+		}
 
-	ret := make(chan error, 1)
-	a.chSendAnswer <- pendingWriteAnswer{
-		ctx:  ctx,
-		data: p,
-		ret:  ret,
+		// 2. Check for a timeout (if you have write deadlines)
+		if e.Is(err, os.ErrDeadlineExceeded) {
+			// Handle specifically: write operation timed out
+			return errors.NewError(fmt.Errorf("agent kick failed: %w", err), errors.ErrRequestTimeout)
+		}
+
+		// 3. Unwrap OpError to check for specific syscall errors if needed
+		var opError *net.OpError
+		if e.As(err, &opError) {
+			if e.Is(opError.Err, syscall.EPIPE) {
+				// Handle specifically: broken pipe (often means client disconnected)
+				return errors.NewError(fmt.Errorf("agent kick failed: %w", err), errors.ErrClosedRequest)
+			}
+			if e.Is(opError.Err, syscall.ECONNRESET) {
+				// Handle specifically: connection reset by peer
+				return errors.NewError(fmt.Errorf("agent kick failed: %w", err), errors.ErrClientClosedRequest)
+			}
+		}
+
+		return errors.NewError(fmt.Errorf("agent kick failed: %w", err), errors.ErrClosedRequest)
 	}
-
-	timeout := time.NewTimer(a.writeTimeout)
-	defer timeout.Stop()
-
-	select {
-	case err = <-ret:
-		return err
-	case <-timeout.C:
-		return fmt.Errorf("agent kick write timeout")
-	}
+	return nil
 }
 
 // SetLastAt sets the last at to now
@@ -555,13 +561,13 @@ func (a *agentImpl) onSessionClosed(s session.Session) {
 
 // SendHandshakeResponse sends a handshake response
 func (a *agentImpl) SendHandshakeResponse() error {
-	_, err := a.conn.Write(hrd)
+	_, err := a.connWrite(hrd)
 
 	return err
 }
 
 func (a *agentImpl) SendHandshakeErrorResponse() error {
-	_, err := a.conn.Write(herd)
+	_, err := a.connWrite(herd)
 
 	return err
 }
@@ -574,30 +580,6 @@ func (a *agentImpl) write() {
 
 	for {
 		select {
-		case pWrite := <-a.chSendAnswer:
-			ctx, data := pWrite.ctx, pWrite.data
-
-			writeErr := a.writeToConnection(ctx, data)
-			if pWrite.ret != nil {
-				pWrite.ret <- writeErr
-			}
-
-			if writeErr != nil {
-				if e.Is(writeErr, os.ErrDeadlineExceeded) {
-					// Log the timeout error but continue processing
-					logger.Log.Warnf(
-						"Context deadline exceeded for write in conn (%s) | session (%s): %s",
-						a.conn.RemoteAddr(), a.Session.UID(), writeErr.Error(),
-					)
-				} else {
-					logger.Log.Errorf(
-						"Failed to write in conn (%s) | session (%s): %s, agent will close",
-						a.conn.RemoteAddr(), a.Session.UID(), writeErr.Error(),
-					)
-					// close agent if low-level conn broke during write
-					return
-				}
-			}
 		case pWrite := <-a.chSend:
 			ctx, err, data := pWrite.ctx, pWrite.err, pWrite.data
 
@@ -636,12 +618,19 @@ func (a *agentImpl) writeToConnection(ctx context.Context, data []byte) error {
 	defer span.Finish()
 
 	a.conn.SetWriteDeadline(time.Now().Add(a.writeTimeout))
-	_, writeErr := a.conn.Write(data)
+	_, writeErr := a.connWrite(data)
 	if writeErr != nil {
 		tracing.LogError(span, writeErr.Error())
 		return writeErr
 	}
 	return writeErr
+}
+
+func (a *agentImpl) connWrite(b []byte) (n int, err error) {
+	a.writeLock.Lock()
+	defer a.writeLock.Unlock()
+
+	return a.conn.Write(b)
 }
 
 func createConnectionSpan(ctx context.Context, conn net.Conn, op string) opentracing.Span {

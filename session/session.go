@@ -455,7 +455,7 @@ func (s *sessionImpl) Bind(ctx context.Context, uid string) error {
 		// is not the frontend server that received the user request
 		err := s.bindInFront(ctx)
 		if err != nil {
-			logger.Log.Error("error while trying to push session to front: ", err)
+			logger.WithCtx(ctx).Error("error while trying to push session to front: ", err)
 			s.uid = ""
 			return err
 		}

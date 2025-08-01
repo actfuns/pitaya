@@ -53,7 +53,13 @@ func (u *UniqueSession) OnUserBind(uid, fid string) {
 	oldSession := u.sessionPool.GetSessionByUID(uid)
 	if oldSession != nil {
 		// TODO: it would be nice to set this correctly
-		oldSession.Kick(context.Background())
+		if err := oldSession.Kick(context.Background()); err != nil {
+			logger.Log.WithFields(map[string]interface{}{
+				"old_session_id": oldSession.ID(),
+				"uid":            uid,
+				"error":          err.Error(),
+			}).WithError(err).Warnf("kicking old session failed")
+		}
 	}
 }
 
