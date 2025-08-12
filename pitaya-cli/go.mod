@@ -9,7 +9,6 @@ require (
 	github.com/topfreegames/pitaya/v2 v2.8.1-0.20231207120201-acb62e4fb582
 )
 
-require github.com/golang/protobuf v1.5.4 // indirect
 
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect

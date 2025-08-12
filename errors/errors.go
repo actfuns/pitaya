@@ -70,6 +70,19 @@ type Error struct {
 	Metadata map[string]string
 }
 
+// New ctor
+func New(code int32, level int32, message string, metadata ...map[string]string) *Error {
+	e := &Error{
+		Code:    code,
+		Level:   level,
+		Message: message,
+	}
+	if len(metadata) > 0 {
+		e.Metadata = metadata[0]
+	}
+	return e
+}
+
 // NewError ctor
 func NewError(err error, code int32, metadata ...map[string]string) *Error {
 	var pitayaErr *Error

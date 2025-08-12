@@ -9,7 +9,6 @@ require (
 	go.k6.io/k6 v0.46.0
 )
 
-require github.com/golang/protobuf v1.5.4 // indirect
 
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect

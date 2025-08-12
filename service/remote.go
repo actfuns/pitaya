@@ -257,7 +257,7 @@ func (r *RemoteService) DoRPC(ctx context.Context, rpcType protos.RPCType, serve
 	if serverID == "" {
 		target, err := r.router.Route(ctx, rpcType, route.SvType, route, msg)
 		if err != nil {
-			logger.Log.Errorf("error making call for route %s: %w", route.String(), err)
+			logger.Log.Errorf("error making call for route %s: %v", route.String(), err)
 			return nil, e.NewError(err, e.ErrInternalCode)
 		}
 		serverID = target.ID
@@ -681,14 +681,14 @@ func (r *RemoteService) remoteCall(
 	if target == nil {
 		target, err = r.router.Route(ctx, rpcType, svType, route, msg)
 		if err != nil {
-			logger.Log.Errorf("error making call for route %s: %w", route.String(), err)
+			logger.Log.Errorf("error making call for route %s: %v", route.String(), err)
 			return nil, e.NewError(err, e.ErrInternalCode)
 		}
 	}
 
 	res, err := r.rpcClient.Call(ctx, rpcType, route, session, msg, target)
 	if err != nil {
-		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %s", target.ID, route.String(), target.Hostname, err.Error())
+		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %v", target.ID, route.String(), target.Hostname, err)
 		return nil, err
 	}
 	return res, err
