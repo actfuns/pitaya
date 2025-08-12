@@ -23,7 +23,11 @@ func New() interfaces.Logger {
 	}
 }
 
-func NewWithLogger(logger *zap.SugaredLogger) interfaces.Logger {
+func NewWithLogger(logger *zap.Logger) interfaces.Logger {
+	return &zapImpl{sugar: logger.Sugar()}
+}
+
+func NewWithSugaredLogger(logger *zap.SugaredLogger) interfaces.Logger {
 	return &zapImpl{sugar: logger}
 }
 

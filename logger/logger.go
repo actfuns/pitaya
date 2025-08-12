@@ -61,8 +61,8 @@ func initZapLogger() interfaces.Logger {
 	if err != nil {
 		panic(err)
 	}
-	sugar := logger.Sugar()
-	return zapwrapper.NewWithLogger(sugar)
+	sugar := logger.Sugar().With("source", "pitaya")
+	return zapwrapper.NewWithSugaredLogger(sugar)
 }
 
 // SetLogger rewrites the default logger
