@@ -27,12 +27,15 @@ import (
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
+	zapwrapper "github.com/topfreegames/pitaya/v2/logger/zap"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Log is the default logger
-var Log = initLogger()
+var Log = initZapLogger()
 
-func initLogger() interfaces.Logger {
+func initLogrusLogger() interfaces.Logger {
 	plog := logrus.New()
 	plog.Formatter = new(logrus.TextFormatter)
 	plog.Level = logrus.DebugLevel
@@ -40,7 +43,26 @@ func initLogger() interfaces.Logger {
 	log := plog.WithFields(logrus.Fields{
 		"source": "pitaya",
 	})
-	return logruswrapper.NewWithFieldLogger(log)
+	return logruswrapper.NewWithLogger(log.Logger)
+}
+
+func initZapLogger() interfaces.Logger {
+	cfg := zap.NewProductionConfig()
+	cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	cfg.Encoding = "console"
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	cfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	logger, err := cfg.Build(
+		zap.AddCaller(),
+		zap.AddCallerSkip(1),
+		zap.AddStacktrace(zapcore.PanicLevel),
+	)
+	if err != nil {
+		panic(err)
+	}
+	sugar := logger.Sugar()
+	return zapwrapper.NewWithLogger(sugar)
 }
 
 // SetLogger rewrites the default logger

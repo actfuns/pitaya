@@ -23,13 +23,101 @@ package logger
 import (
 	"testing"
 
+	"github.com/topfreegames/pitaya/v2/errors"
+	"github.com/topfreegames/pitaya/v2/logger/interfaces"
+
 	"github.com/stretchr/testify/assert"
 	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
 )
 
-func TestInitLogger(t *testing.T) {
-	initLogger()
-	assert.NotNil(t, Log)
+func TestInitLogrusLogger(t *testing.T) {
+	// 初始化 zap logger
+	log := initLogrusLogger()
+
+	// 基础级别日志
+	log.Debug("debug msg")
+	log.Debugf("debug %s", "formatted")
+	log.Debugln("debug", "ln")
+
+	log.Info("info msg")
+	log.Infof("info %s", "formatted")
+	log.Infoln("info", "ln")
+
+	log.Warn("warn msg")
+	log.Warnf("warn %s", "formatted")
+	log.Warnln("warn", "ln")
+
+	log.Error("error msg")
+	log.Errorf("error %s", "formatted")
+	log.Errorln("error", "ln")
+
+	// Panic/Fatal 级别我们不直接执行（防止中断测试）
+	// 所以我们只验证 WithFields/WithError 和 LogErrorWithLevel
+	err := &errors.Error{Level: interfaces.ErrorLevel, Message: "error msg"}
+	log.WithError(err).Error("with error field")
+	log.WithField("key1", "val1").Info("with single field")
+	log.WithFields(map[string]interface{}{
+		"f1": "v1",
+		"f2": 123,
+	}).Info("with multiple fields")
+
+	// 测试 LogErrorWithLevel 系列
+	log.LogErrorWithLevel(err, "logerror simple")
+	log.LogErrorWithLevelf(err, "logerror formatted: %d", 100)
+	log.LogErrorWithLevelln(err, "logerror ln 1", "and more")
+
+	// 测试传入 nil error
+	log.LogErrorWithLevel(nil, "no error")
+	log.LogErrorWithLevelf(nil, "no error formatted")
+	log.LogErrorWithLevelln(nil, "no error ln")
+
+	// 内部 logger 获取（只是验证不会 panic）
+	_ = log.GetInternalLogger()
+}
+
+func TestInitZapLogger(t *testing.T) {
+	// 初始化 zap logger
+	log := initZapLogger()
+
+	// 基础级别日志
+	log.Debug("debug msg")
+	log.Debugf("debug %s", "formatted")
+	log.Debugln("debug", "ln")
+
+	log.Info("info msg")
+	log.Infof("info %s", "formatted")
+	log.Infoln("info", "ln")
+
+	log.Warn("warn msg")
+	log.Warnf("warn %s", "formatted")
+	log.Warnln("warn", "ln")
+
+	log.Error("error msg")
+	log.Errorf("error %s", "formatted")
+	log.Errorln("error", "ln")
+
+	// Panic/Fatal 级别我们不直接执行（防止中断测试）
+	// 所以我们只验证 WithFields/WithError 和 LogErrorWithLevel
+	err := &errors.Error{Level: interfaces.ErrorLevel, Message: "error msg"}
+	log.WithError(err).Error("with error field")
+	log.WithField("key1", "val1").Info("with single field")
+	log.WithFields(map[string]interface{}{
+		"f1": "v1",
+		"f2": 123,
+	}).Info("with multiple fields")
+
+	// 测试 LogErrorWithLevel 系列
+	log.LogErrorWithLevel(err, "logerror simple")
+	log.LogErrorWithLevelf(err, "logerror formatted: %d", 100)
+	log.LogErrorWithLevelln(err, "logerror ln 1", "and more")
+
+	// 测试传入 nil error
+	log.LogErrorWithLevel(nil, "no error")
+	log.LogErrorWithLevelf(nil, "no error formatted")
+	log.LogErrorWithLevelln(nil, "no error ln")
+
+	// 内部 logger 获取（只是验证不会 panic）
+	_ = log.GetInternalLogger()
 }
 
 func TestSetLogger(t *testing.T) {

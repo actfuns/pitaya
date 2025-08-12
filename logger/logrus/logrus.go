@@ -2,6 +2,7 @@ package logrus
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 )
 
@@ -46,4 +47,75 @@ func (l *logrusImpl) WithError(err error) interfaces.Logger {
 
 func (l *logrusImpl) GetInternalLogger() any {
 	return l.FieldLogger
+}
+
+func (l *logrusImpl) LogErrorWithLevel(err error, args ...interface{}) {
+	level, log := l.prepareLoggerWithError(err)
+	switch level {
+	case interfaces.PanicLevel:
+		log.Panic(args...)
+	case interfaces.FatalLevel:
+		log.Fatal(args...)
+	case interfaces.ErrorLevel:
+		log.Error(args...)
+	case interfaces.WarnLevel:
+		log.Warn(args...)
+	case interfaces.InfoLevel:
+		log.Info(args...)
+	case interfaces.DebugLevel:
+		log.Debug(args...)
+	default:
+		log.Error(args...)
+	}
+}
+
+func (l *logrusImpl) LogErrorWithLevelf(err error, format string, args ...interface{}) {
+	level, log := l.prepareLoggerWithError(err)
+	switch level {
+	case interfaces.PanicLevel:
+		log.Panicf(format, args...)
+	case interfaces.FatalLevel:
+		log.Fatalf(format, args...)
+	case interfaces.ErrorLevel:
+		log.Errorf(format, args...)
+	case interfaces.WarnLevel:
+		log.Warnf(format, args...)
+	case interfaces.InfoLevel:
+		log.Infof(format, args...)
+	case interfaces.DebugLevel:
+		log.Debugf(format, args...)
+	default:
+		log.Errorf(format, args...)
+	}
+}
+
+func (l *logrusImpl) LogErrorWithLevelln(err error, args ...interface{}) {
+	level, log := l.prepareLoggerWithError(err)
+	switch level {
+	case interfaces.PanicLevel:
+		log.Panicln(args...)
+	case interfaces.FatalLevel:
+		log.Fatalln(args...)
+	case interfaces.ErrorLevel:
+		log.Errorln(args...)
+	case interfaces.WarnLevel:
+		log.Warnln(args...)
+	case interfaces.InfoLevel:
+		log.Infoln(args...)
+	case interfaces.DebugLevel:
+		log.Debugln(args...)
+	default:
+		log.Errorln(args...)
+	}
+}
+
+func (l *logrusImpl) prepareLoggerWithError(err error) (int32, *logrusImpl) {
+	if err == nil {
+		return interfaces.InfoLevel, l
+	}
+	var level = interfaces.ErrorLevel
+	if e, ok := err.(errors.PitayaError); ok {
+		level = e.GetLevel()
+	}
+	return level, &logrusImpl{FieldLogger: l.FieldLogger.WithError(err)}
 }

@@ -311,15 +311,7 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route 
 	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false)
 	if msg.Type != message.Notify {
 		if err != nil {
-			logLevel := 0
-			if val, ok := err.(e.PitayaError); ok {
-				logLevel = int(val.GetLevel())
-			}
-			if logLevel == 0 {
-				logger.Log.Errorf("handler %s failed to process message: %s", route.String(), err.Error())
-			} else {
-				logger.Log.Warnf("handler %s encountered a warning while processing message: %s", route.String(), err.Error())
-			}
+			logger.Log.LogErrorWithLevelf(err, "handler %s failed to process message: %s", route.String(), err.Error())
 			a.AnswerWithError(ctx, mid, err)
 		} else {
 			err := a.GetSession().ResponseMID(ctx, mid, ret)

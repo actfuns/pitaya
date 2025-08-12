@@ -22,6 +22,8 @@ package errors
 
 import (
 	"errors"
+
+	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 )
 
 // ErrUnknownCode is a string code representing an unknown error
@@ -80,7 +82,7 @@ func NewError(err error, code int32, metadata ...map[string]string) *Error {
 
 	e := &Error{
 		Code:    code,
-		Level:   0,
+		Level:   interfaces.ErrorLevel,
 		Message: err.Error(),
 	}
 	if len(metadata) > 0 {
