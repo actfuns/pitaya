@@ -126,7 +126,7 @@ func (l *zapImpl) GetInternalLogger() any {
 	return l.sugar
 }
 
-func (l *zapImpl) LogErrorWithLevel(err error, args ...interface{}) {
+func (l *zapImpl) LogWithErrorLevel(err error, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {
 	case interfaces.PanicLevel:
@@ -146,7 +146,7 @@ func (l *zapImpl) LogErrorWithLevel(err error, args ...interface{}) {
 	}
 }
 
-func (l *zapImpl) LogErrorWithLevelf(err error, format string, args ...interface{}) {
+func (l *zapImpl) LogfWithErrorLevel(err error, format string, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {
 	case interfaces.PanicLevel:
@@ -166,7 +166,7 @@ func (l *zapImpl) LogErrorWithLevelf(err error, format string, args ...interface
 	}
 }
 
-func (l *zapImpl) LogErrorWithLevelln(err error, args ...interface{}) {
+func (l *zapImpl) LoglnWithErrorLevel(err error, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {
 	case interfaces.PanicLevel:
@@ -194,5 +194,5 @@ func (l *zapImpl) prepareLoggerWithError(err error) (int32, *zapImpl) {
 	if e, ok := err.(errors.PitayaError); ok {
 		level = e.GetLevel()
 	}
-	return level, &zapImpl{sugar: l.sugar.With(zap.Error(err))}
+	return level, l
 }

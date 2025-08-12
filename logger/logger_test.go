@@ -62,14 +62,14 @@ func TestInitLogrusLogger(t *testing.T) {
 	}).Info("with multiple fields")
 
 	// 测试 LogErrorWithLevel 系列
-	log.LogErrorWithLevel(err, "logerror simple")
-	log.LogErrorWithLevelf(err, "logerror formatted: %d", 100)
-	log.LogErrorWithLevelln(err, "logerror ln 1", "and more")
+	log.LogWithErrorLevel(err, "logerror simple")
+	log.LogfWithErrorLevel(err, "logerror formatted: %d", 100)
+	log.LoglnWithErrorLevel(err, "logerror ln 1", "and more")
 
 	// 测试传入 nil error
-	log.LogErrorWithLevel(nil, "no error")
-	log.LogErrorWithLevelf(nil, "no error formatted")
-	log.LogErrorWithLevelln(nil, "no error ln")
+	log.LogWithErrorLevel(nil, "no error")
+	log.LogfWithErrorLevel(nil, "no error formatted")
+	log.LoglnWithErrorLevel(nil, "no error ln")
 
 	// 内部 logger 获取（只是验证不会 panic）
 	_ = log.GetInternalLogger()
@@ -107,14 +107,14 @@ func TestInitZapLogger(t *testing.T) {
 	}).Info("with multiple fields")
 
 	// 测试 LogErrorWithLevel 系列
-	log.LogErrorWithLevel(err, "logerror simple")
-	log.LogErrorWithLevelf(err, "logerror formatted: %d", 100)
-	log.LogErrorWithLevelln(err, "logerror ln 1", "and more")
+	log.LogWithErrorLevel(err, "logerror simple")
+	log.LogfWithErrorLevel(err, "logerror formatted: %d", 100)
+	log.LoglnWithErrorLevel(err, "logerror ln 1", "and more")
 
 	// 测试传入 nil error
-	log.LogErrorWithLevel(nil, "no error")
-	log.LogErrorWithLevelf(nil, "no error formatted")
-	log.LogErrorWithLevelln(nil, "no error ln")
+	log.LogWithErrorLevel(nil, "no error")
+	log.LogfWithErrorLevel(nil, "no error formatted")
+	log.LoglnWithErrorLevel(nil, "no error ln")
 
 	// 内部 logger 获取（只是验证不会 panic）
 	_ = log.GetInternalLogger()

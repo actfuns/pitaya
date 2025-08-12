@@ -49,7 +49,7 @@ func (l *logrusImpl) GetInternalLogger() any {
 	return l.FieldLogger
 }
 
-func (l *logrusImpl) LogErrorWithLevel(err error, args ...interface{}) {
+func (l *logrusImpl) LogWithErrorLevel(err error, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {
 	case interfaces.PanicLevel:
@@ -69,7 +69,7 @@ func (l *logrusImpl) LogErrorWithLevel(err error, args ...interface{}) {
 	}
 }
 
-func (l *logrusImpl) LogErrorWithLevelf(err error, format string, args ...interface{}) {
+func (l *logrusImpl) LogfWithErrorLevel(err error, format string, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {
 	case interfaces.PanicLevel:
@@ -89,7 +89,7 @@ func (l *logrusImpl) LogErrorWithLevelf(err error, format string, args ...interf
 	}
 }
 
-func (l *logrusImpl) LogErrorWithLevelln(err error, args ...interface{}) {
+func (l *logrusImpl) LoglnWithErrorLevel(err error, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {
 	case interfaces.PanicLevel:
@@ -117,5 +117,5 @@ func (l *logrusImpl) prepareLoggerWithError(err error) (int32, *logrusImpl) {
 	if e, ok := err.(errors.PitayaError); ok {
 		level = e.GetLevel()
 	}
-	return level, &logrusImpl{FieldLogger: l.FieldLogger.WithError(err)}
+	return level, l
 }

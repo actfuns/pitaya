@@ -35,9 +35,9 @@ type Logger interface {
 	Panicf(format string, args ...interface{})
 	Panicln(args ...interface{})
 
-	LogErrorWithLevel(err error, args ...interface{})
-	LogErrorWithLevelf(err error, format string, args ...interface{})
-	LogErrorWithLevelln(err error, args ...interface{})
+	LogWithErrorLevel(err error, args ...interface{})
+	LogfWithErrorLevel(err error, format string, args ...interface{})
+	LoglnWithErrorLevel(err error, args ...interface{})
 
 	WithFields(fields map[string]interface{}) Logger
 	WithField(key string, value interface{}) Logger

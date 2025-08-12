@@ -489,7 +489,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
-		logger.Log.LogErrorWithLevelf(err, "RPC %s failed to process message: %s", rt.String(), err.Error())
+		logger.Log.LogfWithErrorLevel(err, "RPC %s failed to process message: %s", rt.String(), err.Error())
 		return response
 	}
 
@@ -562,7 +562,7 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
-		logger.Log.LogErrorWithLevelf(err, "Remote handler %s failed to process message: %s", rt.String(), err.Error())
+		logger.Log.LogfWithErrorLevel(err, "Remote handler %s failed to process message: %s", rt.String(), err.Error())
 	} else {
 		response = &protos.Response{Data: ret}
 	}
@@ -633,7 +633,7 @@ func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
-		logger.Log.LogErrorWithLevelf(err, "RPC handler %s failed to process message: %s", rt.String(), err.Error())
+		logger.Log.LogfWithErrorLevel(err, "RPC handler %s failed to process message: %s", rt.String(), err.Error())
 		return response
 	}
 
@@ -688,7 +688,7 @@ func (r *RemoteService) remoteCall(
 
 	res, err := r.rpcClient.Call(ctx, rpcType, route, session, msg, target)
 	if err != nil {
-		logger.Log.LogErrorWithLevelf(err, "error making call to target with id %s, route %s and host %s: %s", target.ID, route.String(), target.Hostname, err.Error())
+		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %s", target.ID, route.String(), target.Hostname, err.Error())
 		return nil, err
 	}
 	return res, err
