@@ -227,7 +227,7 @@ func (r *RemoteService) PushToUser(ctx context.Context, push *protos.Push) (*pro
 			Data: []byte("ack"),
 		}, nil
 	}
-	return nil, constants.ErrSessionNotFound
+	return nil, e.NewError(constants.ErrSessionNotFound, e.ErrSessionNotFound)
 }
 
 // KickUser sends a kick to user
@@ -243,7 +243,7 @@ func (r *RemoteService) KickUser(ctx context.Context, kick *protos.KickMsg) (*pr
 			Kicked: true,
 		}, nil
 	}
-	return nil, constants.ErrSessionNotFound
+	return nil, e.NewError(constants.ErrSessionNotFound, e.ErrSessionNotFound)
 }
 
 // DoRPC do rpc and get answer

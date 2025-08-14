@@ -54,6 +54,9 @@ const ErrGatewayTimeout int32 = 504
 // ErrTaskRunnerBusy is a string code representing the task runner busy error
 const ErrTaskRunnerBusy int32 = 503
 
+// ErrSessionNotFound is a string code representing the session not found error
+const ErrSessionNotFound int32 = 460
+
 type PitayaError interface {
 	Error() string
 	GetCode() int32

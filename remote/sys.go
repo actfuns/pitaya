@@ -23,6 +23,8 @@ package remote
 import (
 	"context"
 
+	e "github.com/topfreegames/pitaya/v2/errors"
+
 	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/protos"
@@ -44,7 +46,7 @@ func NewSys(sessionPool session.SessionPool) *Sys {
 func (s *Sys) BindSession(ctx context.Context, sessionData *protos.Session) (*protos.Response, error) {
 	sess := s.sessionPool.GetSessionByID(sessionData.Id)
 	if sess == nil {
-		return nil, constants.ErrSessionNotFound
+		return nil, e.NewError(constants.ErrSessionNotFound, e.ErrSessionNotFound)
 	}
 	if err := sess.Bind(ctx, sessionData.Uid); err != nil {
 		return nil, err
@@ -56,7 +58,7 @@ func (s *Sys) BindSession(ctx context.Context, sessionData *protos.Session) (*pr
 func (s *Sys) PushSession(ctx context.Context, sessionData *protos.Session) (*protos.Response, error) {
 	sess := s.sessionPool.GetSessionByID(sessionData.Id)
 	if sess == nil {
-		return nil, constants.ErrSessionNotFound
+		return nil, e.NewError(constants.ErrSessionNotFound, e.ErrSessionNotFound)
 	}
 	if err := sess.SetDataEncoded(sessionData.Data); err != nil {
 		return nil, err
@@ -71,7 +73,7 @@ func (s *Sys) Kick(ctx context.Context, msg *protos.KickMsg) (*protos.KickAnswer
 	}
 	sess := s.sessionPool.GetSessionByUID(msg.GetUserId())
 	if sess == nil {
-		return res, constants.ErrSessionNotFound
+		return res, e.NewError(constants.ErrSessionNotFound, e.ErrSessionNotFound)
 	}
 	err := sess.Kick(ctx)
 	if err != nil {
