@@ -267,12 +267,14 @@ func NewEtcdClient(cfg clientv3.Config) (*clientv3.Client, error) {
 
 	for _, ep := range cli.Endpoints() {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		_, err := cli.Status(ctx, ep)
-		cancel()
+		defer cancel()
 
+		_, err := cli.Status(ctx, ep)
 		if err != nil {
+			cli.Close()
 			return nil, fmt.Errorf("etcd endpoint %s is unreachable: %w", ep, err)
 		}
 	}
+
 	return cli, nil
 }
