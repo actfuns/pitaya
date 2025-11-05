@@ -71,6 +71,9 @@ func (ts *TimerService) SetInterval(taskid string, delay time.Duration, counter 
 }
 
 func (ts *TimerService) ClearInterval(timerId uint64) error {
+	if timerId == 0 {
+		return timer.ErrArgument
+	}
 	if err := ts.timingWheel.RemoveTimer(timerId); err != nil {
 		return err
 	}

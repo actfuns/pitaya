@@ -111,6 +111,14 @@ func GetTaskIDFromCtx(ctx context.Context) string {
 	return taskIDVal.(string)
 }
 
+func GetTimerIDFromCtx(ctx context.Context) uint64 {
+	taskIDVal := ctx.Value(constants.TimerIdKey)
+	if taskIDVal == nil {
+		return 0
+	}
+	return taskIDVal.(uint64)
+}
+
 func Start() {
 	DefaultApp.Start()
 }
