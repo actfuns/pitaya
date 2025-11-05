@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"runtime"
 	"strings"
 	"sync"
@@ -15,16 +14,6 @@ import (
 	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/logger"
 	syncx "github.com/topfreegames/pitaya/v2/sync"
-)
-
-const (
-	OPENED = iota
-	CLOSED
-)
-
-const (
-	DefaultAntsPoolSize      = math.MaxInt32
-	DefaultCleanIntervalTime = time.Second
 )
 
 var (

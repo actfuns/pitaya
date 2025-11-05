@@ -2,12 +2,14 @@ package timer
 
 import (
 	"container/list"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/lang"
+	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/thread"
 )
 
@@ -276,10 +278,14 @@ func (tw *TimingWheel) runTasks(tasks []timingTask) {
 		return
 	}
 
-	for i := range tasks {
-		thread.RunSafe(func() {
-			tw.execute(tasks[i].key, tasks[i].value)
-		})
+	if err := thread.SubmitAnonymous(context.Background(), func(ctx context.Context) {
+		for i := range tasks {
+			thread.RunSafe(func() {
+				tw.execute(tasks[i].key, tasks[i].value)
+			})
+		}
+	}); err != nil {
+		logger.Log.Errorf("submit anonymous tasks error: %v", err)
 	}
 }
 
