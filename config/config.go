@@ -41,8 +41,9 @@ type PitayaConfig struct {
 		ExpiryDurationSecond int `mapstructure:"expiryDurationSecond"`
 	}
 	Timer struct {
-		Interval time.Duration `mapstructure:"interval"`
-		NumSlots int           `mapstructure:"numslots"`
+		Interval   time.Duration `mapstructure:"interval"`
+		NumSlots   int           `mapstructure:"numslots"`
+		MaxRetries int           `mapstructure:"maxRetries"`
 	}
 	Session SessionConfig `mapstructure:"session"`
 
@@ -124,10 +125,12 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 			ExpiryDurationSecond: 5,
 		},
 		Timer: struct {
-			Interval time.Duration `mapstructure:"interval"`
-			NumSlots int           `mapstructure:"numslots"`
+			Interval   time.Duration `mapstructure:"interval"`
+			NumSlots   int           `mapstructure:"numslots"`
+			MaxRetries int           `mapstructure:"maxRetries"`
 		}{
 			time.Millisecond * 10,
+			10,
 			10,
 		},
 		Session: *newDefaultSessionConfig(),

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -18,9 +19,11 @@ type TimerService struct {
 	id          uint64
 	taskService *TaskService
 	timingWheel *timer.TimingWheel
+	timerIds    sync.Map
+	maxRetries  int
 }
 
-func NewTimerService(interval time.Duration, numSlots int, taskService *TaskService) (*TimerService, error) {
+func NewTimerService(interval time.Duration, numSlots int, maxRetries int, taskService *TaskService) (*TimerService, error) {
 	ts := TimerService{
 		id:          0,
 		taskService: taskService,
@@ -29,6 +32,7 @@ func NewTimerService(interval time.Duration, numSlots int, taskService *TaskServ
 	if err != nil {
 		return nil, err
 	}
+	ts.maxRetries = maxRetries
 	ts.timingWheel = timingWheel
 	return &ts, nil
 }
@@ -37,18 +41,40 @@ func (ts *TimerService) SetInterval(taskid string, delay time.Duration, counter 
 	if counter == 0 {
 		return 0, timer.ErrArgument
 	}
-	timerId := atomic.AddUint64(&ts.id, 1)
+	var timerId uint64
+	for i := 0; i < ts.maxRetries; i++ {
+		id := atomic.AddUint64(&ts.id, 1)
+		if id == 0 {
+			continue
+		}
+		if _, exists := ts.timerIds.Load(id); exists {
+			continue
+		}
+		if _, loaded := ts.timerIds.LoadOrStore(id, struct{}{}); loaded {
+			continue
+		}
+		timerId = id
+		break
+	}
+	if timerId == 0 {
+		return 0, timer.ErrMaxRetries
+	}
 	if err := ts.timingWheel.SetTimer(timerId, &timerEntity{
 		taskid: taskid,
 		fn:     fn,
 	}, delay, int(counter)); err != nil {
+		ts.timerIds.Delete(timerId)
 		return 0, err
 	}
 	return timerId, nil
 }
 
 func (ts *TimerService) ClearInterval(timerId uint64) error {
-	return ts.timingWheel.RemoveTimer(timerId)
+	if err := ts.timingWheel.RemoveTimer(timerId); err != nil {
+		return err
+	}
+	ts.timerIds.Delete(timerId)
+	return nil
 }
 
 func (ts *TimerService) execute(key, value any) {

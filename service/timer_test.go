@@ -9,7 +9,7 @@ import (
 
 func TestSetTimer(t *testing.T) {
 	taskService, _ := NewTaskService(1, 1, 1)
-	timerService, _ := NewTimerService(time.Millisecond*10, 1000, taskService)
+	timerService, _ := NewTimerService(time.Millisecond*10, 1000, 10, taskService)
 	last := time.Now().UnixMilli()
 	timerId, _ := timerService.SetInterval("test", time.Millisecond*400, -1, func(ctx context.Context) {
 		now := time.Now().UnixMilli()

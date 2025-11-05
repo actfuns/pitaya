@@ -14,8 +14,9 @@ import (
 const drainWorkers = 8
 
 var (
-	ErrClosed   = errors.New("TimingWheel is closed already")
-	ErrArgument = errors.New("incorrect task argument")
+	ErrClosed     = errors.New("TimingWheel is closed already")
+	ErrArgument   = errors.New("incorrect task argument")
+	ErrMaxRetries = errors.New("max retries exceeded")
 )
 
 type (

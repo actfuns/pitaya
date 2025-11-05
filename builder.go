@@ -199,7 +199,7 @@ func (builder *Builder) Build() Pitaya {
 	if err != nil {
 		panic(err)
 	}
-	timerService, err := service.NewTimerService(builder.Config.Timer.Interval, builder.Config.Timer.NumSlots, taskService)
+	timerService, err := service.NewTimerService(builder.Config.Timer.Interval, builder.Config.Timer.NumSlots, builder.Config.Timer.MaxRetries, taskService)
 	if err != nil {
 		panic(err)
 	}
