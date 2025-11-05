@@ -84,6 +84,11 @@ type taskIdKey struct{}
 // TaskIDKey is the key holding the request task id to be sent over the context
 var TaskIDKey = taskIdKey{}
 
+type timerIdKey struct{}
+
+// TimerIdKey is the key holding the request timer id to be sent over the context
+var TimerIdKey = timerIdKey{}
+
 // RouteKey is the key holding the request route to be sent over the context
 var RouteKey = "req-route"
 

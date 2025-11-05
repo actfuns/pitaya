@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/timer"
 )
@@ -79,7 +80,8 @@ func (ts *TimerService) ClearInterval(timerId uint64) error {
 
 func (ts *TimerService) execute(key, value any) {
 	task := value.(*timerEntity)
-	if err := ts.taskService.Submit(context.Background(), task.taskid, task.fn); err != nil {
+	ctx := context.WithValue(context.Background(), constants.TimerIdKey, key)
+	if err := ts.taskService.Submit(ctx, task.taskid, task.fn); err != nil {
 		logger.Log.Errorf("timerService task %s execute error: %v", task.taskid, err)
 	}
 }
