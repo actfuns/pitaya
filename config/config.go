@@ -129,7 +129,7 @@ func NewDefaultPitayaConfig() *PitayaConfig {
 			NumSlots   int           `mapstructure:"numslots"`
 			MaxRetries int           `mapstructure:"maxRetries"`
 		}{
-			time.Millisecond,
+			time.Millisecond * 10,
 			10,
 			10,
 		},

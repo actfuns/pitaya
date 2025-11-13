@@ -192,7 +192,7 @@ func (tw *TimingWheel) drainAll(fn func(key, value any)) {
 }
 
 func (tw *TimingWheel) getPositionAndCircle(d time.Duration) (pos, circle int) {
-	steps := int(d/tw.interval) + 1
+	steps := int(d / tw.interval)
 	pos = (tw.tickedPos + steps) % tw.numSlots
 	circle = (steps - 1) / tw.numSlots
 
@@ -269,7 +269,7 @@ func (tw *TimingWheel) run() {
 		case <-tw.ticker.Chan():
 			tw.onTick()
 		case task := <-tw.setChannel:
-			tw.setTask(&task)
+			tw.setTask(&task, true)
 		case key := <-tw.removeChannel:
 			tw.removeTask(key)
 		case task := <-tw.moveChannel:
@@ -345,12 +345,12 @@ func (tw *TimingWheel) scanAndRunTasks(l *list.List) {
 		e = next
 	}
 	for _, task := range resetTasks {
-		tw.setTask(task)
+		tw.setTask(task, false)
 	}
 	tw.runTasks(tasks)
 }
 
-func (tw *TimingWheel) setTask(task *timingEntry) {
+func (tw *TimingWheel) setTask(task *timingEntry, isInit bool) {
 	if task.delay < tw.interval {
 		task.delay = tw.interval
 	}
@@ -360,7 +360,13 @@ func (tw *TimingWheel) setTask(task *timingEntry) {
 		entry.item.value = task.value
 		tw.moveTask(task.baseEntry)
 	} else {
-		pos, circle := tw.getPositionAndCircle(task.delay)
+		var delay time.Duration
+		if isInit {
+			delay = task.delay + time.Duration(((time.Now().UnixNano()-tw.lastTime-1)/int64(tw.interval)+1)*int64(tw.interval))
+		} else {
+			delay = task.delay
+		}
+		pos, circle := tw.getPositionAndCircle(delay)
 		task.circle = circle
 		tw.slots[pos].PushBack(task)
 		tw.setTimerPosition(pos, task)
