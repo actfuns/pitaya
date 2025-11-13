@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	// DefaultAntsPoolSize is the default capacity for a default goroutine pool.
-	DefaultAntsPoolSize = math.MaxInt32
+	// DefaultPoolSize is the default capacity for a default goroutine pool.
+	DefaultPoolSize = math.MaxInt32
+
+	// DefaultWorkerChanCap is the default capacity for a worker chan.
+	DefaultWorkerChanCap = 1
 
 	// DefaultCleanIntervalTime is the interval time to clean up goroutines.
 	DefaultCleanIntervalTime = time.Second
@@ -22,7 +25,7 @@ const (
 )
 
 var (
-	defaultAntsPool, _ = NewPool(DefaultAntsPoolSize, 0, DefaultCleanIntervalTime)
+	defaultAntsPool, _ = NewPool(DefaultPoolSize, DefaultWorkerChanCap, DefaultCleanIntervalTime)
 	taskSeq            uint64
 )
 
