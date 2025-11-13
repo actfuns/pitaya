@@ -39,6 +39,7 @@ type (
 		removeChannel chan any
 		drainChannel  chan func(key, value any)
 		stopChannel   chan lang.PlaceholderType
+		lastTime      int64
 	}
 
 	timingEntry struct {
@@ -91,6 +92,7 @@ func NewTimingWheelWithTicker(interval time.Duration, numSlots int, execute Exec
 		removeChannel: make(chan any),
 		drainChannel:  make(chan func(key, value any)),
 		stopChannel:   make(chan lang.PlaceholderType),
+		lastTime:      time.Now().UnixNano(),
 	}
 
 	tw.initSlots()
@@ -237,9 +239,17 @@ func (tw *TimingWheel) moveTask(task baseEntry) {
 }
 
 func (tw *TimingWheel) onTick() {
-	tw.tickedPos = (tw.tickedPos + 1) % tw.numSlots
-	l := tw.slots[tw.tickedPos]
-	tw.scanAndRunTasks(l)
+	now := time.Now().UnixNano()
+	num := (now - tw.lastTime) / int64(tw.interval)
+	if num <= 0 {
+		return
+	}
+	tw.lastTime += int64(tw.interval) * num
+	for range num {
+		tw.tickedPos = (tw.tickedPos + 1) % tw.numSlots
+		l := tw.slots[tw.tickedPos]
+		tw.scanAndRunTasks(l)
+	}
 }
 
 func (tw *TimingWheel) removeTask(key any) {
