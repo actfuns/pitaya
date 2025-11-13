@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/logger"
@@ -9,7 +11,8 @@ import (
 )
 
 type TaskService struct {
-	pool *thread.Pool
+	taskSeq uint64
+	pool    *thread.Pool
 }
 
 func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*TaskService, error) {
@@ -22,12 +25,21 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 	}, nil
 }
 
-func (c *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {
-	return c.pool.Submit(ctx, id, task)
+func (ts *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {
+	return ts.pool.Submit(ctx, id, task)
 }
 
-func (c *TaskService) Shutdown() {
-	if err := c.pool.ReleaseTimeout(time.Second * 30); err != nil {
+func (ts *TaskService) SubmitWithTimeout(ctx context.Context, id string, timeout time.Duration, task func(context.Context)) error {
+	return ts.pool.SubmitWithTimeout(ctx, id, timeout, task)
+}
+
+func (ts *TaskService) SubmitAnonymous(ctx context.Context, task func(context.Context)) error {
+	seq := atomic.AddUint64(&ts.taskSeq, 1)
+	return ts.pool.Submit(ctx, fmt.Sprintf("pool:anonymous:%d_%d", time.Now().UnixMilli(), seq), task)
+}
+
+func (ts *TaskService) Shutdown() {
+	if err := ts.pool.ReleaseTimeout(time.Second * 30); err != nil {
 		logger.Log.Errorf("task service shutdown error:%v", err)
 	}
 	logger.Log.Infof("taskService stopped!")

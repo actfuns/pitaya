@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/topfreegames/pitaya/v2/thread"
 	"github.com/topfreegames/pitaya/v2/timer"
 )
 
@@ -84,7 +86,19 @@ func (ts *TimerService) ClearInterval(timerId uint64) error {
 func (ts *TimerService) execute(key, value any) {
 	task := value.(*timerEntity)
 	ctx := context.WithValue(context.Background(), constants.TimerIdKey, key)
-	if err := ts.taskService.Submit(ctx, task.taskid, task.fn); err != nil {
+	err := ts.taskService.SubmitWithTimeout(ctx, task.taskid, -1, task.fn)
+	if err == nil {
+		return
+	}
+	if !errors.Is(err, thread.ErrTaskRunnerBusy) {
+		logger.Log.Errorf("timerService task %s execute error: %v", task.taskid, err)
+		return
+	}
+	if err = ts.taskService.SubmitAnonymous(ctx, func(ctx context.Context) {
+		if err := ts.taskService.Submit(ctx, task.taskid, task.fn); err != nil {
+			logger.Log.Errorf("timerService task %s execute error: %v", task.taskid, err)
+		}
+	}); err != nil {
 		logger.Log.Errorf("timerService task %s execute error: %v", task.taskid, err)
 	}
 }

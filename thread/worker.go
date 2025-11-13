@@ -20,7 +20,7 @@ type worker interface {
 	setId(string)
 	run()
 	finish()
-	inputFunc(*TaskEntry) error
+	inputFunc(*TaskEntry, time.Duration) error
 	getRef() int32
 	addRef(int32) int32
 	lastUsedTime() time.Time
@@ -111,9 +111,18 @@ func (w *goWorker) setLastUsedTime(t time.Time) {
 	w.lastUsed = t
 }
 
-const timeout = 3 * time.Second
+func (w *goWorker) inputFunc(t *TaskEntry, timeout time.Duration) error {
+	if timeout <= 0 {
+		// 无超时情况
+		select {
+		case w.task <- t:
+			return nil
+		default:
+			return ErrTaskRunnerBusy
+		}
+	}
 
-func (w *goWorker) inputFunc(t *TaskEntry) error {
+	// 有超时情况
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 

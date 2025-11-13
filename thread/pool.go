@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"runtime"
 	"strings"
 	"sync"
@@ -14,6 +15,22 @@ import (
 	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/logger"
 	syncx "github.com/topfreegames/pitaya/v2/sync"
+)
+
+const (
+	// DefaultPoolSize is the default capacity for a default goroutine pool.
+	DefaultPoolSize = math.MaxInt32
+
+	// DefaultSubmitTimeout is the default timeout for submitting a task.
+	DefaultSubmitTimeout = time.Second * 3
+
+	// DefaultCleanIntervalTime is the interval time to clean up goroutines.
+	DefaultCleanIntervalTime = time.Second
+)
+
+const (
+	OPENED = iota
+	CLOSED
 )
 
 var (
@@ -92,6 +109,10 @@ func NewPool(size int, workerChanCap int32, expiryDuration time.Duration) (*Pool
 }
 
 func (p *Pool) Submit(ctx context.Context, taskId string, task func(ctx context.Context)) error {
+	return p.SubmitWithTimeout(ctx, taskId, DefaultSubmitTimeout, task)
+}
+
+func (p *Pool) SubmitWithTimeout(ctx context.Context, taskId string, timeout time.Duration, task func(ctx context.Context)) error {
 	if p.IsClosed() {
 		return ErrPoolClosed
 	}
@@ -112,7 +133,7 @@ func (p *Pool) Submit(ctx context.Context, taskId string, task func(ctx context.
 	}
 	md, _ := pcontext.FromPropagateContext(ctx)
 	subCtx := pcontext.NewPropagateContext(ctx, md)
-	if err = worker.inputFunc(&TaskEntry{Task: task, Ctx: subCtx}); err != nil {
+	if err = worker.inputFunc(&TaskEntry{Task: task, Ctx: subCtx}, timeout); err != nil {
 		worker.addRef(-1)
 		return err
 	}

@@ -131,6 +131,7 @@ type Pitaya interface {
 
 	GetNumberOfConnectedClients() int64
 	SubmitTask(ctx context.Context, id string, task func(context.Context)) error
+	SubmitAnonymousTask(ctx context.Context, task func(context.Context)) error
 	SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error)
 	ClearInterval(timerId uint64) error
 	UpdateServerMetadata(metadata map[string]string) error
@@ -590,6 +591,11 @@ func (app *App) GetNumberOfConnectedClients() int64 {
 // SubmitTask submits a task to be executed
 func (app *App) SubmitTask(ctx context.Context, id string, task func(context.Context)) error {
 	return app.taskService.Submit(ctx, id, task)
+}
+
+// SubmitAnonymousTask submits an anonymous task to be executed
+func (app *App) SubmitAnonymousTask(ctx context.Context, task func(context.Context)) error {
+	return app.taskService.SubmitAnonymous(ctx, task)
 }
 
 // SetInterval sets an interval
