@@ -161,7 +161,7 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 	if err == nil {
 		c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
 		var dispatchId string
-		dispatchId, err = r.router.Dispatch(rt, req.Msg.Data)
+		dispatchId, err = r.router.Dispatch(c, req.Type, rt, req.Msg.Data)
 		if err == nil {
 			result := make(chan *protos.Response, 1)
 			err = r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
@@ -348,7 +348,7 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 	if err == nil {
 		subCtx = pcontext.AddToPropagateCtx(subCtx, constants.RequestInstanceKey, route.Instance)
 		var dispatchId string
-		dispatchId, err = r.router.Dispatch(rt, req.Msg.Data)
+		dispatchId, err = r.router.Dispatch(subCtx, req.Type, rt, req.Msg.Data)
 		if err == nil {
 			result := make(chan *protos.Response, 1)
 			err = r.taskSevice.Submit(subCtx, dispatchId, func(tctx context.Context) {

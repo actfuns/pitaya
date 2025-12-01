@@ -282,7 +282,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		r.SvType = h.server.Type
 	}
 
-	if err := h.taskService.Submit(ctx, fmt.Sprintf("handler:%d", session.ID()), func(tctx context.Context) {
+	if err := h.taskService.Submit(ctx, fmt.Sprintf("pitaya:handler:%d", session.ID()), func(tctx context.Context) {
 		if r.SvType == h.server.Type {
 			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
 			h.localProcess(tctx, a, r, msg)

@@ -35,7 +35,7 @@ func (ts *TaskService) SubmitWithTimeout(ctx context.Context, id string, timeout
 
 func (ts *TaskService) SubmitAnonymous(ctx context.Context, task func(context.Context)) error {
 	seq := atomic.AddUint64(&ts.taskSeq, 1)
-	return ts.pool.Submit(ctx, fmt.Sprintf("pool:anonymous:%d_%d", time.Now().UnixMilli(), seq), task)
+	return ts.pool.Submit(ctx, fmt.Sprintf("pitaya:task:anonymous:%d_%d", time.Now().UnixMilli(), seq), task)
 }
 
 func (ts *TaskService) Shutdown() {

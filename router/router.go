@@ -55,7 +55,7 @@ type Session interface {
 	GetId() int64
 	GetUid() string
 }
-type DispatchFunc func(route *route.Route, data []byte) (string, error)
+type DispatchFunc func(ctx context.Context, rpcType protos.RPCType, route *route.Route, data []byte) (string, error)
 
 // New returns the router
 func New() *Router {
@@ -126,13 +126,13 @@ func (r *Router) AddRoute(
 
 // defaultDispatch returns a random dispatch id
 func (r *Router) defaultDispatch() (string, error) {
-	return fmt.Sprintf("%d", rand.Int63n(1000000)), nil
+	return fmt.Sprintf("pitaya:route:%d", rand.Int63n(1000_0000)), nil
 }
 
 // Dispatch gets the right server to use in the call
-func (r *Router) Dispatch(route *route.Route, data []byte) (string, error) {
+func (r *Router) Dispatch(ctx context.Context, rpcType protos.RPCType, route *route.Route, data []byte) (string, error) {
 	if r.dispatch != nil {
-		return r.dispatch(route, data)
+		return r.dispatch(ctx, rpcType, route, data)
 	}
 	return r.defaultDispatch()
 }
