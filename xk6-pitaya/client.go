@@ -52,6 +52,22 @@ func (c *Client) Connect(addr string) error { //TODO: tls Options
 	return err
 }
 
+func (c *Client) ConnectWS(addr string, path string) error { //TODO: tls Options
+	vuState := c.vu.State()
+
+	if vuState == nil {
+		return errors.New("connecting to a pitaya server in the init context is not supported")
+	}
+
+	err := c.client.ConnectToWS(addr, path)
+	if err != nil {
+		return err
+	}
+	go c.listen()
+
+	return err
+}
+
 // IsConnected returns true if the client is connected to the server
 func (c *Client) IsConnected() bool {
 	res := reflect.ValueOf(c.client).Elem().FieldByName("Connected")
@@ -69,14 +85,14 @@ func (c *Client) ConsumePush(route string, timeoutMs int) *sobek.Promise {
 		case data := <-ch:
 			var ret Response
 			if err := json.Unmarshal(data, &ret); err != nil {
-				err = fmt.Errorf("Error unmarshaling response: %s", err)
+				err = fmt.Errorf("error unmarshaling response: %w", err)
 				reject(err)
 				return
 			}
 			resolve(ret)
 			return
 		case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
-			reject(fmt.Errorf("Timeout waiting for push on route %s", route))
+			reject(fmt.Errorf("timeout waiting for push on route %s", route))
 			return
 		}
 	}()
@@ -138,7 +154,7 @@ func (c *Client) Request(route string, msg interface{}) *sobek.Promise { // TODO
 			return
 		case <-time.After(c.timeout):
 			c.pushRequestMetrics(route, time.Since(timeNow), false, true)
-			reject(fmt.Errorf("Timeout waiting for response on route %s", route))
+			reject(fmt.Errorf("timeout waiting for response on route %s", route))
 		}
 	}()
 	return promise
