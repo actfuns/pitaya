@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/sobek"
 	"github.com/sirupsen/logrus"
 	pitayaclient "github.com/topfreegames/pitaya/v2/client"
+	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/session"
 	"go.k6.io/k6/js/common"
 	"go.k6.io/k6/js/modules"
@@ -81,7 +82,7 @@ func (mi *ModuleInstance) NewClient(call sobek.ConstructorCall) *sobek.Object {
 		vu:        mi.vu,
 		client:    nil,
 		handshake: opts.HandshakeData,
-		responses: make(map[uint]chan []byte, 100),
+		responses: make(map[uint]chan *message.Message, 100),
 		pushes:    make(map[string]chan []byte, 100),
 		timeout:   time.Duration(opts.RequestTimeoutMs) * time.Millisecond,
 		metrics:   mi.metrics,

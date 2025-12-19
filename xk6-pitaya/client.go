@@ -27,7 +27,7 @@ type Client struct {
 	client         client.PitayaClient
 	handshake      *session.HandshakeData
 	responsesMutex sync.Mutex
-	responses      map[uint]chan []byte
+	responses      map[uint]chan *message.Message
 	pushesMutex    sync.Mutex
 	pushes         map[string]chan []byte
 	timeout        time.Duration
@@ -145,12 +145,20 @@ func (c *Client) Request(route string, msg interface{}) *sobek.Promise { // TODO
 		select {
 		case responseData := <-responseChan:
 			c.pushRequestMetrics(route, time.Since(timeNow), true, false)
-			var ret Response
-			if err := json.Unmarshal(responseData, &ret); err != nil {
-				resolve(responseData)
-				return
+			if responseData.Err {
+				var ret Response
+				if err := json.Unmarshal(responseData.Data, &ret); err == nil {
+					reject(ret)
+					return
+				}
+			} else {
+				var ret Response
+				if err := json.Unmarshal(responseData.Data, &ret); err == nil {
+					resolve(ret)
+					return
+				}
 			}
-			resolve(ret)
+			resolve(responseData.Data)
 			return
 		case <-time.After(c.timeout):
 			c.pushRequestMetrics(route, time.Since(timeNow), false, true)
@@ -207,6 +215,12 @@ func (c *Client) pushRequestMetrics(route string, responseTime time.Duration, su
 // Disconnect disconnects from the server
 func (c *Client) Disconnect() {
 	c.client.Disconnect()
+	for _, ch := range c.pushes {
+		close(ch)
+	}
+	for _, ch := range c.responses {
+		close(ch)
+	}
 }
 
 func (c *Client) listen() {
@@ -216,7 +230,7 @@ func (c *Client) listen() {
 			switch m.Type {
 			case message.Response:
 				ch := c.getResponseChannelForID(m.ID)
-				ch <- m.Data
+				ch <- m
 				c.removeResponseChannelForID(m.ID)
 			case message.Push:
 				ch := c.getPushChannelForRoute(m.Route)
@@ -231,11 +245,11 @@ func (c *Client) listen() {
 	}()
 }
 
-func (c *Client) getResponseChannelForID(id uint) chan []byte {
+func (c *Client) getResponseChannelForID(id uint) chan (*message.Message) {
 	c.responsesMutex.Lock()
 	defer c.responsesMutex.Unlock()
 	if _, ok := c.responses[id]; !ok {
-		c.responses[id] = make(chan []byte, 1)
+		c.responses[id] = make(chan *message.Message, 1)
 	}
 
 	return c.responses[id]
