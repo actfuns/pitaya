@@ -138,6 +138,7 @@ type Session interface {
 	OnClose(c func()) error
 	Close()
 	RemoteAddr() net.Addr
+	ClientIP() string
 	Remove(key string) error
 	Set(key string, value interface{}) error
 	HasKey(key string) bool
@@ -534,6 +535,11 @@ func (s *sessionImpl) Close() {
 // RemoteAddr returns the remote network address.
 func (s *sessionImpl) RemoteAddr() net.Addr {
 	return s.entity.RemoteAddr()
+}
+
+// ClientIP returns the client's IP address.
+func (s *sessionImpl) ClientIP() string {
+	return s.entity.ClientIP()
 }
 
 // Remove delete data associated with the key from session storage

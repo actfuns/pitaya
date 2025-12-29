@@ -14,5 +14,6 @@ type NetworkEntity interface {
 	Close() error
 	Kick(ctx context.Context) error
 	RemoteAddr() net.Addr
+	ClientIP() string
 	SendRequest(ctx context.Context, serverID, route string, v interface{}) (*protos.Response, error)
 }

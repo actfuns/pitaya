@@ -33,6 +33,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/topfreegames/pitaya/v2/acceptor"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/conn/codec"
 	"github.com/topfreegames/pitaya/v2/conn/message"
@@ -75,7 +76,7 @@ type (
 		chStopHeartbeat    chan struct{}     // stop heartbeats
 		chStopWrite        chan struct{}     // stop writing messages
 		closeMutex         sync.Mutex
-		conn               net.Conn            // low-level conn fd
+		conn               acceptor.PlayerConn // low-level conn fd
 		decoder            codec.PacketDecoder // binary decoder
 		encoder            codec.PacketEncoder // binary encoder
 		heartbeatTimeout   time.Duration
@@ -111,6 +112,7 @@ type (
 		ResponseMID(ctx context.Context, mid uint, v interface{}, isError ...bool) error
 		Close() error
 		RemoteAddr() net.Addr
+		ClientIP() string
 		String() string
 		GetStatus() int32
 		Kick(ctx context.Context) error
@@ -126,7 +128,7 @@ type (
 
 	// AgentFactory factory for creating Agent instances
 	AgentFactory interface {
-		CreateAgent(conn net.Conn) Agent
+		CreateAgent(conn acceptor.PlayerConn) Agent
 	}
 
 	agentFactoryImpl struct {
@@ -171,13 +173,13 @@ func NewAgentFactory(
 }
 
 // CreateAgent returns a new agent
-func (f *agentFactoryImpl) CreateAgent(conn net.Conn) Agent {
+func (f *agentFactoryImpl) CreateAgent(conn acceptor.PlayerConn) Agent {
 	return newAgent(conn, f.decoder, f.encoder, f.serializer, f.heartbeatTimeout, f.writeTimeout, f.messagesBufferSize, f.appDieChan, f.messageEncoder, f.metricsReporters, f.sessionPool)
 }
 
 // NewAgent create new agent instance
 func newAgent(
-	conn net.Conn,
+	conn acceptor.PlayerConn,
 	packetDecoder codec.PacketDecoder,
 	packetEncoder codec.PacketEncoder,
 	serializer serialize.Serializer,
@@ -412,6 +414,11 @@ func (a *agentImpl) Close() error {
 // returns the remote network address.
 func (a *agentImpl) RemoteAddr() net.Addr {
 	return a.conn.RemoteAddr()
+}
+
+// ClientIP returns the client's IP address
+func (a *agentImpl) ClientIP() string {
+	return a.conn.ClientIP()
 }
 
 // String, implementation for Stringer interface
