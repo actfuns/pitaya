@@ -25,6 +25,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -66,11 +67,11 @@ func NewWSAcceptor(addr string, certs ...string) *WSAcceptor {
 }
 
 func (w *WSAcceptor) IsRunning() bool {
-        return w.running
+	return w.running
 }
 
 func (w *WSAcceptor) GetConfiguredAddress() string {
-        return w.addr
+	return w.addr
 }
 
 // GetAddr returns the addr the acceptor will listen on
@@ -107,7 +108,24 @@ func (h *connHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		logger.Log.Errorf("Failed to create new ws connection: %s", err.Error())
 		return
 	}
+	c.clientIP = h.extractClientIP(r)
 	h.connChan <- c
+}
+
+func (h *connHandler) extractClientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		return strings.TrimSpace(strings.Split(xff, ",")[0])
+	}
+
+	if rip := r.Header.Get("X-Real-IP"); rip != "" {
+		return rip
+	}
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		return host
+	}
+	return r.RemoteAddr
 }
 
 func (w *WSAcceptor) hasTLSCertificates() bool {
@@ -180,9 +198,10 @@ func (w *WSAcceptor) Stop() {
 // WSConn is an adapter to t.Conn, which implements all t.Conn
 // interface base on *websocket.Conn
 type WSConn struct {
-	conn   *websocket.Conn
-	typ    int // message type
-	reader io.Reader
+	conn     *websocket.Conn
+	typ      int // message type
+	reader   io.Reader
+	clientIP string
 }
 
 // NewWSConn return an initialized *WSConn
@@ -267,6 +286,11 @@ func (c *WSConn) LocalAddr() net.Addr {
 // RemoteAddr returns the remote network address.
 func (c *WSConn) RemoteAddr() net.Addr {
 	return c.conn.RemoteAddr()
+}
+
+// ClientIP returns the client ip
+func (c *WSConn) ClientIP() string {
+	return c.clientIP
 }
 
 // SetDeadline sets the read and write deadlines associated

@@ -25,6 +25,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type vtprotoMessage interface {
+	MarshalVT() ([]byte, error)
+	UnmarshalVT(data []byte) error
+}
+
 // Serializer implements the serialize.Serializer interface
 type Serializer struct{}
 
@@ -35,6 +40,9 @@ func NewSerializer() *Serializer {
 
 // Marshal returns the protobuf encoding of v.
 func (s *Serializer) Marshal(v interface{}) ([]byte, error) {
+	if pb, ok := v.(vtprotoMessage); ok {
+		return pb.MarshalVT()
+	}
 	pb, ok := v.(proto.Message)
 	if !ok {
 		return nil, constants.ErrWrongValueType
@@ -45,6 +53,9 @@ func (s *Serializer) Marshal(v interface{}) ([]byte, error) {
 // Unmarshal parses the protobuf-encoded data and stores the result
 // in the value pointed to by v.
 func (s *Serializer) Unmarshal(data []byte, v interface{}) error {
+	if pb, ok := v.(vtprotoMessage); ok {
+		return pb.UnmarshalVT(data)
+	}
 	pb, ok := v.(proto.Message)
 	if !ok {
 		return constants.ErrWrongValueType

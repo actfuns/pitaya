@@ -26,6 +26,7 @@ import "net"
 type PlayerConn interface {
 	GetNextMessage() (b []byte, err error)
 	RemoteAddr() net.Addr
+	ClientIP() string
 	net.Conn
 }
 

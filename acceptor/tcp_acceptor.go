@@ -50,6 +50,19 @@ func (t *tcpPlayerConn) RemoteAddr() net.Addr {
 	return t.remoteAddr
 }
 
+func (t *tcpPlayerConn) ClientIP() string {
+	if t.remoteAddr == nil {
+		return ""
+	}
+
+	host, _, err := net.SplitHostPort(t.remoteAddr.String())
+	if err == nil {
+		return host
+	}
+
+	return t.remoteAddr.String()
+}
+
 // GetNextMessage reads the next message available in the stream
 func (t *tcpPlayerConn) GetNextMessage() (b []byte, err error) {
 	header, err := io.ReadAll(io.LimitReader(t.Conn, codec.HeadLength))

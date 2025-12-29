@@ -96,6 +96,23 @@ func NewError(err error, code int32, metadata ...map[string]string) *Error {
 		return pitayaErr
 	}
 
+	if pitayaErr, ok := err.(PitayaError); ok {
+		e := &Error{
+			Code:    pitayaErr.GetCode(),
+			Level:   pitayaErr.GetLevel(),
+			Message: pitayaErr.GetMsg(),
+		}
+
+		if mdata := pitayaErr.GetMetadata(); len(mdata) > 0 {
+			mergeMetadatas(e, mdata)
+		}
+
+		if len(metadata) > 0 {
+			mergeMetadatas(e, metadata[0])
+		}
+		return e
+	}
+
 	e := &Error{
 		Code:    code,
 		Level:   interfaces.ErrorLevel,
@@ -105,7 +122,6 @@ func NewError(err error, code int32, metadata ...map[string]string) *Error {
 		e.Metadata = metadata[0]
 	}
 	return e
-
 }
 
 func (e *Error) GetCode() int32 {

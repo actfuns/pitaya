@@ -156,6 +156,9 @@ func (a *Remote) Close() error { return nil }
 // RemoteAddr returns the remote address of the user
 func (a *Remote) RemoteAddr() net.Addr { return nil }
 
+// ClientIP returns the client ip of the user
+func (a *Remote) ClientIP() string { return "" }
+
 func (a *Remote) serialize(m pendingMessage) ([]byte, error) {
 	payload, err := util.SerializeOrRaw(a.serializer, m.payload)
 	if err != nil {
