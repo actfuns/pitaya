@@ -81,6 +81,13 @@ func (mi *ModuleInstance) NewClient(call sobek.ConstructorCall) *sobek.Object {
 			}
 		}
 	}
+
+	// Remove unmarshalable types before parsing to avoid json.Marshal errors.
+	for k, v := range optionsArg {
+		if _, ok := v.(func(sobek.FunctionCall) sobek.Value); ok {
+			delete(optionsArg, k)
+		}
+	}
 	delete(optionsArg, "serializer")
 
 	opts, err := newOptionsFrom(optionsArg)
