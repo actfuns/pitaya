@@ -19,6 +19,88 @@ import (
 // Response is the type of the response returned by the server
 type Response interface{}
 
+// Serializer is the interface that wraps the basic Marshal and Unmarshal methods.
+type Serializer interface {
+	Marshal(route string, v interface{}) ([]byte, error)
+	Unmarshal(route string, data []byte, v interface{}) error
+}
+
+type defaultJSONSerializer struct{}
+
+func (s *defaultJSONSerializer) Marshal(route string, v interface{}) ([]byte, error) {
+	return json.Marshal(v)
+}
+
+func (s *defaultJSONSerializer) Unmarshal(route string, data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
+}
+
+type jsSerializer struct {
+	vu  modules.VU
+	obj *sobek.Object
+}
+
+func (s *jsSerializer) Marshal(route string, v interface{}) ([]byte, error) {
+	rt := s.vu.Runtime()
+	marshalFn, ok := sobek.AssertFunction(s.obj.Get("marshal"))
+	if !ok {
+		return nil, errors.New("serializer.marshal is not a function")
+	}
+
+	res, err := marshalFn(sobek.Undefined(), rt.ToValue(route), rt.ToValue(v))
+	if err != nil {
+		return nil, err
+	}
+
+	exp := res.Export()
+	if arr, ok := exp.(sobek.ArrayBuffer); ok {
+		return arr.Bytes(), nil
+	} else if b, ok := exp.([]byte); ok {
+		return b, nil
+	}
+	return nil, errors.New("serializer encode must return an ArrayBuffer or Uint8Array")
+}
+
+func (s *jsSerializer) Unmarshal(route string, data []byte, v interface{}) error {
+	ch := make(chan error, 1)
+	cb := s.vu.RegisterCallback()
+	cb(func() error {
+		rt := s.vu.Runtime()
+		unmarshalFn, ok := sobek.AssertFunction(s.obj.Get("unmarshal"))
+		if !ok {
+			ch <- errors.New("serializer.unmarshal is not a function")
+			return nil
+		}
+
+		res, err := unmarshalFn(sobek.Undefined(), rt.ToValue(route), rt.ToValue(rt.NewArrayBuffer(data)))
+		if err != nil {
+			ch <- err
+			return nil
+		}
+
+		if ptr, ok := v.(*Response); ok {
+			*ptr = res.Export()
+		} else {
+			exp := res.Export()
+			b, err := json.Marshal(exp)
+			if err != nil {
+				ch <- err
+				return nil
+			}
+			err = json.Unmarshal(b, v)
+			if err != nil {
+				ch <- err
+				return nil
+			}
+		}
+
+		ch <- nil
+		return nil
+	})
+
+	return <-ch
+}
+
 // Client is the pitaya client
 // It is used to connect to a pitaya server and send requests and notifies
 // It is also used to consume pushes
@@ -32,6 +114,7 @@ type Client struct {
 	pushes         map[string]chan []byte
 	timeout        time.Duration
 	metrics        *pitayaMetrics
+	serializer     Serializer
 }
 
 // Connect connects to the server
@@ -84,7 +167,7 @@ func (c *Client) ConsumePush(route string, timeoutMs int) *sobek.Promise {
 		select {
 		case data := <-ch:
 			var ret Response
-			if err := json.Unmarshal(data, &ret); err != nil {
+			if err := c.serializer.Unmarshal(route, data, &ret); err != nil {
 				err = fmt.Errorf("error unmarshaling response: %w", err)
 				reject(err)
 				return
@@ -108,7 +191,7 @@ func (c *Client) Notify(route string, msg interface{}) error {
 	if m == nil {
 		m = map[string]interface{}{}
 	}
-	data, err := json.Marshal(m)
+	data, err := c.serializer.Marshal(route, m)
 	if err != nil {
 		return err
 	}
@@ -127,7 +210,7 @@ func (c *Client) Request(route string, msg interface{}) *sobek.Promise { // TODO
 		m = map[string]interface{}{}
 	}
 	promise, resolve, reject := c.makeHandledPromise()
-	data, err := json.Marshal(m)
+	data, err := c.serializer.Marshal(route, m)
 	if err != nil {
 		reject(err)
 		return promise
@@ -147,13 +230,13 @@ func (c *Client) Request(route string, msg interface{}) *sobek.Promise { // TODO
 			c.pushRequestMetrics(route, time.Since(timeNow), true, false)
 			if responseData.Err {
 				var ret Response
-				if err := json.Unmarshal(responseData.Data, &ret); err == nil {
+				if err := c.serializer.Unmarshal("error", responseData.Data, &ret); err == nil {
 					reject(ret)
 					return
 				}
 			} else {
 				var ret Response
-				if err := json.Unmarshal(responseData.Data, &ret); err == nil {
+				if err := c.serializer.Unmarshal(route, responseData.Data, &ret); err == nil {
 					resolve(ret)
 					return
 				}
