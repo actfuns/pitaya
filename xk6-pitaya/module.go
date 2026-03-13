@@ -73,19 +73,30 @@ func (mi *ModuleInstance) NewClient(call sobek.ConstructorCall) *sobek.Object {
 		common.Throw(rt, errors.New("unable to parse options object"))
 	}
 
+	var serializer Serializer = &defaultJSONSerializer{}
+	if optsObj, ok := call.Arguments[0].(*sobek.Object); ok {
+		if s := optsObj.Get("serializer"); s != nil && !sobek.IsUndefined(s) && !sobek.IsNull(s) {
+			if sobj, ok := s.(*sobek.Object); ok {
+				serializer = &jsSerializer{vu: mi.vu, obj: sobj}
+			}
+		}
+	}
+	delete(optionsArg, "serializer")
+
 	opts, err := newOptionsFrom(optionsArg)
 	if err != nil {
 		common.Throw(rt, fmt.Errorf("invalid options; reason: %w", err))
 	}
 
 	client := &Client{
-		vu:        mi.vu,
-		client:    nil,
-		handshake: opts.HandshakeData,
-		responses: make(map[uint]chan *message.Message, 100),
-		pushes:    make(map[string]chan []byte, 100),
-		timeout:   time.Duration(opts.RequestTimeoutMs) * time.Millisecond,
-		metrics:   mi.metrics,
+		vu:         mi.vu,
+		client:     nil,
+		handshake:  opts.HandshakeData,
+		responses:  make(map[uint]chan *message.Message, 100),
+		pushes:     make(map[string]chan []byte, 100),
+		timeout:    time.Duration(opts.RequestTimeoutMs) * time.Millisecond,
+		metrics:    mi.metrics,
+		serializer: serializer,
 	}
 
 	client.client = pitayaclient.New(logrus.InfoLevel)
