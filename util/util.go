@@ -108,12 +108,6 @@ func SliceContainsString(slice []string, str string) bool {
 
 // SerializeOrRaw serializes the interface if its not an array of bytes already
 func SerializeOrRaw(serializer serialize.Serializer, v interface{}) (res []byte, err error) {
-	defer func() {
-		if rec := recover(); rec != nil {
-			err = fmt.Errorf("serialize panic: %v", rec)
-			logger.Log.Errorf("panic: %s", string(debug.Stack()))
-		}
-	}()
 	if data, ok := v.([]byte); ok {
 		return data, nil
 	}

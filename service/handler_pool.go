@@ -49,7 +49,7 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	data []byte,
 	msgTypeIface interface{},
 	remote bool,
-) ([]byte, error) {
+) (ret []byte, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -67,6 +67,14 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	}
 
 	logger := ctx.Value(constants.LoggerCtxKey).(interfaces.Logger)
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("panic: %v", r)
+			ret = nil
+			err = e.NewError(fmt.Errorf("%v", r), e.ErrInternalCode)
+		}
+	}()
+
 	exit, err := handler.ValidateMessageType(msgType)
 	if err != nil && exit {
 		return nil, e.NewError(err, e.ErrBadRequestCode)
@@ -107,7 +115,7 @@ func (h *HandlerPool) ProcessHandlerMessage(
 		return nil, err
 	}
 
-	ret, err := serializeReturn(serializer, resp)
+	ret, err = serializeReturn(serializer, resp)
 	if err != nil {
 		return nil, err
 	}
