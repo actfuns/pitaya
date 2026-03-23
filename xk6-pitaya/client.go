@@ -81,13 +81,7 @@ func (s *jsSerializer) Unmarshal(route string, data []byte, v interface{}) error
 		if ptr, ok := v.(*Response); ok {
 			*ptr = res.Export()
 		} else {
-			exp := res.Export()
-			b, err := json.Marshal(exp)
-			if err != nil {
-				ch <- err
-				return nil
-			}
-			err = json.Unmarshal(b, v)
+			err = rt.ExportTo(res, v)
 			if err != nil {
 				ch <- err
 				return nil

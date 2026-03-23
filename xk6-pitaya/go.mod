@@ -1,6 +1,6 @@
 module github.com/topfreegames/pitaya/xk6-pitaya/v2
 
-go 1.24.1
+go 1.25.8
 
 require (
 	github.com/grafana/sobek v0.0.0-20240613124309-cb36746e8fee
