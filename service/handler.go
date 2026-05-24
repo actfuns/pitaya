@@ -152,7 +152,11 @@ func (h *HandlerService) Handle(conn acceptor.PlayerConn) {
 		if err != nil {
 			// Check if this is an expected error due to connection being closed
 			if errors.Is(err, net.ErrClosed) || err == constants.ErrConnectionClosed {
-				logger.WithError(err).Debug("Connection no longer available while reading next available message")
+				if a.GetStatus() == constants.StatusClosed || err == constants.ErrConnectionClosed {
+					logger.WithError(err).Warn("Connection closed by server")
+				} else {
+					logger.WithError(err).Debug("Connection no longer available while reading next available message")
+				}
 			} else {
 				// Differentiate errors for valid sessions, to avoid noise from load balancer healthchecks and other internet noise
 				if a.GetStatus() != constants.StatusStart {

@@ -57,8 +57,8 @@ func (u *UniqueSession) OnUserBind(uid, fid string) {
 			logger.Log.WithFields(map[string]interface{}{
 				"old_session_id": oldSession.ID(),
 				"uid":            uid,
-				"error":          err.Error(),
 			}).WithError(err).Warnf("kicking old session failed")
+			oldSession.Close()
 		}
 	}
 }
@@ -81,7 +81,6 @@ func (u *UniqueSession) kickOldSession(ctx context.Context, s session.Session) e
 				"old_session_id": oldSession.ID(),
 				"new_session_id": s.ID(),
 				"uid":            s.UID(),
-				"error":          err.Error(),
 			}).WithError(err).Warnf("kicking old session failed, forcing close")
 			oldSession.Close()
 		}
