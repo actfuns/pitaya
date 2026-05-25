@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -168,4 +169,18 @@ func (m *MockServiceDiscovery) UpdateMetadata(metadata map[string]string) error{
 func (mr *MockServiceDiscoveryMockRecorder) UpdateMetadata(metadata map[string]string) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetadata", reflect.TypeOf((*MockServiceDiscovery)(nil).UpdateMetadata), metadata)
+}
+
+// IsConnected mocks base method.
+func (m *MockServiceDiscovery) IsConnected(arg0 context.Context) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsConnected", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsConnected indicates an expected call of IsConnected.
+func (mr *MockServiceDiscoveryMockRecorder) IsConnected(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConnected", reflect.TypeOf((*MockServiceDiscovery)(nil).IsConnected), arg0)
 }

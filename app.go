@@ -27,7 +27,6 @@ import (
 	"reflect"
 	"strings"
 	"syscall"
-
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -136,6 +135,7 @@ type Pitaya interface {
 	ClearInterval(timerId uint64) error
 	UpdateServerMetadata(metadata map[string]string) error
 	GetSerializer() serialize.Serializer
+	IsReady(ctx context.Context) bool
 }
 
 // App is the base app struct
@@ -616,4 +616,42 @@ func (app *App) UpdateServerMetadata(metadata map[string]string) error {
 // GetSerializer gets the serializer instance
 func (app *App) GetSerializer() serialize.Serializer {
 	return app.serializer
+}
+
+// IsReady checks if pitaya is ready and able to serve requests
+func (app *App) IsReady(ctx context.Context) bool {
+	if !app.IsRunning() {
+		return false
+	}
+
+	// Check NATS RPC Client connection
+	if app.rpcClient != nil {
+		if natsClient, ok := app.rpcClient.(*cluster.NatsRPCClient); ok {
+			if !natsClient.IsConnected() {
+				logger.Log.Info("pitaya is not ready")
+				return false
+			}
+		}
+	}
+
+	// Check NATS RPC Server connection
+	if app.rpcServer != nil {
+		if natsServer, ok := app.rpcServer.(*cluster.NatsRPCServer); ok {
+			if !natsServer.IsConnected() {
+				logger.Log.Info("pitaya is not ready")
+				return false
+			}
+		}
+	}
+
+	// Check ETCD connection
+	if app.serviceDiscovery != nil {
+		if !app.serviceDiscovery.IsConnected(ctx) {
+			logger.Log.Info("pitaya is not ready")
+			return false
+		}
+	}
+
+	logger.Log.Info("pitaya is ready")
+	return true
 }
