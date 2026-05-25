@@ -108,6 +108,20 @@ func (mr *MockPlayerConnMockRecorder) RemoteAddr() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoteAddr", reflect.TypeOf((*MockPlayerConn)(nil).RemoteAddr))
 }
 
+// ClientIP mocks base method.
+func (m *MockPlayerConn) ClientIP() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClientIP")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// ClientIP indicates an expected call of ClientIP.
+func (mr *MockPlayerConnMockRecorder) ClientIP() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientIP", reflect.TypeOf((*MockPlayerConn)(nil).ClientIP))
+}
+
 // SetDeadline mocks base method.
 func (m *MockPlayerConn) SetDeadline(arg0 time.Time) error {
 	m.ctrl.T.Helper()

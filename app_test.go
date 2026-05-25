@@ -397,8 +397,7 @@ func TestStartAndListenStandalone(t *testing.T) {
 }
 
 func TestStartAndListenCluster(t *testing.T) {
-	es, cli := helpers.GetTestEtcd(t)
-	defer es.Terminate(t)
+	_, cli := helpers.GetTestEtcd(t)
 
 	ns := helpers.GetTestNatsServer(t)
 	nsAddr := ns.Addr().String()

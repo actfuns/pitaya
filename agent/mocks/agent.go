@@ -10,6 +10,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/topfreegames/pitaya/v2/acceptor"
 	agent "github.com/topfreegames/pitaya/v2/agent"
 	protos "github.com/topfreegames/pitaya/v2/protos"
 	session "github.com/topfreegames/pitaya/v2/session"
@@ -160,6 +161,20 @@ func (mr *MockAgentMockRecorder) RemoteAddr() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoteAddr", reflect.TypeOf((*MockAgent)(nil).RemoteAddr))
 }
 
+// ClientIP mocks base method.
+func (m *MockAgent) ClientIP() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClientIP")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// ClientIP indicates an expected call of ClientIP.
+func (mr *MockAgentMockRecorder) ClientIP() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientIP", reflect.TypeOf((*MockAgent)(nil).ClientIP))
+}
+
 // ResponseMID mocks base method.
 func (m *MockAgent) ResponseMID(arg0 context.Context, arg1 uint, arg2 interface{}, arg3 ...bool) error {
 	m.ctrl.T.Helper()
@@ -284,7 +299,7 @@ func (m *MockAgentFactory) EXPECT() *MockAgentFactoryMockRecorder {
 }
 
 // CreateAgent mocks base method.
-func (m *MockAgentFactory) CreateAgent(arg0 net.Conn) agent.Agent {
+func (m *MockAgentFactory) CreateAgent(arg0 acceptor.PlayerConn) agent.Agent {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAgent", arg0)
 	ret0, _ := ret[0].(agent.Agent)

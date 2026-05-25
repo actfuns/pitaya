@@ -16,10 +16,10 @@ import (
 	interfaces "github.com/topfreegames/pitaya/v2/interfaces"
 	metrics "github.com/topfreegames/pitaya/v2/metrics"
 	router "github.com/topfreegames/pitaya/v2/router"
+	"github.com/topfreegames/pitaya/v2/serialize"
 	session "github.com/topfreegames/pitaya/v2/session"
 	worker "github.com/topfreegames/pitaya/v2/worker"
 	proto "google.golang.org/protobuf/proto"
-	"github.com/topfreegames/pitaya/v2/serialize"
 )
 
 // MockPitaya is a mock of Pitaya interface.
@@ -41,14 +41,14 @@ func NewMockPitaya(ctrl *gomock.Controller) *MockPitaya {
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPitaya) EXPECT() *MockPitayaMockRecorder {
-	return m.recorder
+func (mr *MockPitaya) EXPECT() *MockPitayaMockRecorder {
+	return mr.recorder
 }
 
 // AddRoute mocks base method.
-func (m *MockPitaya) AddRoute(arg0 string, arg1 router.RoutingFunc) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddRoute", arg0, arg1)
+func (mr *MockPitaya) AddRoute(arg0 string, arg1 router.RoutingFunc) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "AddRoute", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -60,9 +60,9 @@ func (mr *MockPitayaMockRecorder) AddRoute(arg0, arg1 interface{}) *gomock.Call 
 }
 
 // Documentation mocks base method.
-func (m *MockPitaya) Documentation(arg0 bool) (map[string]interface{}, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Documentation", arg0)
+func (mr *MockPitaya) Documentation(arg0 bool) (map[string]interface{}, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "Documentation", arg0)
 	ret0, _ := ret[0].(map[string]interface{})
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -75,9 +75,9 @@ func (mr *MockPitayaMockRecorder) Documentation(arg0 interface{}) *gomock.Call {
 }
 
 // GetDieChan mocks base method.
-func (m *MockPitaya) GetDieChan() chan bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDieChan")
+func (mr *MockPitaya) GetDieChan() chan bool {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetDieChan")
 	ret0, _ := ret[0].(chan bool)
 	return ret0
 }
@@ -89,9 +89,9 @@ func (mr *MockPitayaMockRecorder) GetDieChan() *gomock.Call {
 }
 
 // GetMetricsReporters mocks base method.
-func (m *MockPitaya) GetMetricsReporters() []metrics.Reporter {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMetricsReporters")
+func (mr *MockPitaya) GetMetricsReporters() []metrics.Reporter {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetMetricsReporters")
 	ret0, _ := ret[0].([]metrics.Reporter)
 	return ret0
 }
@@ -103,9 +103,9 @@ func (mr *MockPitayaMockRecorder) GetMetricsReporters() *gomock.Call {
 }
 
 // GetModule mocks base method.
-func (m *MockPitaya) GetModule(arg0 string) (interfaces.Module, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetModule", arg0)
+func (mr *MockPitaya) GetModule(arg0 string) (interfaces.Module, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetModule", arg0)
 	ret0, _ := ret[0].(interfaces.Module)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -118,9 +118,9 @@ func (mr *MockPitayaMockRecorder) GetModule(arg0 interface{}) *gomock.Call {
 }
 
 // GetNumberOfConnectedClients mocks base method.
-func (m *MockPitaya) GetNumberOfConnectedClients() int64 {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNumberOfConnectedClients")
+func (mr *MockPitaya) GetNumberOfConnectedClients() int64 {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetNumberOfConnectedClients")
 	ret0, _ := ret[0].(int64)
 	return ret0
 }
@@ -132,9 +132,9 @@ func (mr *MockPitayaMockRecorder) GetNumberOfConnectedClients() *gomock.Call {
 }
 
 // GetServer mocks base method.
-func (m *MockPitaya) GetServer() *cluster.Server {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServer")
+func (mr *MockPitaya) GetServer() *cluster.Server {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetServer")
 	ret0, _ := ret[0].(*cluster.Server)
 	return ret0
 }
@@ -146,9 +146,9 @@ func (mr *MockPitayaMockRecorder) GetServer() *gomock.Call {
 }
 
 // GetServerByID mocks base method.
-func (m *MockPitaya) GetServerByID(arg0 string) (*cluster.Server, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServerByID", arg0)
+func (mr *MockPitaya) GetServerByID(arg0 string) (*cluster.Server, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetServerByID", arg0)
 	ret0, _ := ret[0].(*cluster.Server)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -161,9 +161,9 @@ func (mr *MockPitayaMockRecorder) GetServerByID(arg0 interface{}) *gomock.Call {
 }
 
 // GetServerID mocks base method.
-func (m *MockPitaya) GetServerID() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServerID")
+func (mr *MockPitaya) GetServerID() string {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetServerID")
 	ret0, _ := ret[0].(string)
 	return ret0
 }
@@ -175,9 +175,9 @@ func (mr *MockPitayaMockRecorder) GetServerID() *gomock.Call {
 }
 
 // GetServers mocks base method.
-func (m *MockPitaya) GetServers() []*cluster.Server {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServers")
+func (mr *MockPitaya) GetServers() []*cluster.Server {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetServers")
 	ret0, _ := ret[0].([]*cluster.Server)
 	return ret0
 }
@@ -189,9 +189,9 @@ func (mr *MockPitayaMockRecorder) GetServers() *gomock.Call {
 }
 
 // GetServersByType mocks base method.
-func (m *MockPitaya) GetServersByType(arg0 string) (map[string]*cluster.Server, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServersByType", arg0)
+func (mr *MockPitaya) GetServersByType(arg0 string) (map[string]*cluster.Server, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetServersByType", arg0)
 	ret0, _ := ret[0].(map[string]*cluster.Server)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -204,9 +204,9 @@ func (mr *MockPitayaMockRecorder) GetServersByType(arg0 interface{}) *gomock.Cal
 }
 
 // GetSessionFromCtx mocks base method.
-func (m *MockPitaya) GetSessionFromCtx(arg0 context.Context) session.Session {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionFromCtx", arg0)
+func (mr *MockPitaya) GetSessionFromCtx(arg0 context.Context) session.Session {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GetSessionFromCtx", arg0)
 	ret0, _ := ret[0].(session.Session)
 	return ret0
 }
@@ -218,9 +218,9 @@ func (mr *MockPitayaMockRecorder) GetSessionFromCtx(arg0 interface{}) *gomock.Ca
 }
 
 // GroupAddMember mocks base method.
-func (m *MockPitaya) GroupAddMember(arg0 context.Context, arg1, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupAddMember", arg0, arg1, arg2)
+func (mr *MockPitaya) GroupAddMember(arg0 context.Context, arg1, arg2 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupAddMember", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -232,9 +232,9 @@ func (mr *MockPitayaMockRecorder) GroupAddMember(arg0, arg1, arg2 interface{}) *
 }
 
 // GroupBroadcast mocks base method.
-func (m *MockPitaya) GroupBroadcast(arg0 context.Context, arg1, arg2, arg3 string, arg4 interface{}) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupBroadcast", arg0, arg1, arg2, arg3, arg4)
+func (mr *MockPitaya) GroupBroadcast(arg0 context.Context, arg1, arg2, arg3 string, arg4 interface{}) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupBroadcast", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -246,9 +246,9 @@ func (mr *MockPitayaMockRecorder) GroupBroadcast(arg0, arg1, arg2, arg3, arg4 in
 }
 
 // GroupContainsMember mocks base method.
-func (m *MockPitaya) GroupContainsMember(arg0 context.Context, arg1, arg2 string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupContainsMember", arg0, arg1, arg2)
+func (mr *MockPitaya) GroupContainsMember(arg0 context.Context, arg1, arg2 string) (bool, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupContainsMember", arg0, arg1, arg2)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -261,9 +261,9 @@ func (mr *MockPitayaMockRecorder) GroupContainsMember(arg0, arg1, arg2 interface
 }
 
 // GroupCountMembers mocks base method.
-func (m *MockPitaya) GroupCountMembers(arg0 context.Context, arg1 string) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupCountMembers", arg0, arg1)
+func (mr *MockPitaya) GroupCountMembers(arg0 context.Context, arg1 string) (int, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupCountMembers", arg0, arg1)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -276,9 +276,9 @@ func (mr *MockPitayaMockRecorder) GroupCountMembers(arg0, arg1 interface{}) *gom
 }
 
 // GroupCreate mocks base method.
-func (m *MockPitaya) GroupCreate(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupCreate", arg0, arg1)
+func (mr *MockPitaya) GroupCreate(arg0 context.Context, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupCreate", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -290,9 +290,9 @@ func (mr *MockPitayaMockRecorder) GroupCreate(arg0, arg1 interface{}) *gomock.Ca
 }
 
 // GroupCreateWithTTL mocks base method.
-func (m *MockPitaya) GroupCreateWithTTL(arg0 context.Context, arg1 string, arg2 time.Duration) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupCreateWithTTL", arg0, arg1, arg2)
+func (mr *MockPitaya) GroupCreateWithTTL(arg0 context.Context, arg1 string, arg2 time.Duration) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupCreateWithTTL", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -304,9 +304,9 @@ func (mr *MockPitayaMockRecorder) GroupCreateWithTTL(arg0, arg1, arg2 interface{
 }
 
 // GroupDelete mocks base method.
-func (m *MockPitaya) GroupDelete(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupDelete", arg0, arg1)
+func (mr *MockPitaya) GroupDelete(arg0 context.Context, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupDelete", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -318,9 +318,9 @@ func (mr *MockPitayaMockRecorder) GroupDelete(arg0, arg1 interface{}) *gomock.Ca
 }
 
 // GroupMembers mocks base method.
-func (m *MockPitaya) GroupMembers(arg0 context.Context, arg1 string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupMembers", arg0, arg1)
+func (mr *MockPitaya) GroupMembers(arg0 context.Context, arg1 string) ([]string, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupMembers", arg0, arg1)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -333,9 +333,9 @@ func (mr *MockPitayaMockRecorder) GroupMembers(arg0, arg1 interface{}) *gomock.C
 }
 
 // GroupRemoveAll mocks base method.
-func (m *MockPitaya) GroupRemoveAll(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupRemoveAll", arg0, arg1)
+func (mr *MockPitaya) GroupRemoveAll(arg0 context.Context, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupRemoveAll", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -347,9 +347,9 @@ func (mr *MockPitayaMockRecorder) GroupRemoveAll(arg0, arg1 interface{}) *gomock
 }
 
 // GroupRemoveMember mocks base method.
-func (m *MockPitaya) GroupRemoveMember(arg0 context.Context, arg1, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupRemoveMember", arg0, arg1, arg2)
+func (mr *MockPitaya) GroupRemoveMember(arg0 context.Context, arg1, arg2 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupRemoveMember", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -361,9 +361,9 @@ func (mr *MockPitayaMockRecorder) GroupRemoveMember(arg0, arg1, arg2 interface{}
 }
 
 // GroupRenewTTL mocks base method.
-func (m *MockPitaya) GroupRenewTTL(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupRenewTTL", arg0, arg1)
+func (mr *MockPitaya) GroupRenewTTL(arg0 context.Context, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "GroupRenewTTL", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -375,9 +375,9 @@ func (mr *MockPitayaMockRecorder) GroupRenewTTL(arg0, arg1 interface{}) *gomock.
 }
 
 // IsRunning mocks base method.
-func (m *MockPitaya) IsRunning() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsRunning")
+func (mr *MockPitaya) IsRunning() bool {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "IsRunning")
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
@@ -389,9 +389,9 @@ func (mr *MockPitayaMockRecorder) IsRunning() *gomock.Call {
 }
 
 // RPC mocks base method.
-func (m *MockPitaya) RPC(arg0 context.Context, arg1 string, arg2, arg3 proto.Message) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RPC", arg0, arg1, arg2, arg3)
+func (mr *MockPitaya) RPC(arg0 context.Context, arg1 string, arg2, arg3 proto.Message) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "RPC", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -403,9 +403,9 @@ func (mr *MockPitayaMockRecorder) RPC(arg0, arg1, arg2, arg3 interface{}) *gomoc
 }
 
 // RPCTo mocks base method.
-func (m *MockPitaya) RPCTo(arg0 context.Context, arg1, arg2 string, arg3, arg4 proto.Message) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RPCTo", arg0, arg1, arg2, arg3, arg4)
+func (mr *MockPitaya) RPCTo(arg0 context.Context, arg1, arg2 string, arg3, arg4 proto.Message) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "RPCTo", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -417,13 +417,13 @@ func (mr *MockPitayaMockRecorder) RPCTo(arg0, arg1, arg2, arg3, arg4 interface{}
 }
 
 // Register mocks base method.
-func (m *MockPitaya) Register(arg0 component.Component, arg1 ...component.Option) {
-	m.ctrl.T.Helper()
+func (mr *MockPitaya) Register(arg0 component.Component, arg1 ...component.Option) {
+	mr.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
 	for _, a := range arg1 {
 		varargs = append(varargs, a)
 	}
-	m.ctrl.Call(m, "Register", varargs...)
+	mr.ctrl.Call(mr, "Register", varargs...)
 }
 
 // Register indicates an expected call of Register.
@@ -434,9 +434,9 @@ func (mr *MockPitayaMockRecorder) Register(arg0 interface{}, arg1 ...interface{}
 }
 
 // RegisterModule mocks base method.
-func (m *MockPitaya) RegisterModule(arg0 interfaces.Module, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterModule", arg0, arg1)
+func (mr *MockPitaya) RegisterModule(arg0 interfaces.Module, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "RegisterModule", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -448,9 +448,9 @@ func (mr *MockPitayaMockRecorder) RegisterModule(arg0, arg1 interface{}) *gomock
 }
 
 // RegisterModuleAfter mocks base method.
-func (m *MockPitaya) RegisterModuleAfter(arg0 interfaces.Module, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterModuleAfter", arg0, arg1)
+func (mr *MockPitaya) RegisterModuleAfter(arg0 interfaces.Module, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "RegisterModuleAfter", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -462,9 +462,9 @@ func (mr *MockPitayaMockRecorder) RegisterModuleAfter(arg0, arg1 interface{}) *g
 }
 
 // RegisterModuleBefore mocks base method.
-func (m *MockPitaya) RegisterModuleBefore(arg0 interfaces.Module, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterModuleBefore", arg0, arg1)
+func (mr *MockPitaya) RegisterModuleBefore(arg0 interfaces.Module, arg1 string) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "RegisterModuleBefore", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -476,9 +476,9 @@ func (mr *MockPitayaMockRecorder) RegisterModuleBefore(arg0, arg1 interface{}) *
 }
 
 // RegisterRPCJob mocks base method.
-func (m *MockPitaya) RegisterRPCJob(arg0 worker.RPCJob) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterRPCJob", arg0)
+func (mr *MockPitaya) RegisterRPCJob(arg0 worker.RPCJob) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "RegisterRPCJob", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -490,13 +490,13 @@ func (mr *MockPitayaMockRecorder) RegisterRPCJob(arg0 interface{}) *gomock.Call 
 }
 
 // RegisterRemote mocks base method.
-func (m *MockPitaya) RegisterRemote(arg0 component.Component, arg1 ...component.Option) {
-	m.ctrl.T.Helper()
+func (mr *MockPitaya) RegisterRemote(arg0 component.Component, arg1 ...component.Option) {
+	mr.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
 	for _, a := range arg1 {
 		varargs = append(varargs, a)
 	}
-	m.ctrl.Call(m, "RegisterRemote", varargs...)
+	mr.ctrl.Call(mr, "RegisterRemote", varargs...)
 }
 
 // RegisterRemote indicates an expected call of RegisterRemote.
@@ -507,9 +507,9 @@ func (mr *MockPitayaMockRecorder) RegisterRemote(arg0 interface{}, arg1 ...inter
 }
 
 // ReliableRPC mocks base method.
-func (m *MockPitaya) ReliableRPC(arg0 string, arg1 map[string]interface{}, arg2, arg3 proto.Message) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReliableRPC", arg0, arg1, arg2, arg3)
+func (mr *MockPitaya) ReliableRPC(arg0 string, arg1 map[string]interface{}, arg2, arg3 proto.Message) (string, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "ReliableRPC", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -522,9 +522,9 @@ func (mr *MockPitayaMockRecorder) ReliableRPC(arg0, arg1, arg2, arg3 interface{}
 }
 
 // ReliableRPCWithOptions mocks base method.
-func (m *MockPitaya) ReliableRPCWithOptions(arg0 string, arg1 map[string]interface{}, arg2, arg3 proto.Message, arg4 *config.EnqueueOpts) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReliableRPCWithOptions", arg0, arg1, arg2, arg3, arg4)
+func (mr *MockPitaya) ReliableRPCWithOptions(arg0 string, arg1 map[string]interface{}, arg2, arg3 proto.Message, arg4 *config.EnqueueOpts) (string, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "ReliableRPCWithOptions", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -537,9 +537,9 @@ func (mr *MockPitayaMockRecorder) ReliableRPCWithOptions(arg0, arg1, arg2, arg3,
 }
 
 // SendKickToUsers mocks base method.
-func (m *MockPitaya) SendKickToUsers(arg0 []string, arg1 string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendKickToUsers", arg0, arg1)
+func (mr *MockPitaya) SendKickToUsers(arg0 []string, arg1 string) ([]string, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "SendKickToUsers", arg0, arg1)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -552,9 +552,9 @@ func (mr *MockPitayaMockRecorder) SendKickToUsers(arg0, arg1 interface{}) *gomoc
 }
 
 // SendPushToUsers mocks base method.
-func (m *MockPitaya) SendPushToUsers(arg0 string, arg1 interface{}, arg2 []string, arg3 string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendPushToUsers", arg0, arg1, arg2, arg3)
+func (mr *MockPitaya) SendPushToUsers(arg0 string, arg1 interface{}, arg2 []string, arg3 string) ([]string, error) {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "SendPushToUsers", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -567,9 +567,9 @@ func (mr *MockPitayaMockRecorder) SendPushToUsers(arg0, arg1, arg2, arg3 interfa
 }
 
 // SetDebug mocks base method.
-func (m *MockPitaya) SetDebug(arg0 bool) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetDebug", arg0)
+func (mr *MockPitaya) SetDebug(arg0 bool) {
+	mr.ctrl.T.Helper()
+	mr.ctrl.Call(mr, "SetDebug", arg0)
 }
 
 // SetDebug indicates an expected call of SetDebug.
@@ -579,9 +579,9 @@ func (mr *MockPitayaMockRecorder) SetDebug(arg0 interface{}) *gomock.Call {
 }
 
 // SetDictionary mocks base method.
-func (m *MockPitaya) SetDictionary(arg0 map[string]uint16) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetDictionary", arg0)
+func (mr *MockPitaya) SetDictionary(arg0 map[string]uint16) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "SetDictionary", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -593,9 +593,9 @@ func (mr *MockPitayaMockRecorder) SetDictionary(arg0 interface{}) *gomock.Call {
 }
 
 // SetHeartbeatTime mocks base method.
-func (m *MockPitaya) SetHeartbeatTime(arg0 time.Duration) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetHeartbeatTime", arg0)
+func (mr *MockPitaya) SetHeartbeatTime(arg0 time.Duration) {
+	mr.ctrl.T.Helper()
+	mr.ctrl.Call(mr, "SetHeartbeatTime", arg0)
 }
 
 // SetHeartbeatTime indicates an expected call of SetHeartbeatTime.
@@ -605,9 +605,9 @@ func (mr *MockPitayaMockRecorder) SetHeartbeatTime(arg0 interface{}) *gomock.Cal
 }
 
 // Shutdown mocks base method.
-func (m *MockPitaya) Shutdown() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Shutdown")
+func (mr *MockPitaya) Shutdown() {
+	mr.ctrl.T.Helper()
+	mr.ctrl.Call(mr, "Shutdown")
 }
 
 // Shutdown indicates an expected call of Shutdown.
@@ -617,9 +617,9 @@ func (mr *MockPitayaMockRecorder) Shutdown() *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockPitaya) Start() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Start")
+func (mr *MockPitaya) Start() {
+	mr.ctrl.T.Helper()
+	mr.ctrl.Call(mr, "Start")
 }
 
 // Start indicates an expected call of Start.
@@ -629,9 +629,9 @@ func (mr *MockPitayaMockRecorder) Start() *gomock.Call {
 }
 
 // StartWorker mocks base method.
-func (m *MockPitaya) StartWorker() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StartWorker")
+func (mr *MockPitaya) StartWorker() {
+	mr.ctrl.T.Helper()
+	mr.ctrl.Call(mr, "StartWorker")
 }
 
 // StartWorker indicates an expected call of StartWorker.
@@ -640,41 +640,175 @@ func (mr *MockPitayaMockRecorder) StartWorker() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartWorker", reflect.TypeOf((*MockPitaya)(nil).StartWorker))
 }
 
-func (m *MockPitaya) SubmitTask(ctx context.Context, id string, task func(context.Context)) error{
-	return nil
+// SubmitTask mocks base method.
+func (mr *MockPitaya) SubmitTask(arg0 context.Context, arg1 string, arg2 func(context.Context)) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "SubmitTask", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-func (m *MockPitaya) SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error){
-	return 0,nil
+// SubmitTask indicates an expected call of SubmitTask.
+func (mr *MockPitayaMockRecorder) SubmitTask(arg0 context.Context, arg1 string, arg2 func(context.Context)) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitTask", reflect.TypeOf((*MockPitaya)(nil).SubmitTask), arg0, arg1, arg2)
 }
 
-func (m *MockPitaya) ClearInterval(timerId uint64) error{
-	return nil
+// SubmitAnonymousTask mocks base method.
+func (mr *MockPitaya) SubmitAnonymousTask(arg0 context.Context, arg1 func(context.Context)) error {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "SubmitAnonymousTask", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-func (m *MockPitaya) UpdateServerMetadata(metadata map[string]string) error{
-	return nil
+// SubmitAnonymousTask indicates an expected call of SubmitAnonymousTask.
+func (mr *MockPitayaMockRecorder) SubmitAnonymousTask(arg0 context.Context, arg1 func(context.Context)) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAnonymousTask", reflect.TypeOf((*MockPitaya)(nil).SubmitAnonymousTask), arg0, arg1)
 }
 
-func (m *MockPitaya) GetSerializer() serialize.Serializer{
-	return nil
-}
-
-func (m *MockPitaya) RPCHandle(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error{
-	return nil
-}
-
-func (m *MockPitaya) RPCHandleTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error{
-	return nil
-}
-
-func (m *MockPitaya) SetDispatch(router.DispatchFunc) error{
-	return nil
-}
-// IsReady mocks base method.
-func (m *MockPitaya) IsReady(arg0 context.Context) bool {
+// SetInterval mocks base method.
+func (m *MockPitaya) SetInterval(arg0 string, arg1 time.Duration, arg2 int, arg3 func(context.Context)) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsReady", arg0)
+	ret := m.ctrl.Call(m, "SetInterval", arg0, arg1, arg2, arg3)
+
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+
+	return ret0, ret1
+}
+
+// SetInterval indicates an expected call of SetInterval.
+func (mr *MockPitayaMockRecorder) SetInterval(arg0 string, arg1 time.Duration, arg2 int, arg3 func(context.Context)) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetInterval", reflect.TypeOf((*MockPitaya)(nil).SetInterval), arg0, arg1, arg2, arg3)
+}
+
+// ClearInterval mocks base method.
+func (m *MockPitaya) ClearInterval(arg0 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClearInterval", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearInterval indicates an expected call of ClearInterval.
+func (mr *MockPitayaMockRecorder) ClearInterval(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"ClearInterval",
+		reflect.TypeOf((*MockPitaya)(nil).ClearInterval),
+		arg0,
+	)
+}
+
+// UpdateServerMetadata mocks base method.
+func (m *MockPitaya) UpdateServerMetadata(arg0 map[string]string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateServerMetadata", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateServerMetadata indicates an expected call of UpdateServerMetadata.
+func (mr *MockPitayaMockRecorder) UpdateServerMetadata(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"UpdateServerMetadata",
+		reflect.TypeOf((*MockPitaya)(nil).UpdateServerMetadata),
+		arg0,
+	)
+}
+
+// GetSerializer mocks base method.
+func (m *MockPitaya) GetSerializer() serialize.Serializer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSerializer")
+	ret0, _ := ret[0].(serialize.Serializer)
+	return ret0
+}
+
+// GetSerializer indicates an expected call of GetSerializer.
+func (mr *MockPitayaMockRecorder) GetSerializer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"GetSerializer",
+		reflect.TypeOf((*MockPitaya)(nil).GetSerializer),
+	)
+}
+
+// RPCHandle mocks base method.
+func (m *MockPitaya) RPCHandle(arg0 context.Context, arg1 string, arg2 proto.Message, arg3 proto.Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RPCHandle", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RPCHandle indicates an expected call of RPCHandle.
+func (mr *MockPitayaMockRecorder) RPCHandle(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"RPCHandle",
+		reflect.TypeOf((*MockPitaya)(nil).RPCHandle),
+		arg0,
+		arg1,
+		arg2,
+		arg3,
+	)
+}
+
+// RPCHandleTo mocks base method.
+func (m *MockPitaya) RPCHandleTo(arg0 context.Context, arg1 string, arg2 string, arg3 proto.Message, arg4 proto.Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RPCHandleTo", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RPCHandleTo indicates an expected call of RPCHandleTo.
+func (mr *MockPitayaMockRecorder) RPCHandleTo(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"RPCHandleTo",
+		reflect.TypeOf((*MockPitaya)(nil).RPCHandleTo),
+		arg0,
+		arg1,
+		arg2,
+		arg3,
+		arg4,
+	)
+}
+
+// SetDispatch mocks base method.
+func (m *MockPitaya) SetDispatch(arg0 router.DispatchFunc) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetDispatch", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetDispatch indicates an expected call of SetDispatch.
+func (mr *MockPitayaMockRecorder) SetDispatch(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"SetDispatch",
+		reflect.TypeOf((*MockPitaya)(nil).SetDispatch),
+		arg0,
+	)
+}
+
+// IsReady mocks base method.
+func (mr *MockPitaya) IsReady(arg0 context.Context) bool {
+	mr.ctrl.T.Helper()
+	ret := mr.ctrl.Call(mr, "IsReady", arg0)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }

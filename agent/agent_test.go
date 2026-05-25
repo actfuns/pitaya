@@ -1529,7 +1529,7 @@ func TestAgentResponseMIDPreservesErrorCodeWithCompression(t *testing.T) {
 
 	jsonSerializer := serializejson.NewSerializer()
 	originalErr := &e.Error{
-		Code:     originalCode,
+		Code:     e.ErrUnknownCode,
 		Message:  originalMsg,
 		Metadata: originalMetadata,
 	}

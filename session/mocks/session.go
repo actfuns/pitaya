@@ -416,6 +416,20 @@ func (mr *MockSessionMockRecorder) RemoteAddr() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoteAddr", reflect.TypeOf((*MockSession)(nil).RemoteAddr))
 }
 
+// ClientIP mocks base method.
+func (m *MockSession) ClientIP() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClientIP")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// ClientIP indicates an expected call of ClientIP.
+func (mr *MockSessionMockRecorder) ClientIP() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientIP", reflect.TypeOf((*MockSession)(nil).ClientIP))
+}
+
 // Remove mocks base method.
 func (m *MockSession) Remove(arg0 string) error {
 	m.ctrl.T.Helper()

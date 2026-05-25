@@ -92,6 +92,19 @@ func (mr *MockNetworkEntityMockRecorder) RemoteAddr() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoteAddr", reflect.TypeOf((*MockNetworkEntity)(nil).RemoteAddr))
 }
 
+// ClientIP mocks base method.
+func (m *MockNetworkEntity) ClientIP() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClientIP")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+func (mr *MockNetworkEntityMockRecorder) ClientIP() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClientIP", reflect.TypeOf((*MockNetworkEntity)(nil).ClientIP))
+}
+
 // ResponseMID mocks base method.
 func (m *MockNetworkEntity) ResponseMID(arg0 context.Context, arg1 uint, arg2 interface{}, arg3 ...bool) error {
 	m.ctrl.T.Helper()

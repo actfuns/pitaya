@@ -2,9 +2,11 @@ package helpers
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,7 +19,7 @@ import (
 	"github.com/nats-io/nats-server/v2/server"
 	gnatsd "github.com/nats-io/nats-server/v2/test"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/tests/v3/integration"
+	"go.etcd.io/etcd/server/v3/embed"
 )
 
 // GetFreePort returns a free port
@@ -62,12 +64,72 @@ func GetTestNatsServer(t *testing.T) *server.Server {
 }
 
 // GetTestEtcd gets a test in memory etcd server
-func GetTestEtcd(t *testing.T) (*integration.ClusterV3, *clientv3.Client) {
+func GetTestEtcd(t *testing.T) (*embed.Etcd, *clientv3.Client) {
 	t.Helper()
-	integration.BeforeTest(t)
-	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
-	cli := c.RandClient()
-	return c, cli
+
+	clientLn, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	clientAddr := clientLn.Addr().String()
+	_ = clientLn.Close()
+
+	peerLn, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	peerAddr := peerLn.Addr().String()
+	_ = peerLn.Close()
+
+	clientURL, _ := url.Parse("http://" + clientAddr)
+	peerURL, _ := url.Parse("http://" + peerAddr)
+
+	cfg := embed.NewConfig()
+	cfg.Dir = t.TempDir()
+
+	cfg.ListenClientUrls = []url.URL{*clientURL}
+	cfg.AdvertiseClientUrls = []url.URL{*clientURL}
+
+	cfg.ListenPeerUrls = []url.URL{*peerURL}
+	cfg.AdvertisePeerUrls = []url.URL{*peerURL}
+
+	cfg.InitialCluster = cfg.InitialClusterFromName(cfg.Name)
+
+	e, err := embed.StartEtcd(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-e.Server.ReadyNotify():
+	case <-time.After(10 * time.Second):
+		e.Server.Stop()
+		t.Fatal("etcd server took too long to start")
+	}
+
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{clientURL.String()},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		e.Close()
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		cli.Close()
+		e.Close()
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = cli.Get(ctx, "health")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return e, cli
 }
 
 // WriteFile test helper
