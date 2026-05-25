@@ -1,6 +1,6 @@
 module github.com/topfreegames/pitaya/pitaya-cli/v2
 
-go 1.25.8
+go 1.25.10
 
 require (
 	github.com/abiosoft/ishell/v2 v2.0.2
