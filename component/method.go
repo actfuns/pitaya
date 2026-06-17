@@ -70,12 +70,14 @@ func isRemoteMethod(method reflect.Method) bool {
 		return false
 	}
 
-	if (mt.Out(0).Kind() != reflect.Ptr) || mt.Out(1) != typeOfError {
+	if (mt.Out(0).Kind() != reflect.Ptr && mt.Out(0) != typeOfBytes) || mt.Out(1) != typeOfError {
 		return false
 	}
 
-	if o0 := mt.Out(0); !o0.Implements(typeOfProtoMsg) {
-		return false
+	if mt.Out(0) != typeOfBytes {
+		if o0 := mt.Out(0); !o0.Implements(typeOfProtoMsg) {
+			return false
+		}
 	}
 
 	return true
