@@ -145,29 +145,49 @@ func setupNatsConn(connectString string, appDieChan chan bool, lameDuckReplaceme
 			}
 
 			if appDieChan != nil {
-				select {
-				case appDieChan <- true:
-					return
-				case initialConnectErrorCh <- nc.LastError():
-					logger.Log.Warnf("appDieChan not ready, sending error in initialConnectCh")
-					return
-				default:
-					logger.Log.Warnf("no termination channel available, sending termination signal to app")
+				// appDieChan is the app's shared dieChan, which (*App).Shutdown
+				// closes during shutdown. This handler runs on the NATS async
+				// callback dispatcher and can fire after that close (e.g. NATS
+				// dropped concurrently with shutdown), where "appDieChan <- true"
+				// would panic with "send on closed channel". If it is already
+				// closed the app is terminating and needs no signal, so recover
+				// from that panic and return quietly. recover() only triggers on
+				// the closed-channel send; the other cases never panic.
+				dieChanClosed := false
+				func() {
+					defer func() {
+						if recover() != nil {
+							dieChanClosed = true
+						}
+					}()
 
-					p, err := os.FindProcess(os.Getpid())
-					if err != nil {
-						logger.Log.Errorf("could not find current process: %v", err)
-						os.Exit(1)
-					}
+					select {
+					case appDieChan <- true:
+					case initialConnectErrorCh <- nc.LastError():
+						logger.Log.Warnf("appDieChan not ready, sending error in initialConnectCh")
+					default:
+						logger.Log.Warnf("no termination channel available, sending termination signal to app")
 
-					// On Windows, Signal() with Interrupt works
-					// On Unix-like systems, this is equivalent to SIGINT
-					err = p.Signal(os.Interrupt)
-					if err != nil {
-						logger.Log.Errorf("could not send interrupt signal to the application: %v", err)
-						os.Exit(1)
+						p, err := os.FindProcess(os.Getpid())
+						if err != nil {
+							logger.Log.Errorf("could not find current process: %v", err)
+							os.Exit(1)
+						}
+
+						// On Windows, Signal() with Interrupt works
+						// On Unix-like systems, this is equivalent to SIGINT
+						err = p.Signal(os.Interrupt)
+						if err != nil {
+							logger.Log.Errorf("could not send interrupt signal to the application: %v", err)
+							os.Exit(1)
+						}
 					}
+				}()
+
+				if dieChanClosed {
+					logger.Log.Info("nats connection closed while app was already shutting down; skipping termination signal")
 				}
+				return
 			} else if !wasConnected {
 				// If no appDieChan and connection was never established, try initialConnectErrorCh again
 				select {
