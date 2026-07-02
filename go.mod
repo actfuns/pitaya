@@ -5,7 +5,7 @@ go 1.25.10
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible
 	github.com/go-playground/validator/v10 v10.13.0
-	github.com/golang/mock v1.6.0
+	github.com/golang/mock v1.4.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/mailgun/proxyproto v1.0.0
@@ -24,6 +24,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.6.4
 	go.etcd.io/etcd/client/v3 v3.6.4
 	go.etcd.io/etcd/server/v3 v3.6.4
+	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.43.0
 	google.golang.org/grpc v1.75.0

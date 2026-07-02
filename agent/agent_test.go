@@ -35,7 +35,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,6 +57,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/session"
 	"github.com/topfreegames/pitaya/v2/util"
 	"github.com/topfreegames/pitaya/v2/util/compression"
+	"go.uber.org/mock/gomock"
 )
 
 type mockAddr struct{}

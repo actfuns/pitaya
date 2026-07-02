@@ -25,9 +25,9 @@ import (
 
 	"github.com/topfreegames/pitaya/v2/acceptor"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/mocks"
+	"go.uber.org/mock/gomock"
 )
 
 func TestListenAndServe(t *testing.T) {

@@ -27,7 +27,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	nats "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/config"
@@ -38,6 +37,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/protos"
 	protosmocks "github.com/topfreegames/pitaya/v2/protos/mocks"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 )
 

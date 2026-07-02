@@ -23,13 +23,20 @@ package cluster
 import (
 	"encoding/json"
 	"os"
+	"sync/atomic"
 
 	"github.com/topfreegames/pitaya/v2/logger"
+)
+
+const (
+	StateActive       int32 = 0
+	StateShuttingDown int32 = 1
 )
 
 // Server struct
 type Server struct {
 	loopbackEnabled bool
+	state           atomic.Int32
 
 	ID       string            `json:"id"`
 	Type     string            `json:"type"`
@@ -38,48 +45,49 @@ type Server struct {
 	Hostname string            `json:"hostname"`
 }
 
+// serverDTO is the JSON representation of Server, used for marshal/unmarshal.
+type serverDTO struct {
+	ID       string            `json:"id"`
+	Type     string            `json:"type"`
+	Metadata map[string]string `json:"metadata"`
+	Frontend bool              `json:"frontend"`
+	Hostname string            `json:"hostname"`
+	State    int32             `json:"state"`
+}
+
 type ServerOption func(*Server)
 
-func NewServerWithOptions(id, serverType string, frontend bool, opts ...ServerOption) *Server {
-	server := NewServer(id, serverType, frontend, nil)
-	for _, option := range opts {
-		option(server)
-	}
-
-	return server
-}
-
-func WithMetadata(metadata ...map[string]string) func(*Server) {
-	return func(server *Server) {
-		if len(metadata) > 0 {
-			server.Metadata = metadata[0]
-		}
-	}
-}
-
-func WithLoopbackEnabled(enabled bool) func(*Server) {
-	return func(server *Server) {
-		server.loopbackEnabled = enabled
-	}
-}
-
-// NewServer ctor
-func NewServer(id, serverType string, frontend bool, metadata ...map[string]string) *Server {
-	d := make(map[string]string)
+// NewServer creates a server with the given id, type, frontend flag and options.
+func NewServer(id, serverType string, frontend bool, opts ...ServerOption) *Server {
 	h, err := os.Hostname()
 	if err != nil {
 		logger.Log.Errorf("failed to get hostname: %s", err.Error())
 	}
-	if len(metadata) > 0 {
-		d = metadata[0]
+	s := &Server{
+		ID:       id,
+		Type:     serverType,
+		Metadata: make(map[string]string),
+		Frontend: frontend,
+		Hostname: h,
 	}
-	return &Server{
-		loopbackEnabled: false,
-		ID:              id,
-		Type:            serverType,
-		Metadata:        d,
-		Frontend:        frontend,
-		Hostname:        h,
+	s.state.Store(StateActive)
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+func WithMetadata(metadata map[string]string) ServerOption {
+	return func(s *Server) {
+		if metadata != nil {
+			s.Metadata = metadata
+		}
+	}
+}
+
+func WithLoopbackEnabled(enabled bool) ServerOption {
+	return func(s *Server) {
+		s.loopbackEnabled = enabled
 	}
 }
 
@@ -93,6 +101,44 @@ func (s *Server) AsJSONString() string {
 	return string(str)
 }
 
+// MarshalJSON implements json.Marshaler, atomically reading state.
+func (s *Server) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&serverDTO{
+		ID:       s.ID,
+		Type:     s.Type,
+		Metadata: s.Metadata,
+		Frontend: s.Frontend,
+		Hostname: s.Hostname,
+		State:    s.state.Load(),
+	})
+}
+
+// UnmarshalJSON implements json.Unmarshaler, atomically writing state.
+func (s *Server) UnmarshalJSON(data []byte) error {
+	var aux serverDTO
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	s.ID = aux.ID
+	s.Type = aux.Type
+	s.Metadata = aux.Metadata
+	s.Frontend = aux.Frontend
+	s.Hostname = aux.Hostname
+	s.state.Store(aux.State)
+	return nil
+}
+
 func (s *Server) IsLoopbackEnabled() bool {
 	return s.loopbackEnabled
+}
+
+// GetState atomically returns the server state
+func (s *Server) GetState() int32 {
+	return s.state.Load()
+}
+
+// setState atomically sets the server state.
+// Returns true if the state was changed, false if already in the given state.
+func (s *Server) setState(state int32) {
+	s.state.Store(state)
 }

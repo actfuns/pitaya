@@ -29,7 +29,6 @@ import (
 
 	"github.com/topfreegames/pitaya/v2/constants"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -43,6 +42,7 @@ import (
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
 	"github.com/topfreegames/pitaya/v2/worker"
 	workermocks "github.com/topfreegames/pitaya/v2/worker/mocks"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 )
 

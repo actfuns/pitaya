@@ -37,9 +37,9 @@ import (
 var etcdSDTables = []struct {
 	server *Server
 }{
-	{NewServer("frontend-1", "type1", true, map[string]string{"k1": "v1"})},
-	{NewServer("backend-1", "type2", false, map[string]string{"k2": "v2"})},
-	{NewServer("backend-2", "type3", false, nil)},
+	{NewServer("frontend-1", "type1", true, WithMetadata(map[string]string{"k1": "v1"}))},
+	{NewServer("backend-1", "type2", false, WithMetadata(map[string]string{"k2": "v2"}))},
+	{NewServer("backend-2", "type3", false)},
 }
 
 var etcdSDTablesMultipleServers = []struct {
@@ -47,14 +47,14 @@ var etcdSDTablesMultipleServers = []struct {
 }{
 	{[]*Server{}},
 	{[]*Server{
-		NewServer("frontend-1", "type1", true, map[string]string{"k1": "v1"}),
-		NewServer("backend-1", "type2", false, map[string]string{"k2": "v2"}),
-		NewServer("backend-2", "type3", false, nil),
+		NewServer("frontend-1", "type1", true, WithMetadata(map[string]string{"k1": "v1"})),
+		NewServer("backend-1", "type2", false, WithMetadata(map[string]string{"k2": "v2"})),
+		NewServer("backend-2", "type3", false),
 	}},
 	{[]*Server{
-		NewServer("frontend-1", "type2", true, map[string]string{"k1": "v1"}),
-		NewServer("frontend-2", "type2", true, map[string]string{"k2": "v2"}),
-		NewServer("frontend-3", "type2", true, map[string]string{"k1": "v1"}),
+		NewServer("frontend-1", "type2", true, WithMetadata(map[string]string{"k1": "v1"})),
+		NewServer("frontend-2", "type2", true, WithMetadata(map[string]string{"k2": "v2"})),
+		NewServer("frontend-3", "type2", true, WithMetadata(map[string]string{"k1": "v1"})),
 	}},
 }
 
@@ -66,30 +66,30 @@ var etcdSDBlacklistTables = []struct {
 }{
 	{
 		name:   "test1",
-		server: NewServer("frontend-1", "type1", true, nil),
+		server: NewServer("frontend-1", "type1", true),
 		serversToAdd: []*Server{
-			NewServer("frontend-1", "type1", true, nil),
+			NewServer("frontend-1", "type1", true),
 		},
 		serverTypeBlacklist: nil,
 	},
 	{
 		name:   "test2",
-		server: NewServer("frontend-1", "type1", true, nil),
+		server: NewServer("frontend-1", "type1", true),
 		serversToAdd: []*Server{
-			NewServer("backend-1", "type1", false, nil),
-			NewServer("backend-2", "type2", false, nil),
-			NewServer("backend-3", "type3", false, nil),
+			NewServer("backend-1", "type1", false),
+			NewServer("backend-2", "type2", false),
+			NewServer("backend-3", "type3", false),
 		},
 		serverTypeBlacklist: []string{"type2"},
 	},
 	{
 		name:   "test3",
-		server: NewServer("frontend-1", "type1", true, nil),
+		server: NewServer("frontend-1", "type1", true),
 		serversToAdd: []*Server{
-			NewServer("backend-1", "type1", false, nil),
-			NewServer("backend-2", "type2", false, nil),
-			NewServer("backend-3", "type3", false, nil),
-			NewServer("backend-4", "type4", false, nil),
+			NewServer("backend-1", "type1", false),
+			NewServer("backend-2", "type2", false),
+			NewServer("backend-3", "type3", false),
+			NewServer("backend-4", "type4", false),
 		},
 		serverTypeBlacklist: []string{"type1", "type4"},
 	},
@@ -446,15 +446,15 @@ func TestParallelGetter(t *testing.T) {
 	_, cli := helpers.GetTestEtcd(t)
 
 	serversToAdd := []*Server{
-		NewServer("frontend-1", "type1", true, nil),
-		NewServer("frontend-2", "type2", true, nil),
-		NewServer("frontend-3", "type3", true, nil),
-		NewServer("frontend-4", "type4", true, nil),
-		NewServer("frontend-5", "type5", true, nil),
-		NewServer("frontend-6", "type6", true, nil),
-		NewServer("frontend-7", "type7", true, nil),
-		NewServer("frontend-8", "type8", true, nil),
-		NewServer("frontend-9", "type9", true, nil),
+		NewServer("frontend-1", "type1", true),
+		NewServer("frontend-2", "type2", true),
+		NewServer("frontend-3", "type3", true),
+		NewServer("frontend-4", "type4", true),
+		NewServer("frontend-5", "type5", true),
+		NewServer("frontend-6", "type6", true),
+		NewServer("frontend-7", "type7", true),
+		NewServer("frontend-8", "type8", true),
+		NewServer("frontend-9", "type9", true),
 	}
 
 	// Add server
@@ -500,7 +500,7 @@ func TestEtcdWatcherCompactionErrorHandling(t *testing.T) {
 	config.SyncServers.Interval = 100 * time.Millisecond
 	_, cli := helpers.GetTestEtcd(t)
 
-	server := NewServer("test-server", "test-type", false, nil)
+	server := NewServer("test-server", "test-type", false)
 	e := getEtcdSD(t, config, server, cli)
 	e.Init()
 

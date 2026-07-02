@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/conn/message"
@@ -18,6 +17,7 @@ import (
 	protosmocks "github.com/topfreegames/pitaya/v2/protos/mocks"
 	"github.com/topfreegames/pitaya/v2/route"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 )
 

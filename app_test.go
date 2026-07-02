@@ -32,7 +32,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/spf13/viper"
@@ -51,6 +50,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/router"
 	"github.com/topfreegames/pitaya/v2/session/mocks"
+	"go.uber.org/mock/gomock"
 )
 
 var (

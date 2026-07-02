@@ -25,10 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/metrics"
 	"github.com/topfreegames/pitaya/v2/mocks"
+	"go.uber.org/mock/gomock"
 )
 
 func TestRateLimiterGetNextMessage(t *testing.T) {

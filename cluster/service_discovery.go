@@ -33,7 +33,7 @@ type ServiceDiscovery interface {
 	GetServers() []*Server
 	SyncServers(firstSync bool) error
 	AddListener(listener SDListener)
-	UpdateMetadata(metadata map[string]string) error
+	SetServerState(state int32)
 	IsConnected(ctx context.Context) bool
 	interfaces.Module
 }

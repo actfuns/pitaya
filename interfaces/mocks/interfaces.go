@@ -5,8 +5,9 @@
 package mocks
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockModule is a mock of Module interface

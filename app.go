@@ -131,8 +131,6 @@ type Pitaya interface {
 	SubmitAnonymousTask(ctx context.Context, task func(context.Context)) error
 	SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error)
 	ClearInterval(timerId uint64) error
-	UpdateServerMetadata(metadata map[string]string) error
-	GetSerializer() serialize.Serializer
 	IsReady(ctx context.Context) bool
 }
 
@@ -358,6 +356,7 @@ func (app *App) Start() {
 		logger.Log.Warn("got signal: ", s, ", shutting down...")
 		if app.config.Session.Drain.Enabled && s == syscall.SIGTERM {
 			logger.Log.Info("Session drain is enabled, draining all sessions before shutting down")
+			app.serviceDiscovery.SetServerState(cluster.StateShuttingDown)
 			timeoutTimer := time.NewTimer(app.config.Session.Drain.Timeout)
 			app.startModuleSessionDraining()
 		loop:
@@ -604,16 +603,6 @@ func (app *App) SetInterval(taskid string, delay time.Duration, counter int, fn 
 // ClearInterval clears an interval
 func (app *App) ClearInterval(timerId uint64) error {
 	return app.timerService.ClearInterval(timerId)
-}
-
-// UpdateServerMetadata updates the server metadata
-func (app *App) UpdateServerMetadata(metadata map[string]string) error {
-	return app.serviceDiscovery.UpdateMetadata(metadata)
-}
-
-// GetSerializer gets the serializer instance
-func (app *App) GetSerializer() serialize.Serializer {
-	return app.serializer
 }
 
 // IsReady checks if pitaya is ready and able to serve requests

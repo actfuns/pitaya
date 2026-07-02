@@ -7,8 +7,8 @@ package mocks
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	protos "github.com/topfreegames/pitaya/v2/protos"
+	gomock "go.uber.org/mock/gomock"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )

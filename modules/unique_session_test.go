@@ -7,12 +7,12 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/cluster"
 	clustermocks "github.com/topfreegames/pitaya/v2/cluster/mocks"
 	"github.com/topfreegames/pitaya/v2/session"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"go.uber.org/mock/gomock"
 )
 
 func TestUniqueSessionBind_ShouldKickOldSession(t *testing.T) {

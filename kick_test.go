@@ -24,7 +24,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	clustermocks "github.com/topfreegames/pitaya/v2/cluster/mocks"
@@ -32,6 +31,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/protos"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSendKickToUsersLocalSession(t *testing.T) {

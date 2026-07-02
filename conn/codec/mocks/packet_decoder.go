@@ -5,9 +5,10 @@
 package mocks
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	packet "github.com/topfreegames/pitaya/v2/conn/packet"
 	reflect "reflect"
+
+	packet "github.com/topfreegames/pitaya/v2/conn/packet"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockPacketDecoder is a mock of PacketDecoder interface

@@ -43,9 +43,15 @@ func TestNewServer(t *testing.T) {
 	t.Parallel()
 	for _, table := range svTestTables {
 		t.Run(table.id, func(t *testing.T) {
-			s := NewServer(table.id, table.svType, table.frontend, table.metadata)
+			var opts []ServerOption
+			if table.metadata != nil {
+				opts = append(opts, WithMetadata(table.metadata))
+			}
+			s := NewServer(table.id, table.svType, table.frontend, opts...)
 			assert.Equal(t, table.id, s.ID)
-			assert.Equal(t, table.metadata, s.Metadata)
+			if table.metadata != nil {
+				assert.Equal(t, table.metadata, s.Metadata)
+			}
 			assert.Equal(t, table.frontend, s.Frontend)
 			assert.NotNil(t, s.Hostname)
 		})
@@ -56,7 +62,11 @@ func TestAsJSONString(t *testing.T) {
 	t.Parallel()
 	for _, table := range svTestTables {
 		t.Run(table.id, func(t *testing.T) {
-			s := NewServer(table.id, table.svType, table.frontend, table.metadata)
+			var opts []ServerOption
+			if table.metadata != nil {
+				opts = append(opts, WithMetadata(table.metadata))
+			}
+			s := NewServer(table.id, table.svType, table.frontend, opts...)
 			b, err := json.Marshal(s)
 			assert.NoError(t, err)
 			assert.Equal(t, string(b), s.AsJSONString())

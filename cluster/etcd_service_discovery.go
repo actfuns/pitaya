@@ -240,9 +240,10 @@ func (sd *etcdServiceDiscovery) AfterInit() {
 
 func (sd *etcdServiceDiscovery) notifyListeners(act Action, sv *Server) {
 	for _, l := range sd.listeners {
-		if act == DEL {
+		switch act {
+		case DEL:
 			l.RemoveServer(sv)
-		} else if act == ADD {
+		case ADD:
 			l.AddServer(sv)
 		}
 	}
@@ -455,11 +456,11 @@ type parallelGetter struct {
 	workChan    chan parallelGetterWork
 }
 
-func newParallelGetter(cli *clientv3.Client, numWorkers int) parallelGetter {
+func newParallelGetter(cli *clientv3.Client, numWorkers int) *parallelGetter {
 	if numWorkers <= 0 {
 		numWorkers = 10
 	}
-	p := parallelGetter{
+	p := &parallelGetter{
 		cli:        cli,
 		numWorkers: numWorkers,
 		workChan:   make(chan parallelGetterWork),
@@ -521,18 +522,12 @@ func (p *parallelGetter) addWork(serverType, serverID string) {
 	}
 }
 
-// UpdateMetadata updates the metadata of the server
-func (sd *etcdServiceDiscovery) UpdateMetadata(metadata map[string]string) error {
-	if metadata == nil {
-		metadata = make(map[string]string)
+// SetServerState sets the state of the server
+func (sd *etcdServiceDiscovery) SetServerState(state int32) {
+	sd.server.setState(state)
+	if err := sd.addServerIntoEtcd(sd.server); err != nil {
+		logger.Log.Errorf("failed to sync server info to etcd: %s", err.Error())
 	}
-	for k, v := range sd.server.Metadata {
-		if _, ok := metadata[k]; !ok {
-			metadata[k] = v
-		}
-	}
-	sd.server.Metadata = metadata
-	return sd.addServerIntoEtcd(sd.server)
 }
 
 // SyncServers gets all servers from etcd
@@ -644,7 +639,7 @@ func (sd *etcdServiceDiscovery) revoke() error {
 }
 
 func (sd *etcdServiceDiscovery) addServer(sv *Server) {
-	if _, loaded := sd.serverMapByID.LoadOrStore(sv.ID, sv); !loaded {
+	if actual, loaded := sd.serverMapByID.LoadOrStore(sv.ID, sv); !loaded {
 		sd.writeLockScope(func() {
 			mapSvByType, ok := sd.serverMapByType[sv.Type]
 			if !ok {
@@ -657,14 +652,8 @@ func (sd *etcdServiceDiscovery) addServer(sv *Server) {
 			sd.notifyListeners(ADD, sv)
 		}
 	} else {
-		sd.mapByTypeLock.RLock()
-		defer sd.mapByTypeLock.RUnlock()
-		if mapSvByType, ok := sd.serverMapByType[sv.Type]; ok {
-			osv := mapSvByType[sv.ID]
-			if osv != nil {
-				osv.Metadata = sv.Metadata
-			}
-		}
+		existing := actual.(*Server)
+		existing.setState(sv.GetState())
 	}
 }
 

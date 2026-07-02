@@ -24,7 +24,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/topfreegames/pitaya/v2/cluster"
@@ -42,6 +41,7 @@ import (
 	serializemocks "github.com/topfreegames/pitaya/v2/serialize/mocks"
 	"github.com/topfreegames/pitaya/v2/service"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 )
 

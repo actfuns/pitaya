@@ -27,7 +27,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/cluster"
@@ -41,6 +40,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/route"
 	serializemocks "github.com/topfreegames/pitaya/v2/serialize/mocks"
 	"github.com/topfreegames/pitaya/v2/session"
+	"go.uber.org/mock/gomock"
 )
 
 type someStruct struct {

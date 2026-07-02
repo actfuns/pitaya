@@ -11,11 +11,11 @@ type Summary struct {
 
 // Histogram defines a histogram metric
 type Histogram struct {
-	Subsystem  string
-	Name       string
-	Help       string
-	Buckets    []float64
-	Labels     []string
+	Subsystem string
+	Name      string
+	Help      string
+	Buckets   []float64
+	Labels    []string
 }
 
 // Gauge defines a gauge metric
