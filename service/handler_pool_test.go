@@ -48,7 +48,7 @@ func TestGetHandlerExists(t *testing.T) {
 	handlerPool.handlers[rt.Short()] = expected
 	defer func() { delete(handlerPool.handlers, rt.Short()) }()
 
-	h, err := handlerPool.getHandler(rt)
+	h, err := handlerPool.getHandler(rt.String())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, h)
 }
@@ -56,7 +56,7 @@ func TestGetHandlerExists(t *testing.T) {
 func TestGetHandlerDoesntExist(t *testing.T) {
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	handlerPool := NewHandlerPool()
-	h, err := handlerPool.getHandler(rt)
+	h, err := handlerPool.getHandler(rt.String())
 	assert.Nil(t, h)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("%s not found", rt.String()))
@@ -129,7 +129,7 @@ func TestProcessHandlerMessage(t *testing.T) {
 				}
 			}
 			handlerHooks := pipeline.NewHandlerHooks()
-			out, err := handlerPool.ProcessHandlerMessage(nil, table.route, mockSerializer, handlerHooks, ss, nil, table.msgType, table.remote)
+			out, err := handlerPool.ProcessHandlerMessage(nil, table.route.String(), mockSerializer, handlerHooks, ss, nil, table.msgType, table.remote)
 			assert.Equal(t, table.out, out)
 			assert.Equal(t, table.err, err)
 		})
@@ -153,7 +153,7 @@ func TestProcessHandlerMessageBrokenBeforePipeline(t *testing.T) {
 	ss := session_mocks.NewMockSession(ctrl)
 	ss.EXPECT().UID().Return("uid").AnyTimes()
 	ss.EXPECT().ID().Return(int64(1)).AnyTimes()
-	out, err := handlerPool.ProcessHandlerMessage(nil, rt, nil, handlerHooks, ss, nil, message.Request, false)
+	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), nil, handlerHooks, ss, nil, message.Request, false)
 	assert.Nil(t, out)
 	assert.Equal(t, expected, err)
 }
@@ -188,7 +188,7 @@ func TestProcessHandlerMessageBrokenAfterPipeline(t *testing.T) {
 
 	handlerHooks := pipeline.NewHandlerHooks()
 	handlerHooks.AfterHandler = afterHandler
-	out, err := handlerPool.ProcessHandlerMessage(nil, rt, mockSerializer, handlerHooks, ss, nil, message.Request, false)
+	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false)
 	assert.Nil(t, out)
 	assert.Equal(t, errors.New("oh noes"), err)
 }

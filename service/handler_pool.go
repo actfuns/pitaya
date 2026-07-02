@@ -11,7 +11,6 @@ import (
 	e "github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 	"github.com/topfreegames/pitaya/v2/pipeline"
-	"github.com/topfreegames/pitaya/v2/route"
 	"github.com/topfreegames/pitaya/v2/serialize"
 	"github.com/topfreegames/pitaya/v2/session"
 	"github.com/topfreegames/pitaya/v2/util"
@@ -42,7 +41,7 @@ func (h *HandlerPool) GetHandlers() map[string]*component.Handler {
 // ProcessHandlerMessage ...
 func (h *HandlerPool) ProcessHandlerMessage(
 	ctx context.Context,
-	rt *route.Route,
+	route string,
 	serializer serialize.Serializer,
 	handlerHooks *pipeline.HandlerHooks,
 	session session.Session,
@@ -54,9 +53,9 @@ func (h *HandlerPool) ProcessHandlerMessage(
 		ctx = context.Background()
 	}
 	ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
-	ctx = util.CtxWithDefaultLogger(ctx, rt.Short(), session.UID())
+	ctx = util.CtxWithDefaultLogger(ctx, route, session.UID())
 
-	handler, err := h.getHandler(rt)
+	handler, err := h.getHandler(route)
 	if err != nil {
 		return nil, e.NewError(err, e.ErrNotFoundCode)
 	}
@@ -123,12 +122,11 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	return ret, nil
 }
 
-func (h *HandlerPool) getHandler(rt *route.Route) (*component.Handler, error) {
-	handler, ok := h.handlers[rt.ServiceKey()]
+func (h *HandlerPool) getHandler(route string) (*component.Handler, error) {
+	handler, ok := h.handlers[route]
 	if !ok {
-		e := fmt.Errorf("pitaya/handler: %s not found", rt.String())
+		e := fmt.Errorf("pitaya/handler: %s not found", route)
 		return nil, e
 	}
 	return handler, nil
-
 }

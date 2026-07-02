@@ -80,6 +80,7 @@ type Msg struct {
 	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	Reply         string                 `protobuf:"bytes,4,opt,name=reply,proto3" json:"reply,omitempty"`
 	Type          MsgType                `protobuf:"varint,5,opt,name=type,proto3,enum=protos.MsgType" json:"type,omitempty"`
+	ShardKey      string                 `protobuf:"bytes,6,opt,name=shardKey,proto3" json:"shardKey,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -149,17 +150,25 @@ func (x *Msg) GetType() MsgType {
 	return MsgType_MsgRequest
 }
 
+func (x *Msg) GetShardKey() string {
+	if x != nil {
+		return x.ShardKey
+	}
+	return ""
+}
+
 var File_msg_proto protoreflect.FileDescriptor
 
 const file_msg_proto_rawDesc = "" +
 	"\n" +
-	"\tmsg.proto\x12\x06protos\"z\n" +
+	"\tmsg.proto\x12\x06protos\"\x96\x01\n" +
 	"\x03Msg\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x14\n" +
 	"\x05route\x18\x02 \x01(\tR\x05route\x12\x12\n" +
 	"\x04data\x18\x03 \x01(\fR\x04data\x12\x14\n" +
 	"\x05reply\x18\x04 \x01(\tR\x05reply\x12#\n" +
-	"\x04type\x18\x05 \x01(\x0e2\x0f.protos.MsgTypeR\x04type*F\n" +
+	"\x04type\x18\x05 \x01(\x0e2\x0f.protos.MsgTypeR\x04type\x12\x1a\n" +
+	"\bshardKey\x18\x06 \x01(\tR\bshardKey*F\n" +
 	"\aMsgType\x12\x0e\n" +
 	"\n" +
 	"MsgRequest\x10\x00\x12\r\n" +

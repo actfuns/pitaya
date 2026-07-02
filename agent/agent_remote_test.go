@@ -182,7 +182,7 @@ func TestKickRemote(t *testing.T) {
 
 	mockSD.EXPECT().GetServer(frontID)
 	c := context.Background()
-	r, _ := route.Decode("sys.kick")
+	r, _ := route.Decode("sys.sys.kick")
 	rpcClient.EXPECT().Call(c, protos.RPCType_User, r, gomock.Nil(), gomock.Any(), gomock.Nil())
 	err = remote.Kick(c)
 
@@ -254,9 +254,9 @@ func TestAgentRemoteResponseMID(t *testing.T) {
 
 			}
 			if table.msgErr {
-				err = remote.ResponseMID(nil, table.mid, table.data, table.msgErr)
+				err = remote.ResponseMID(context.Background(), table.mid, table.data, table.msgErr)
 			} else {
-				err = remote.ResponseMID(nil, table.mid, table.data)
+				err = remote.ResponseMID(context.Background(), table.mid, table.data)
 			}
 			assert.Equal(t, table.err, err)
 		})

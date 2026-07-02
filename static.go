@@ -127,8 +127,8 @@ func SetDictionary(dict map[string]uint16) error {
 	return DefaultApp.SetDictionary(dict)
 }
 
-func AddRoute(serverType string, routingFunction router.RoutingFunc) error {
-	return DefaultApp.AddRoute(serverType, routingFunction)
+func AddRoute(domain string, routingFunction router.RoutingFunc) error {
+	return DefaultApp.AddRoute(domain, routingFunction)
 }
 
 func Shutdown() {

@@ -30,8 +30,8 @@ var (
 		route *route.Route,
 		payload []byte,
 		servers map[string]*cluster.Server,
-	) (*cluster.Server, error) {
-		return server, nil
+	) (string, *cluster.Server, error) {
+		return route.Domain, server, nil
 	}
 )
 
@@ -64,8 +64,9 @@ func TestDefaultRoute(t *testing.T) {
 	t.Parallel()
 
 	router := New()
+	route := route.NewRoute(serverType, "service", "method")
 
-	retServer := router.defaultRoute(servers)
+	_, retServer := router.defaultRoute(context.Background(), nil, protos.RPCType_Sys, route, servers)
 	assert.Equal(t, server, retServer)
 }
 
@@ -88,7 +89,7 @@ func TestRoute(t *testing.T) {
 			router.AddRoute(serverType, routingFunction)
 			router.SetServiceDiscovery(mockServiceDiscovery)
 
-			retServer, err := router.Route(ctx, table.rpcType, route, &message.Message{
+			_, retServer, err := router.Resolve(ctx, nil, table.rpcType, route, &message.Message{
 				Data: []byte{0x01},
 			})
 			assert.Equal(t, table.server, retServer)
@@ -115,7 +116,7 @@ func TestRouteFailIfNullServiceDiscovery(t *testing.T) {
 	t.Parallel()
 
 	router := New()
-	_, err := router.Route(context.Background(), protos.RPCType_Sys, route.NewRoute(serverType, "service", "method"), &message.Message{
+	_, _, err := router.Resolve(context.Background(), nil, protos.RPCType_Sys, route.NewRoute(serverType, "service", "method"), &message.Message{
 		Data: []byte{0x01},
 	})
 	assert.Equal(t, constants.ErrServiceDiscoveryNotInitialized, err)

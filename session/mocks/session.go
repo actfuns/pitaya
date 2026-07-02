@@ -237,10 +237,10 @@ func (mr *MockSessionMockRecorder) GetOnCloseCallbacks() *gomock.Call {
 }
 
 // GetRequestsInFlight mocks base method.
-func (m *MockSession) GetRequestsInFlight() session.ReqInFlight {
+func (m *MockSession) GetRequestsInFlight() *session.ReqInFlight {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRequestsInFlight")
-	ret0, _ := ret[0].(session.ReqInFlight)
+	ret0, _ := ret[0].(*session.ReqInFlight)
 	return ret0
 }
 

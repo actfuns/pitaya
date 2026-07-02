@@ -388,8 +388,8 @@ func TestRemoteServiceRemoteCall(t *testing.T) {
 			router.SetServiceDiscovery(mockServiceDiscovery)
 			mockServiceDiscovery.EXPECT().GetServersByDomain(table.route.Domain).Return(map[string]*cluster.Server{"sv": {Type: "sv"}}, nil).AnyTimes()
 
-			router.AddRoute(table.route.Domain, func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (*cluster.Server, error) {
-				return &cluster.Server{}, table.routeErr
+			router.AddRoute(table.route.Domain, func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (string, *cluster.Server, error) {
+				return route.Domain, &cluster.Server{}, table.routeErr
 			})
 			svc := NewRemoteService(mockRPCClient, nil, nil, nil, nil, router, nil, nil, sessionPool, nil, pipeline.NewHandlerHooks(), nil, nil)
 			assert.NotNil(t, svc)
@@ -468,7 +468,7 @@ func TestRemoteServiceHandleRPCUser(t *testing.T) {
 			svc.remotes[rtRes.Short()] = compRes
 
 			assert.NotNil(t, svc)
-			res := svc.handleRPCUser(context.Background(), table.req, table.rt)
+			res := svc.handleRPCUser(context.Background(), table.req)
 			assert.NoError(t, err)
 			if table.errSubstring != "" {
 				assert.Contains(t, res.Error.Msg, table.errSubstring)
@@ -614,7 +614,7 @@ func TestRemoteServiceHandleRPCUserWithHooks(t *testing.T) {
 			assert.False(t, beforeHookInvoked, "Before hook invoked before RPC")
 			assert.False(t, afterHookInvoked, "After hook invoked before RPC")
 
-			res := svc.handleRPCUser(context.Background(), table.req, table.rt)
+			res := svc.handleRPCUser(context.Background(), table.req)
 
 			if table.shouldRunBeforeHook {
 				assert.True(t, beforeHookInvoked, "After hook was never invoked")
@@ -680,7 +680,7 @@ func TestRemoteServiceHandleRPCSys(t *testing.T) {
 			if table.errSubstring == "" {
 				mockSerializer.EXPECT().Unmarshal(gomock.Any(), gomock.Any()).Return(nil)
 			}
-			res := svc.handleRPCSys(nil, table.req, table.rt)
+			res := svc.handleRPCSys(nil, table.req)
 
 			if table.errSubstring != "" {
 				assert.Contains(t, res.Error.Msg, table.errSubstring)

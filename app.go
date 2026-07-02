@@ -80,8 +80,7 @@ type Pitaya interface {
 	GetSessionFromCtx(ctx context.Context) session.Session
 	Start()
 	SetDictionary(dict map[string]uint16) error
-	AddRoute(serverType string, routingFunction router.RoutingFunc) error
-	SetDispatch(router.DispatchFunc) error
+	AddRoute(domain string, routingFunction router.RoutingFunc) error
 	Shutdown()
 	StartWorker()
 	RegisterRPCJob(rpcJob worker.RPCJob) error
@@ -443,27 +442,14 @@ func (app *App) SetDictionary(dict map[string]uint16) error {
 
 // AddRoute adds a routing function to a server type
 func (app *App) AddRoute(
-	serverType string,
+	domain string,
 	routingFunction router.RoutingFunc,
 ) error {
 	if app.router != nil {
 		if app.running {
 			return constants.ErrChangeRouteWhileRunning
 		}
-		app.router.AddRoute(serverType, routingFunction)
-	} else {
-		return constants.ErrRouterNotInitialized
-	}
-	return nil
-}
-
-// SetDispatch sets the dispatch function
-func (app *App) SetDispatch(dispatchFunc router.DispatchFunc) error {
-	if app.router != nil {
-		if app.running {
-			return constants.ErrChangeRouteWhileRunning
-		}
-		app.router.SetDispatch(dispatchFunc)
+		app.router.AddRoute(domain, routingFunction)
 	} else {
 		return constants.ErrRouterNotInitialized
 	}

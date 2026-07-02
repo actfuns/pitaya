@@ -146,25 +146,17 @@ func (r *RemoteService) AddRemoteBindingListener(bindingListener cluster.RemoteB
 
 // Call processes a remote call
 func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.Response, error) {
-	c, rt, err := util.GetContextFromRequest(req, r.server.ID)
-	var rts string
-	if rt != nil {
-		rts = rt.StringNotInst()
-	} else {
-		rts = req.GetMsg().GetRoute()
-	}
-	c = util.StartSpanFromRequest(c, r.server.ID, rts)
+	c, err := util.GetContextFromRequest(req, r.server.ID)
+	c = util.StartSpanFromRequest(c, r.server.ID, req.Msg.Route)
 	defer tracing.FinishSpan(c, err)
 	var res *protos.Response
 
 	if err == nil {
-		c = pcontext.AddToPropagateCtx(c, constants.RequestInstanceKey, rt.Instance)
-		var dispatchId string
-		dispatchId, err = r.router.Dispatch(c, req.Type, rt, req.Msg.Data)
+		c = pcontext.AddToPropagateCtx(c, constants.RequestShardKey, req.Msg.ShardKey)
 		if err == nil {
 			result := make(chan *protos.Response, 1)
-			err = r.taskSevice.Submit(c, dispatchId, func(tctx context.Context) {
-				result <- processRemoteMessage(tctx, req, r, rt)
+			err = r.taskSevice.Submit(c, req.Msg.ShardKey, func(tctx context.Context) {
+				result <- processRemoteMessage(tctx, req, r)
 			})
 			if err == nil {
 				reqTimeout := pcontext.GetFromPropagateCtx(c, constants.RequestTimeout)
@@ -197,7 +189,7 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 				Msg:  err.Error(),
 			},
 		}
-		logger.WithCtx(ctx).Errorf("[remote] failed to process remote message for route '%s': %v", req.GetMsg().GetRoute(), err)
+		logger.WithCtx(ctx).Errorf("[remote] failed to process remote message for route '%s': %v", req.Msg.Route, err)
 	}
 
 	return res, err
@@ -254,12 +246,13 @@ func (r *RemoteService) DoRPC(ctx context.Context, rpcType protos.RPCType, serve
 	}
 
 	if serverID == "" {
-		target, err := r.router.Route(ctx, rpcType, route, msg)
+		shardKey, target, err := r.router.Resolve(ctx, r.server, rpcType, route, msg)
 		if err != nil {
-			logger.Log.Errorf("error making call for route %s: %v", route.String(), err)
+			logger.Log.Errorf("error making call for route %s: %v", msg.Route, err)
 			return nil, e.NewError(err, e.ErrInternalCode)
 		}
 		serverID = target.ID
+		msg.ShardKey = shardKey
 	}
 
 	if serverID == r.server.ID && r.server.IsLoopbackEnabled() {
@@ -308,21 +301,15 @@ func (r *RemoteService) RPC(ctx context.Context, rpcType protos.RPCType, serverI
 }
 
 func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, route *route.Route, msg *message.Message) (*protos.Response, error) {
-	req, err := cluster.BuildRequest(ctx, rpcType, route, nil, msg, r.server)
+	req, err := cluster.BuildRequest(ctx, rpcType, nil, msg, r.server)
 	if err != nil {
 		return nil, err
 	}
-	subCtx, rt, err := util.GetContextFromRequest(req, r.server.ID)
+	subCtx, err := util.GetContextFromRequest(req, r.server.ID)
 	if taskId := ctx.Value(constants.TaskIDKey); taskId != nil {
 		subCtx = context.WithValue(subCtx, constants.TaskIDKey, taskId)
 	}
-	var rts string
-	if rt != nil {
-		rts = rt.StringNotInst()
-	} else {
-		rts = req.GetMsg().GetRoute()
-	}
-	subCtx = util.StartSpanFromRequest(subCtx, r.server.ID, rts)
+	subCtx = util.StartSpanFromRequest(subCtx, r.server.ID, req.Msg.Route)
 	defer tracing.FinishSpan(subCtx, err)
 
 	if err != nil {
@@ -345,24 +332,20 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 
 	var res *protos.Response
 	if err == nil {
-		subCtx = pcontext.AddToPropagateCtx(subCtx, constants.RequestInstanceKey, route.Instance)
-		var dispatchId string
-		dispatchId, err = r.router.Dispatch(subCtx, req.Type, rt, req.Msg.Data)
+		subCtx = pcontext.AddToPropagateCtx(subCtx, constants.RequestShardKey, msg.ShardKey)
+		result := make(chan *protos.Response, 1)
+		err = r.taskSevice.Submit(subCtx, msg.ShardKey, func(tctx context.Context) {
+			result <- processRemoteMessage(tctx, req, r)
+		})
 		if err == nil {
-			result := make(chan *protos.Response, 1)
-			err = r.taskSevice.Submit(subCtx, dispatchId, func(tctx context.Context) {
-				result <- processRemoteMessage(tctx, req, r, rt)
-			})
-			if err == nil {
-				timer := time.NewTimer(5 * time.Second)
-				defer timer.Stop()
+			timer := time.NewTimer(5 * time.Second)
+			defer timer.Stop()
 
-				select {
-				case <-timer.C:
-					err = constants.ErrRPCRequestTimeout
-				case res = <-result:
-					return res, nil
-				}
+			select {
+			case <-timer.C:
+				err = constants.ErrRPCRequestTimeout
+			case res = <-result:
+				return res, nil
 			}
 		}
 	}
@@ -374,7 +357,7 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 				Msg:  err.Error(),
 			},
 		}
-		logger.WithCtx(ctx).Errorf("[remote] failed to process loopback message for route '%s': %v", req.GetMsg().GetRoute(), err)
+		logger.WithCtx(ctx).Errorf("[remote] failed to process loopback message for route '%s': %v", req.Msg.Route, err)
 	}
 
 	return res, err
@@ -401,12 +384,12 @@ func (r *RemoteService) Register(comp component.Component, opts []component.Opti
 	return nil
 }
 
-func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteService, rt *route.Route) *protos.Response {
+func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteService) *protos.Response {
 	switch {
 	case req.Type == protos.RPCType_Sys:
-		return r.handleRPCSys(ctx, req, rt)
+		return r.handleRPCSys(ctx, req)
 	case req.Type == protos.RPCType_User:
-		return r.handleRPCUser(ctx, req, rt)
+		return r.handleRPCUser(ctx, req)
 	default:
 		return &protos.Response{
 			Error: &protos.Error{
@@ -420,8 +403,8 @@ func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteSer
 	}
 }
 
-func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, rt *route.Route) (response *protos.Response) {
-	serviceKey := rt.ServiceKey()
+func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request) (response *protos.Response) {
+	serviceKey := req.Msg.Route
 	remote, ok := r.remotes[serviceKey]
 	if !ok {
 		logger.WithCtx(ctx).Warnf("pitaya/remote: %s not found", serviceKey)
@@ -498,7 +481,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
-		logger.WithCtx(ctx).LogfWithErrorLevel(err, "RPC %s failed to process message: %s", rt.String(), err.Error())
+		logger.WithCtx(ctx).LogfWithErrorLevel(err, "RPC %s failed to process message: %s", serviceKey, err.Error())
 		return
 	}
 
@@ -531,7 +514,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 	return
 }
 
-func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, rt *route.Route) (response *protos.Response) {
+func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request) (response *protos.Response) {
 	reply := req.GetMsg().GetReply()
 	a, err := agent.NewRemote(
 		req.GetSession(),
@@ -555,7 +538,7 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 		return
 	}
 
-	ret, err := r.handlerPool.ProcessHandlerMessage(ctx, rt, r.serializer, r.handlerHooks, a.Session, req.GetMsg().GetData(), req.GetMsg().GetType(), true)
+	ret, err := r.handlerPool.ProcessHandlerMessage(ctx, req.Msg.Route, r.serializer, r.handlerHooks, a.Session, req.GetMsg().GetData(), req.GetMsg().GetType(), true)
 	if err != nil {
 		response = &protos.Response{
 			Error: &protos.Error{},
@@ -570,7 +553,7 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 		}
 		response.Error.Code = code
 		response.Error.Msg = msg
-		logger.WithCtx(ctx).LogfWithErrorLevel(err, "Remote handler %s failed to process message: %s", rt.String(), err.Error())
+		logger.WithCtx(ctx).LogfWithErrorLevel(err, "Remote handler %s failed to process message: %s", req.Msg.Route, err.Error())
 	} else {
 		response = &protos.Response{Data: ret}
 	}
@@ -579,26 +562,16 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 
 func (r *RemoteService) remoteCall(
 	ctx context.Context,
-	server *cluster.Server,
+	target *cluster.Server,
 	rpcType protos.RPCType,
 	route *route.Route,
 	session session.Session,
 	msg *message.Message,
 ) (*protos.Response, error) {
 	var err error
-	target := server
-
-	if target == nil {
-		target, err = r.router.Route(ctx, rpcType, route, msg)
-		if err != nil {
-			logger.Log.Errorf("error making call for route %s: %v", route.String(), err)
-			return nil, e.NewError(err, e.ErrInternalCode)
-		}
-	}
-
 	res, err := r.rpcClient.Call(ctx, rpcType, route, session, msg, target)
 	if err != nil {
-		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %v", target.ID, route.String(), target.Hostname, err)
+		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %v", target.ID, msg.Route, target.Hostname, err)
 		return nil, err
 	}
 	return res, err

@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"slices"
 	"strings"
 	"time"
 
@@ -34,6 +33,8 @@ import (
 
 	"github.com/topfreegames/pitaya/v2/acceptor"
 	"github.com/topfreegames/pitaya/v2/pipeline"
+	"github.com/topfreegames/pitaya/v2/protos"
+	"github.com/topfreegames/pitaya/v2/router"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/topfreegames/pitaya/v2/agent"
@@ -62,7 +63,9 @@ type (
 	HandlerService struct {
 		baseService
 		decoder          codec.PacketDecoder // binary decoder
+		router           *router.Router
 		remoteService    *RemoteService
+		taskService      *TaskService
 		serializer       serialize.Serializer          // message serializer
 		server           *cluster.Server               // server obj
 		services         map[string]*component.Service // all registered service
@@ -70,7 +73,6 @@ type (
 		agentFactory     agent.AgentFactory
 		handlerPool      *HandlerPool
 		handlers         map[string]*component.Handler // all handler method
-		taskService      *TaskService
 	}
 )
 
@@ -79,24 +81,26 @@ func NewHandlerService(
 	packetDecoder codec.PacketDecoder,
 	serializer serialize.Serializer,
 	server *cluster.Server,
+	router *router.Router,
 	remoteService *RemoteService,
+	taskService *TaskService,
 	agentFactory agent.AgentFactory,
 	metricsReporters []metrics.Reporter,
 	handlerHooks *pipeline.HandlerHooks,
 	handlerPool *HandlerPool,
-	taskService *TaskService,
 ) *HandlerService {
 	h := &HandlerService{
 		services:         make(map[string]*component.Service),
+		router:           router,
 		decoder:          packetDecoder,
 		serializer:       serializer,
 		server:           server,
 		remoteService:    remoteService,
+		taskService:      taskService,
 		agentFactory:     agentFactory,
 		metricsReporters: metricsReporters,
 		handlerPool:      handlerPool,
 		handlers:         make(map[string]*component.Handler),
-		taskService:      taskService,
 	}
 
 	h.handlerHooks = handlerHooks
@@ -281,6 +285,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		a.AnswerWithError(ctx, msg.ID, e.NewError(err, e.ErrBadRequestCode))
 		return
 	}
+	msg.Route = r.String()
 
 	if r.Domain == "" {
 		logger.Log.Errorf("route missing server type: %s", msg.Route)
@@ -288,20 +293,28 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		return
 	}
 
-	if err := h.taskService.Submit(ctx, fmt.Sprintf("pitaya:handler:%d", session.ID()), func(tctx context.Context) {
-		if slices.Contains(h.server.Domains, r.Domain) {
+	shardKey, target, err := h.router.Resolve(ctx, h.server, protos.RPCType_Sys, r, msg)
+	if err != nil {
+		logger.Log.Errorf("error making call for route %s: %v", msg.Route, err)
+		a.AnswerWithError(ctx, msg.ID, e.NewError(constants.ErrRouteMissingServerDomain, e.ErrInternalCode))
+		return
+	}
+	msg.ShardKey = shardKey
+
+	if err := h.taskService.Submit(ctx, msg.ShardKey, func(tctx context.Context) {
+		if target.ID == h.server.ID {
 			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
 			h.localProcess(tctx, a, r, msg)
 		} else {
 			if h.remoteService != nil {
 				metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "remote")
-				h.remoteService.remoteProcess(tctx, nil, a, r, msg)
+				h.remoteService.remoteProcess(tctx, target, a, r, msg)
 			} else {
 				logger.Log.Warnf("request made to another server type but no remoteService running")
 			}
 		}
 	}); err != nil {
-		logger.Log.Errorf("Failed to submit task: %s", err.Error())
+		logger.Log.Errorf("Failed to subit task: %s", err.Error())
 	}
 }
 
@@ -314,10 +327,10 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route 
 		mid = 0
 	}
 
-	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false)
+	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, msg.Route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false)
 	if msg.Type != message.Notify {
 		if err != nil {
-			logger.Log.LogfWithErrorLevel(err, "handler %s failed to process message: %s", route.String(), err.Error())
+			logger.Log.LogfWithErrorLevel(err, "handler %s failed to process message: %s", msg.Route, err.Error())
 			a.AnswerWithError(ctx, mid, err)
 		} else {
 			err := a.GetSession().ResponseMID(ctx, mid, ret)

@@ -610,20 +610,6 @@ func (mr *MockPitayaMockRecorder) SetDictionary(dict any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDictionary", reflect.TypeOf((*MockPitaya)(nil).SetDictionary), dict)
 }
 
-// SetDispatch mocks base method.
-func (m *MockPitaya) SetDispatch(arg0 router.DispatchFunc) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetDispatch", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetDispatch indicates an expected call of SetDispatch.
-func (mr *MockPitayaMockRecorder) SetDispatch(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDispatch", reflect.TypeOf((*MockPitaya)(nil).SetDispatch), arg0)
-}
-
 // SetHeartbeatTime mocks base method.
 func (m *MockPitaya) SetHeartbeatTime(interval time.Duration) {
 	m.ctrl.T.Helper()

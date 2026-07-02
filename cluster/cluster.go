@@ -80,18 +80,16 @@ const (
 func BuildRequest(
 	ctx context.Context,
 	rpcType protos.RPCType,
-	route *route.Route,
 	session session.Session,
 	msg *message.Message,
 	thisServer *Server,
 ) (*protos.Request, error) {
-	return buildRequest(ctx, rpcType, route, session, msg, thisServer)
+	return buildRequest(ctx, rpcType, session, msg, thisServer)
 }
 
 func buildRequest(
 	ctx context.Context,
 	rpcType protos.RPCType,
-	route *route.Route,
 	session session.Session,
 	msg *message.Message,
 	thisServer *Server,
@@ -99,7 +97,7 @@ func buildRequest(
 	req := &protos.Request{
 		Type: rpcType,
 		Msg: &protos.Msg{
-			Route: route.String(),
+			Route: msg.Route,
 			Data:  msg.Data,
 		},
 	}
@@ -123,6 +121,7 @@ func buildRequest(
 	case message.Notify:
 		req.Msg.Type = protos.MsgType_MsgNotify
 	}
+	req.Msg.ShardKey = msg.ShardKey
 
 	if rpcType == protos.RPCType_Sys {
 		mid := uint(0)

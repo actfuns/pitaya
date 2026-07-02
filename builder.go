@@ -251,12 +251,13 @@ func (builder *Builder) Build() Pitaya {
 		builder.PacketDecoder,
 		builder.Serializer,
 		builder.Server,
+		builder.Router,
 		remoteService,
+		taskService,
 		agentFactory,
 		builder.MetricsReporters,
 		builder.HandlerHooks,
 		handlerPool,
-		taskService,
 	)
 
 	app := NewApp(

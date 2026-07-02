@@ -120,7 +120,7 @@ type Session interface {
 	SetIsFrontend(isFrontend bool)
 	SetSubscriptions(subscriptions []*nats.Subscription)
 	HasRequestsInFlight() bool
-	GetRequestsInFlight() ReqInFlight
+	GetRequestsInFlight() *ReqInFlight
 	SetRequestInFlight(reqID string, reqData string, inFlight bool)
 
 	Push(route string, v interface{}) error
@@ -884,8 +884,8 @@ func (s *sessionImpl) HasRequestsInFlight() bool {
 	return len(s.requestsInFlight.m) != 0
 }
 
-func (s *sessionImpl) GetRequestsInFlight() ReqInFlight {
-	return s.requestsInFlight
+func (s *sessionImpl) GetRequestsInFlight() *ReqInFlight {
+	return &s.requestsInFlight
 }
 
 func (s *sessionImpl) SetRequestInFlight(reqID string, reqData string, inFlight bool) {
@@ -893,9 +893,7 @@ func (s *sessionImpl) SetRequestInFlight(reqID string, reqData string, inFlight 
 	if inFlight {
 		s.requestsInFlight.m[reqID] = reqData
 	} else {
-		if _, ok := s.requestsInFlight.m[reqID]; ok {
-			delete(s.requestsInFlight.m, reqID)
-		}
+		delete(s.requestsInFlight.m, reqID)
 	}
 	s.requestsInFlight.mu.Unlock()
 }

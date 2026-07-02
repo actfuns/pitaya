@@ -37,64 +37,24 @@ var (
 
 // Route struct
 type Route struct {
-	Domain     string
-	Service    string
-	Method     string
-	ServiceOri string
-	Instance   string
+	Domain  string
+	Service string
+	Method  string
 }
 
 // NewRoute creates a new route
-func NewRoute(domain, service, method string) *Route {
-	var serviceOri, instance string
-	index := strings.LastIndex(service, "@")
-	if index == -1 {
-		serviceOri = service
-	} else {
-		serviceOri = service[0:index]
-		instance = service[index+1:]
-	}
-	return &Route{domain, service, method, serviceOri, instance}
+func NewRoute(server, service, method string) *Route {
+	return &Route{server, service, method}
 }
 
 // String transforms the route into a string
 func (r *Route) String() string {
-	if r.Domain != "" {
-		return fmt.Sprintf("%s.%s.%s", r.Domain, r.Service, r.Method)
-	}
-	return r.Short()
-}
-
-// StringNotInst transforms the route into a string without the instance
-func (r *Route) StringNotInst() string {
-	if r.Domain != "" {
-		return fmt.Sprintf("%s.%s.%s", r.Domain, r.ServiceOri, r.Method)
-	}
-	return r.Short()
+	return fmt.Sprintf("%s.%s.%s", r.Domain, r.Service, r.Method)
 }
 
 // Short transforms the route into a string without the server type
 func (r *Route) Short() string {
 	return fmt.Sprintf("%s.%s", r.Service, r.Method)
-}
-
-// SetInstance sets the instance
-func (r *Route) SetInstance(instance string) {
-	r.Instance = instance
-	if instance == "" {
-		r.Service = r.ServiceOri
-	} else {
-		r.Service = fmt.Sprintf("%s@%s", r.ServiceOri, instance)
-	}
-}
-
-// ServiceKey returns the service key
-func (r *Route) ServiceKey() string {
-	index := strings.LastIndex(r.Service, "@")
-	if index == -1 {
-		return fmt.Sprintf("%s.%s", r.Service, r.Method)
-	}
-	return fmt.Sprintf("%s.%s", r.Service[0:index], r.Method)
 }
 
 // Decode decodes the route
@@ -105,13 +65,9 @@ func Decode(route string) (*Route, error) {
 			return nil, ErrRouteFieldCantEmpty
 		}
 	}
-	switch len(r) {
-	case 3:
-		return NewRoute(r[0], r[1], r[2]), nil
-	case 2:
-		return NewRoute("", r[0], r[1]), nil
-	default:
+	if len(r) != 3 {
 		logger.Log.Errorf("invalid route: " + route)
 		return nil, ErrInvalidRoute
 	}
+	return NewRoute(r[0], r[1], r[2]), nil
 }

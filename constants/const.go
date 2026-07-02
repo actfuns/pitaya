@@ -40,7 +40,7 @@ const (
 	SessionBindRoute = "sys.bindsession"
 
 	// KickRoute is the route used for kicking an user
-	KickRoute = "sys.kick"
+	KickRoute = "sys.sys.kick"
 )
 
 type sessionKey struct{}
@@ -76,8 +76,8 @@ var RequestIDKey = "request.id"
 // RequestUidKey is the context key where the user id will be set
 var RequestUidKey = "request.uid"
 
-// RequestInstanceKey is the key holding the request instance to be sent over the context
-var RequestInstanceKey = "request.instance"
+// RequestShardKey is the key holding the request instance to be sent over the context
+var RequestShardKey = "request.shardKey"
 
 type taskIdKey struct{}
 

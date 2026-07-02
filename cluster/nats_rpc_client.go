@@ -188,7 +188,7 @@ func (ns *NatsRPCClient) Call(
 	}
 	logger.Log.Debugf("[rpc_client] sending remote nats request for route %s with timeout of %s", route, reqTimeout)
 
-	req, err := buildRequest(ctx, rpcType, route, session, msg, ns.server)
+	req, err := buildRequest(ctx, rpcType, session, msg, ns.server)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (ns *NatsRPCClient) Call(
 	if ns.metricsReporters != nil {
 		startTime := time.Now()
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.StartTimeKey, startTime.UnixNano())
-		ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, route.StringNotInst())
+		ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, req.Msg.Route)
 		defer func() {
 			typ := "rpc"
 			metrics.ReportTimingFromCtx(ctx, ns.metricsReporters, typ, err)
@@ -216,7 +216,7 @@ func (ns *NatsRPCClient) Call(
 		if err == nats.ErrTimeout {
 			err = errors.NewError(constants.ErrRPCRequestTimeout, e.ErrRequestTimeout, map[string]string{
 				"timeout": timeout.String(),
-				"route":   route.String(),
+				"route":   req.Msg.Route,
 				"server":  ns.server.ID,
 				"peer.id": server.ID,
 			})

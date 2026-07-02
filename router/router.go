@@ -22,24 +22,23 @@ package router
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/topfreegames/pitaya/v2/cluster"
 	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/constants"
-	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/route"
+	"github.com/topfreegames/pitaya/v2/session"
 )
 
 // Router struct
 type Router struct {
 	serviceDiscovery cluster.ServiceDiscovery
 	routesMap        map[string]RoutingFunc
-	dispatch         DispatchFunc
 }
 
 // RoutingFunc defines a routing function
@@ -49,13 +48,12 @@ type RoutingFunc func(
 	route *route.Route,
 	payload []byte,
 	servers map[string]*cluster.Server,
-) (*cluster.Server, error)
+) (string, *cluster.Server, error)
 
 type Session interface {
 	GetId() int64
 	GetUid() string
 }
-type DispatchFunc func(ctx context.Context, rpcType protos.RPCType, route *route.Route, data []byte) (string, error)
 
 // New returns the router
 func New() *Router {
@@ -70,73 +68,60 @@ func (r *Router) SetServiceDiscovery(sd cluster.ServiceDiscovery) {
 }
 
 func (r *Router) defaultRoute(
+	ctx context.Context,
+	server *cluster.Server,
+	rpcType protos.RPCType,
+	route *route.Route,
 	servers map[string]*cluster.Server,
-) *cluster.Server {
+) (string, *cluster.Server) {
+	if rpcType == protos.RPCType_Sys && server != nil {
+		sessionVal, ok := ctx.Value(constants.SessionCtxKey).(session.Session)
+		if !ok {
+			return route.Domain, server
+		}
+		return strconv.FormatInt(sessionVal.ID(), 10), server
+	}
 	srvList := make([]*cluster.Server, 0)
 	s := rand.NewSource(time.Now().Unix())
 	rnd := rand.New(s)
 	for _, v := range servers {
 		srvList = append(srvList, v)
 	}
-	server := srvList[rnd.Intn(len(srvList))]
-	return server
+	sv := srvList[rnd.Intn(len(srvList))]
+	return route.Domain, sv
 }
 
-// Route gets the right server to use in the call
-func (r *Router) Route(
+// Resolve gets the right server to use in the call
+func (r *Router) Resolve(
 	ctx context.Context,
+	server *cluster.Server,
 	rpcType protos.RPCType,
 	route *route.Route,
 	msg *message.Message,
-) (*cluster.Server, error) {
+) (string, *cluster.Server, error) {
 	if r.serviceDiscovery == nil {
-		return nil, constants.ErrServiceDiscoveryNotInitialized
+		return "", nil, constants.ErrServiceDiscoveryNotInitialized
 	}
 	serversOfDomain, err := r.serviceDiscovery.GetServersByDomain(route.Domain)
 	if err != nil {
-		return nil, err
-	}
-	if rpcType == protos.RPCType_User {
-		val := pcontext.GetFromPropagateCtx(ctx, constants.RouteCustomKey)
-		if val == nil {
-			server := r.defaultRoute(serversOfDomain)
-			return server, nil
-		}
+		return "", nil, err
 	}
 	routeFunc, ok := r.routesMap[route.Domain]
 	if !ok {
 		logger.Log.Debugf("no specific route for svType: %s, using default route", route.Domain)
-		server := r.defaultRoute(serversOfDomain)
-		return server, nil
+		shardKey, server := r.defaultRoute(ctx, server, rpcType, route, serversOfDomain)
+		return shardKey, server, nil
 	}
 	return routeFunc(ctx, rpcType, route, msg.Data, serversOfDomain)
 }
 
 // AddRoute adds a routing function to a server type
 func (r *Router) AddRoute(
-	serverType string,
+	domain string,
 	routingFunction RoutingFunc,
 ) {
-	if _, ok := r.routesMap[serverType]; ok {
-		logger.Log.Warnf("overriding the route to svType %s", serverType)
+	if _, ok := r.routesMap[domain]; ok {
+		logger.Log.Warnf("overriding the route to svType %s", domain)
 	}
-	r.routesMap[serverType] = routingFunction
-}
-
-// defaultDispatch returns a random dispatch id
-func (r *Router) defaultDispatch() (string, error) {
-	return fmt.Sprintf("pitaya:route:%d", rand.Int63n(1000_0000)), nil
-}
-
-// Dispatch gets the right server to use in the call
-func (r *Router) Dispatch(ctx context.Context, rpcType protos.RPCType, route *route.Route, data []byte) (string, error) {
-	if r.dispatch != nil {
-		return r.dispatch(ctx, rpcType, route, data)
-	}
-	return r.defaultDispatch()
-}
-
-// SetDispatch sets the dispatch function
-func (r *Router) SetDispatch(dispatchFunc DispatchFunc) {
-	r.dispatch = dispatchFunc
+	r.routesMap[domain] = routingFunction
 }

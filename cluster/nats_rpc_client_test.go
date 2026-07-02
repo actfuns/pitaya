@@ -384,7 +384,7 @@ func TestNatsRPCClientBuildRequest(t *testing.T) {
 			}
 
 			rpcClient.server.Frontend = table.frontendServer
-			req, err := buildRequest(context.Background(), table.rpcType, table.route, ss, table.msg, rpcClient.server)
+			req, err := buildRequest(context.Background(), table.rpcType, ss, table.msg, rpcClient.server)
 			assert.NoError(t, err)
 			assert.NotNil(t, req.Metadata)
 			req.Metadata = nil

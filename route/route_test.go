@@ -34,7 +34,6 @@ var tables = []struct {
 	shortStr string
 }{
 	{"someserver", "someservice", "somemethod", "someserver.someservice.somemethod", "someservice.somemethod"},
-	{"", "someservice", "somemethod", "someservice.somemethod", "someservice.somemethod"},
 }
 
 func TestNewRoute(t *testing.T) {
@@ -74,7 +73,7 @@ func TestDecode(t *testing.T) {
 	t.Parallel()
 	dTables := []struct {
 		route   string
-		server  string
+		domain  string
 		service string
 		method  string
 		invalid error
@@ -89,7 +88,7 @@ func TestDecode(t *testing.T) {
 		t.Run(table.route, func(t *testing.T) {
 			r, err := Decode(table.route)
 			if table.invalid == nil {
-				assert.Equal(t, table.server, r.Domain)
+				assert.Equal(t, table.domain, r.Domain)
 				assert.Equal(t, table.service, r.Service)
 				assert.Equal(t, table.method, r.Method)
 			} else {
