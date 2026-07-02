@@ -89,6 +89,36 @@ func TestNatsRPCCommonCloseHandler(t *testing.T) {
 	assert.NotNil(t, conn)
 }
 
+// TestNatsRPCCommonCloseHandlerDoesNotPanicOnClosedDieChan is a regression test
+// for the shutdown race where (*App).Shutdown closes the shared dieChan while an
+// async NATS ClosedHandler still fires (NATS dropped with an error concurrently
+// with shutdown). Sending to the closed dieChan used to panic with "send on
+// closed channel", crashing the process and aborting graceful shutdown (e.g. etcd
+// deregistration). The handler must recover and return instead. Without the fix
+// the async panic crashes the test binary; reaching the end means it recovered.
+func TestNatsRPCCommonCloseHandlerDoesNotPanicOnClosedDieChan(t *testing.T) {
+	var conn *nats.Conn
+	s := helpers.GetTestNatsServer(t)
+
+	// dieChan is already closed, simulating (*App).Shutdown having run.
+	dieChan := make(chan bool)
+	close(dieChan)
+
+	conn, err := setupNatsConn(fmt.Sprintf("nats://%s", s.Addr()), dieChan, nil,
+		nats.MaxReconnects(1), nats.ReconnectWait(1*time.Millisecond))
+	assert.NoError(t, err)
+	assert.NotNil(t, conn)
+
+	// Force the connection to close with an error, firing ClosedHandler on the
+	// async dispatcher goroutine.
+	s.Shutdown()
+	s.WaitForShutdown()
+
+	// If the handler panicked the process would already be dead; reaching this
+	// assertion (and the connection eventually closing) proves it recovered.
+	assert.Eventually(t, conn.IsClosed, 2*time.Second, 5*time.Millisecond)
+}
+
 func TestNatsRPCCommonWaitReconnections(t *testing.T) {
 	var conn *nats.Conn
 	ts := helpers.GetTestNatsServer(t)
