@@ -78,21 +78,6 @@ func (mr *MockPitayaMockRecorder) ClearInterval(timerId any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearInterval", reflect.TypeOf((*MockPitaya)(nil).ClearInterval), timerId)
 }
 
-// Documentation mocks base method.
-func (m *MockPitaya) Documentation(getPtrNames bool) (map[string]any, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Documentation", getPtrNames)
-	ret0, _ := ret[0].(map[string]any)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Documentation indicates an expected call of Documentation.
-func (mr *MockPitayaMockRecorder) Documentation(getPtrNames any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Documentation", reflect.TypeOf((*MockPitaya)(nil).Documentation), getPtrNames)
-}
-
 // GetDieChan mocks base method.
 func (m *MockPitaya) GetDieChan() chan bool {
 	m.ctrl.T.Helper()

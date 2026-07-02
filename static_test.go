@@ -293,32 +293,6 @@ func TestStaticRegisterRPCJob(t *testing.T) {
 	}
 }
 
-func TestStaticDocumentation(t *testing.T) {
-	tables := []struct {
-		name         string
-		expectedBool bool
-		returned     map[string]interface{}
-		err          error
-	}{
-		{"Success", true, map[string]interface{}{}, nil},
-		{"Error", true, nil, errors.New("error")},
-	}
-
-	for _, row := range tables {
-		t.Run(row.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-
-			app := mocks.NewMockPitaya(ctrl)
-			app.EXPECT().Documentation(row.expectedBool).Return(row.returned, row.err)
-
-			DefaultApp = app
-			ret, err := Documentation(row.expectedBool)
-			require.Equal(t, row.returned, ret)
-			require.Equal(t, row.err, err)
-		})
-	}
-}
-
 func TestStaticIsRunning(t *testing.T) {
 	tables := []struct {
 		name     string

@@ -143,10 +143,6 @@ func RegisterRPCJob(rpcJob worker.RPCJob) error {
 	return DefaultApp.RegisterRPCJob(rpcJob)
 }
 
-func Documentation(getPtrNames bool) (map[string]interface{}, error) {
-	return DefaultApp.Documentation(getPtrNames)
-}
-
 func IsRunning() bool {
 	return DefaultApp.IsRunning()
 }

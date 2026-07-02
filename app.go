@@ -37,7 +37,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/constants"
 	pcontext "github.com/topfreegames/pitaya/v2/context"
-	"github.com/topfreegames/pitaya/v2/docgenerator"
 	"github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/groups"
 	"github.com/topfreegames/pitaya/v2/interfaces"
@@ -86,7 +85,6 @@ type Pitaya interface {
 	Shutdown()
 	StartWorker()
 	RegisterRPCJob(rpcJob worker.RPCJob) error
-	Documentation(getPtrNames bool) (map[string]interface{}, error)
 	IsRunning() bool
 
 	RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error
@@ -532,22 +530,6 @@ func ExtractSpan(ctx context.Context) (opentracing.SpanContext, error) {
 	return tracing.ExtractSpan(ctx)
 }
 
-// Documentation returns handler and remotes documentacion
-func (app *App) Documentation(getPtrNames bool) (map[string]interface{}, error) {
-	handlerDocs, err := app.handlerService.Docs(getPtrNames)
-	if err != nil {
-		return nil, err
-	}
-	remoteDocs, err := app.remoteService.Docs(getPtrNames)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]interface{}{
-		"handlers": handlerDocs,
-		"remotes":  remoteDocs,
-	}, nil
-}
-
 // AddGRPCInfoToMetadata adds host, external host and
 // port into metadata
 func AddGRPCInfoToMetadata(
@@ -562,11 +544,6 @@ func AddGRPCInfoToMetadata(
 	metadata[constants.GRPCExternalPortKey] = externalPort
 	metadata[constants.RegionKey] = region
 	return metadata
-}
-
-// Descriptor returns the protobuf message descriptor for a given message name
-func Descriptor(protoName string) ([]byte, error) {
-	return docgenerator.ProtoDescriptors(protoName)
 }
 
 // StartWorker configures, starts and returns pitaya worker

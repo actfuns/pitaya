@@ -36,7 +36,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/conn/message"
 	"github.com/topfreegames/pitaya/v2/constants"
 	pcontext "github.com/topfreegames/pitaya/v2/context"
-	"github.com/topfreegames/pitaya/v2/docgenerator"
 	e "github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/pipeline"
@@ -612,12 +611,4 @@ func (r *RemoteService) DumpServices() {
 	for name := range r.remotes {
 		logger.Log.Infof("registered remote %s", name)
 	}
-}
-
-// Docs returns documentation for remotes
-func (r *RemoteService) Docs(getPtrNames bool) (map[string]interface{}, error) {
-	if r == nil {
-		return map[string]interface{}{}, nil
-	}
-	return docgenerator.RemotesDocs(r.server.Type, r.services, getPtrNames)
 }

@@ -91,7 +91,7 @@ func NewBuilder(isFrontend bool,
 	serverMetadata map[string]string,
 	config config.PitayaConfig,
 ) *Builder {
-	server := cluster.NewServerWithOptions(
+	server := cluster.NewServer(
 		uuid.New().String(),
 		serverType,
 		isFrontend,
