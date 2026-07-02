@@ -41,16 +41,6 @@ func (app *App) RPCTo(ctx context.Context, serverID, routeStr string, reply prot
 	return app.doSendRPC(ctx, serverID, routeStr, reply, arg)
 }
 
-// RPCHandle calls a method in a different server
-func (app *App) RPCHandle(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error {
-	return app.doSendRPCHandle(ctx, "", routeStr, reply, arg)
-}
-
-// RPCHandleTo send a rpc to a specific server
-func (app *App) RPCHandleTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error {
-	return app.doSendRPCHandle(ctx, serverID, routeStr, reply, arg)
-}
-
 // ReliableRPC enqueues RPC to worker so it's executed asynchronously
 // Default enqueue options are used
 func (app *App) ReliableRPC(
@@ -95,29 +85,4 @@ func (app *App) doSendRPC(ctx context.Context, serverID, routeStr string, reply 
 	}
 
 	return app.remoteService.RPC(ctx, protos.RPCType_User, serverID, r, reply, arg)
-}
-
-func (app *App) doSendRPCHandle(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error {
-	if app.rpcServer == nil {
-		return constants.ErrRPCServerNotInitialized
-	}
-
-	if reflect.TypeOf(reply).Kind() != reflect.Ptr {
-		return constants.ErrReplyShouldBePtr
-	}
-
-	r, err := route.Decode(routeStr)
-	if err != nil {
-		return err
-	}
-
-	if r.SvType == "" {
-		return constants.ErrNoServerTypeChosenForRPC
-	}
-
-	if ((r.SvType == app.server.Type && serverID == "") || serverID == app.server.ID) && !app.server.IsLoopbackEnabled() {
-		return constants.ErrNonsenseRPC
-	}
-
-	return app.remoteService.RPC(ctx, protos.RPCType_Handle, serverID, r, reply, arg)
 }

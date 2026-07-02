@@ -741,51 +741,6 @@ func (mr *MockPitayaMockRecorder) GetSerializer() *gomock.Call {
 	)
 }
 
-// RPCHandle mocks base method.
-func (m *MockPitaya) RPCHandle(arg0 context.Context, arg1 string, arg2 proto.Message, arg3 proto.Message) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RPCHandle", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RPCHandle indicates an expected call of RPCHandle.
-func (mr *MockPitayaMockRecorder) RPCHandle(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(
-		mr.mock,
-		"RPCHandle",
-		reflect.TypeOf((*MockPitaya)(nil).RPCHandle),
-		arg0,
-		arg1,
-		arg2,
-		arg3,
-	)
-}
-
-// RPCHandleTo mocks base method.
-func (m *MockPitaya) RPCHandleTo(arg0 context.Context, arg1 string, arg2 string, arg3 proto.Message, arg4 proto.Message) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RPCHandleTo", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RPCHandleTo indicates an expected call of RPCHandleTo.
-func (mr *MockPitayaMockRecorder) RPCHandleTo(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(
-		mr.mock,
-		"RPCHandleTo",
-		reflect.TypeOf((*MockPitaya)(nil).RPCHandleTo),
-		arg0,
-		arg1,
-		arg2,
-		arg3,
-		arg4,
-	)
-}
-
 // SetDispatch mocks base method.
 func (m *MockPitaya) SetDispatch(arg0 router.DispatchFunc) error {
 	m.ctrl.T.Helper()

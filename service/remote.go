@@ -408,8 +408,6 @@ func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteSer
 		return r.handleRPCSys(ctx, req, rt)
 	case req.Type == protos.RPCType_User:
 		return r.handleRPCUser(ctx, req, rt)
-	case req.Type == protos.RPCType_Handle:
-		return r.handleRPCHandle(ctx, req, rt)
 	default:
 		return &protos.Response{
 			Error: &protos.Error{
@@ -577,116 +575,6 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, r
 	} else {
 		response = &protos.Response{Data: ret}
 	}
-	return
-}
-
-func (r *RemoteService) handleRPCHandle(ctx context.Context, req *protos.Request, rt *route.Route) (response *protos.Response) {
-	serviceKey := rt.ServiceKey()
-	handler, ok := r.handlerPool.handlers[serviceKey]
-	if !ok {
-		logger.WithCtx(ctx).Warnf("pitaya/handler: %s not found", serviceKey)
-		response = &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrNotFoundCode,
-				Msg:  "route not found",
-				Metadata: map[string]string{
-					"route": serviceKey,
-				},
-			},
-		}
-		return
-	}
-
-	var ret interface{}
-	var arg interface{}
-	var err error
-
-	arg, err = unmarshalRemoteArg(handler.Type, req.GetMsg().GetData())
-	if err != nil {
-		response = &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrBadRequestCode,
-				Msg:  err.Error(),
-			},
-		}
-		return
-	}
-
-	val := pcontext.GetFromPropagateCtx(ctx, constants.RequestUidKey)
-	uid, _ := val.(string)
-	ctx = util.CtxWithDefaultLogger(ctx, rt.Short(), uid)
-
-	defer func() {
-		if r := recover(); r != nil {
-			logger.WithCtx(ctx).Errorf("panic: %v", r)
-			response = &protos.Response{
-				Error: &protos.Error{
-					Code: e.ErrInternalCode,
-					Msg:  fmt.Sprintf("%v", r),
-				},
-			}
-		}
-	}()
-
-	ctx, arg, err = r.handlerHooks.BeforeHandler.ExecuteBeforePipeline(ctx, arg)
-	if err != nil {
-		response = &protos.Response{
-			Error: &protos.Error{
-				Code: e.ErrInternalCode,
-				Msg:  err.Error(),
-			},
-		}
-		return
-	}
-
-	params := []reflect.Value{handler.Receiver, reflect.ValueOf(ctx)}
-	params = append(params, reflect.ValueOf(arg))
-	ret, err = util.Pcall(handler.Method, params)
-	ret, err = r.handlerHooks.AfterHandler.ExecuteAfterPipeline(ctx, ret, err)
-	if err != nil {
-		response = &protos.Response{
-			Error: &protos.Error{},
-		}
-		code := e.ErrUnknownCode
-		msg := err.Error()
-		if val, ok := err.(e.PitayaError); ok {
-			code = val.GetCode()
-			msg = val.GetMsg()
-			response.Error.Level = val.GetLevel()
-			response.Error.Metadata = val.GetMetadata()
-		}
-		response.Error.Code = code
-		response.Error.Msg = msg
-		logger.WithCtx(ctx).LogfWithErrorLevel(err, "RPC handler %s failed to process message: %s", rt.String(), err.Error())
-		return
-	}
-
-	var b []byte
-	if ret != nil {
-		pb, ok := ret.(proto.Message)
-		if !ok {
-			if b, ok = ret.([]byte); !ok {
-				response = &protos.Response{
-					Error: &protos.Error{
-						Code: e.ErrUnknownCode,
-						Msg:  constants.ErrWrongValueType.Error(),
-					},
-				}
-				return
-			}
-		} else if b, err = proto.Marshal(pb); err != nil {
-			response = &protos.Response{
-				Error: &protos.Error{
-					Code: e.ErrUnknownCode,
-					Msg:  err.Error(),
-				},
-			}
-			return
-		}
-	}
-
-	response = &protos.Response{}
-	response.Data = b
 	return
 }
 

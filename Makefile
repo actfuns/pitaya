@@ -86,7 +86,7 @@ protos-compile-demo:
 
 protos-compile:
 	@cd benchmark/testdata && ./gen_proto.sh
-	@protoc -I pitaya-protos/ pitaya-protos/*.proto --go_out=plugins=grpc:protos
+	@protoc -I pitaya-protos/ pitaya-protos/*.proto --go_out=protos --go-grpc_out=protos --go_opt=module=github.com/topfreegames/pitaya/pkg/protos --go-grpc_opt=module=github.com/topfreegames/pitaya/pkg/protos
 
 rm-test-temp-files:
 	@rm -f cluster/127.0.0.1* 127.0.0.1*
