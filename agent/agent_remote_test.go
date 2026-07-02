@@ -158,7 +158,7 @@ func TestAgentRemotePush(t *testing.T) {
 			}
 
 			if table.err != constants.ErrNoUIDBind {
-				mockSD.EXPECT().GetServer(fSvID).Return(cluster.NewServer(fSvID, "connector", true), nil)
+				mockSD.EXPECT().GetServer(fSvID).Return(cluster.NewServer(fSvID, "connector", true, cluster.WithDomain("connector")), nil)
 			}
 			err = remote.Push(route, table.data)
 			assert.Equal(t, table.err, err)

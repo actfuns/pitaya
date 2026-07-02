@@ -40,6 +40,7 @@ type Server struct {
 
 	ID       string            `json:"id"`
 	Type     string            `json:"type"`
+	Domains  []string          `json:"domains"`
 	Metadata map[string]string `json:"metadata"`
 	Frontend bool              `json:"frontend"`
 	Hostname string            `json:"hostname"`
@@ -49,13 +50,22 @@ type Server struct {
 type serverDTO struct {
 	ID       string            `json:"id"`
 	Type     string            `json:"type"`
+	Domains  []string          `json:"domains"`
 	Metadata map[string]string `json:"metadata"`
 	Frontend bool              `json:"frontend"`
 	Hostname string            `json:"hostname"`
 	State    int32             `json:"state"`
 }
 
-type ServerOption func(*Server)
+// ServerOptions holds optional configuration for creating a Server.
+type ServerOptions struct {
+	metadata        map[string]string
+	domains         []string
+	loopbackEnabled bool
+}
+
+// ServerOption configures a ServerOptions.
+type ServerOption func(*ServerOptions)
 
 // NewServer creates a server with the given id, type, frontend flag and options.
 func NewServer(id, serverType string, frontend bool, opts ...ServerOption) *Server {
@@ -63,31 +73,42 @@ func NewServer(id, serverType string, frontend bool, opts ...ServerOption) *Serv
 	if err != nil {
 		logger.Log.Errorf("failed to get hostname: %s", err.Error())
 	}
+
+	o := &ServerOptions{}
+	for _, opt := range opts {
+		opt(o)
+	}
+
 	s := &Server{
+		loopbackEnabled: o.loopbackEnabled,
+
 		ID:       id,
 		Type:     serverType,
-		Metadata: make(map[string]string),
+		Metadata: o.metadata,
 		Frontend: frontend,
 		Hostname: h,
+		Domains:  o.domains,
 	}
 	s.state.Store(StateActive)
-	for _, opt := range opts {
-		opt(s)
-	}
+
 	return s
 }
 
 func WithMetadata(metadata map[string]string) ServerOption {
-	return func(s *Server) {
-		if metadata != nil {
-			s.Metadata = metadata
-		}
+	return func(o *ServerOptions) {
+		o.metadata = metadata
+	}
+}
+
+func WithDomain(domains ...string) ServerOption {
+	return func(o *ServerOptions) {
+		o.domains = append(o.domains, domains...)
 	}
 }
 
 func WithLoopbackEnabled(enabled bool) ServerOption {
-	return func(s *Server) {
-		s.loopbackEnabled = enabled
+	return func(o *ServerOptions) {
+		o.loopbackEnabled = enabled
 	}
 }
 
@@ -106,6 +127,7 @@ func (s *Server) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&serverDTO{
 		ID:       s.ID,
 		Type:     s.Type,
+		Domains:  s.Domains,
 		Metadata: s.Metadata,
 		Frontend: s.Frontend,
 		Hostname: s.Hostname,
@@ -121,6 +143,7 @@ func (s *Server) UnmarshalJSON(data []byte) error {
 	}
 	s.ID = aux.ID
 	s.Type = aux.Type
+	s.Domains = aux.Domains
 	s.Metadata = aux.Metadata
 	s.Frontend = aux.Frontend
 	s.Hostname = aux.Hostname

@@ -170,7 +170,7 @@ func TestStaticGetServersByType(t *testing.T) {
 			app.EXPECT().GetServersByType(row.typ).Return(row.server, row.err)
 
 			DefaultApp = app
-			server, err := GetServersByType(row.typ)
+			server, err := GetServersByDomain(row.typ)
 			require.Equal(t, row.err, err)
 			require.Equal(t, row.server, server)
 		})

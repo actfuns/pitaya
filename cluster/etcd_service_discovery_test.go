@@ -37,9 +37,9 @@ import (
 var etcdSDTables = []struct {
 	server *Server
 }{
-	{NewServer("frontend-1", "type1", true, WithMetadata(map[string]string{"k1": "v1"}))},
-	{NewServer("backend-1", "type2", false, WithMetadata(map[string]string{"k2": "v2"}))},
-	{NewServer("backend-2", "type3", false)},
+	{NewServer("frontend-1", "type1", true, WithDomain("type1"), WithMetadata(map[string]string{"k1": "v1"}))},
+	{NewServer("backend-1", "type2", false, WithDomain("type2"), WithMetadata(map[string]string{"k2": "v2"}))},
+	{NewServer("backend-2", "type3", false, WithDomain("type3"))},
 }
 
 var etcdSDTablesMultipleServers = []struct {
@@ -47,14 +47,14 @@ var etcdSDTablesMultipleServers = []struct {
 }{
 	{[]*Server{}},
 	{[]*Server{
-		NewServer("frontend-1", "type1", true, WithMetadata(map[string]string{"k1": "v1"})),
-		NewServer("backend-1", "type2", false, WithMetadata(map[string]string{"k2": "v2"})),
-		NewServer("backend-2", "type3", false),
+		NewServer("frontend-1", "type1", true, WithDomain("type1"), WithMetadata(map[string]string{"k1": "v1"})),
+		NewServer("backend-1", "type2", false, WithDomain("type2"), WithMetadata(map[string]string{"k2": "v2"})),
+		NewServer("backend-2", "type3", false, WithDomain("type3")),
 	}},
 	{[]*Server{
-		NewServer("frontend-1", "type2", true, WithMetadata(map[string]string{"k1": "v1"})),
-		NewServer("frontend-2", "type2", true, WithMetadata(map[string]string{"k2": "v2"})),
-		NewServer("frontend-3", "type2", true, WithMetadata(map[string]string{"k1": "v1"})),
+		NewServer("frontend-1", "type2", true, WithDomain("type2"), WithMetadata(map[string]string{"k1": "v1"})),
+		NewServer("frontend-2", "type2", true, WithDomain("type2"), WithMetadata(map[string]string{"k2": "v2"})),
+		NewServer("frontend-3", "type2", true, WithDomain("type2"), WithMetadata(map[string]string{"k1": "v1"})),
 	}},
 }
 
@@ -66,30 +66,30 @@ var etcdSDBlacklistTables = []struct {
 }{
 	{
 		name:   "test1",
-		server: NewServer("frontend-1", "type1", true),
+		server: NewServer("frontend-1", "type1", true, WithDomain("type1")),
 		serversToAdd: []*Server{
-			NewServer("frontend-1", "type1", true),
+			NewServer("frontend-1", "type1", true, WithDomain("type1")),
 		},
 		serverTypeBlacklist: nil,
 	},
 	{
 		name:   "test2",
-		server: NewServer("frontend-1", "type1", true),
+		server: NewServer("frontend-1", "type1", true, WithDomain("type1")),
 		serversToAdd: []*Server{
-			NewServer("backend-1", "type1", false),
-			NewServer("backend-2", "type2", false),
-			NewServer("backend-3", "type3", false),
+			NewServer("backend-1", "type1", false, WithDomain("type1")),
+			NewServer("backend-2", "type2", false, WithDomain("type2")),
+			NewServer("backend-3", "type3", false, WithDomain("type3")),
 		},
 		serverTypeBlacklist: []string{"type2"},
 	},
 	{
 		name:   "test3",
-		server: NewServer("frontend-1", "type1", true),
+		server: NewServer("frontend-1", "type1", true, WithDomain("type1")),
 		serversToAdd: []*Server{
-			NewServer("backend-1", "type1", false),
-			NewServer("backend-2", "type2", false),
-			NewServer("backend-3", "type3", false),
-			NewServer("backend-4", "type4", false),
+			NewServer("backend-1", "type1", false, WithDomain("type1")),
+			NewServer("backend-2", "type2", false, WithDomain("type2")),
+			NewServer("backend-3", "type3", false, WithDomain("type3")),
+			NewServer("backend-4", "type4", false, WithDomain("type4")),
 		},
 		serverTypeBlacklist: []string{"type1", "type4"},
 	},
@@ -181,8 +181,10 @@ func TestEtcdSDDeleteServer(t *testing.T) {
 			generatedSv, ok := e.serverMapByID.Load(table.server.ID)
 			assert.False(t, ok)
 			assert.Nil(t, generatedSv)
-			_, err = e.GetServersByType(table.server.Type)
-			assert.EqualError(t, constants.ErrNoServersAvailableOfType, err.Error())
+			for _, domain := range table.server.Domains {
+				_, err = e.GetServersByDomain(domain)
+				assert.EqualError(t, constants.ErrNoServersAvailableOfType, err.Error())
+			}
 		})
 	}
 }
@@ -327,13 +329,14 @@ func TestEtcdWatchChangesAddNewServers(t *testing.T) {
 			e := getEtcdSD(t, config, table.server, cli)
 			e.Init()
 			e.running = true
-			serversBefore, err := e.GetServersByType(table.server.Type)
+			serversBefore, err := e.GetServersByDomain(table.server.Domains[0])
 			assert.NoError(t, err)
 			assert.Equal(t, 1, len(serversBefore))
 			newServer := &Server{
 				ID:       "newID",
 				Type:     table.server.Type,
 				Frontend: false,
+				Domains:  table.server.Domains,
 			}
 			err = e.addServerIntoEtcd(newServer)
 			assert.NoError(t, err)
@@ -341,7 +344,7 @@ func TestEtcdWatchChangesAddNewServers(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, newServer, ss)
 			helpers.ShouldEventuallyReturn(t, func() int {
-				serversNow, _ := e.GetServersByType(table.server.Type)
+				serversNow, _ := e.GetServersByDomain(table.server.Domains[0])
 				return len(serversNow)
 			}, 2)
 		})
@@ -358,13 +361,14 @@ func TestEtcdWatchChangesDeleteServers(t *testing.T) {
 			e := getEtcdSD(t, config, table.server, cli)
 			e.Init()
 			e.running = true
-			serversBefore, err := e.GetServersByType(table.server.Type)
+			serversBefore, err := e.GetServersByDomain(table.server.Domains[0])
 			assert.NoError(t, err)
 			assert.Equal(t, 1, len(serversBefore))
 			newServer := &Server{
 				ID:       "newID",
 				Type:     table.server.Type,
 				Frontend: false,
+				Domains:  table.server.Domains,
 			}
 			err = e.addServerIntoEtcd(newServer)
 			assert.NoError(t, err)
@@ -372,13 +376,13 @@ func TestEtcdWatchChangesDeleteServers(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, newServer, ss)
 			helpers.ShouldEventuallyReturn(t, func() int {
-				serversNow, _ := e.GetServersByType(table.server.Type)
+				serversNow, _ := e.GetServersByDomain(table.server.Domains[0])
 				return len(serversNow)
 			}, 2)
 			_, err = cli.Delete(context.TODO(), getKey(newServer.ID, newServer.Type))
 			assert.NoError(t, err)
 			helpers.ShouldEventuallyReturn(t, func() int {
-				serversNow, _ := e.GetServersByType(table.server.Type)
+				serversNow, _ := e.GetServersByDomain(table.server.Domains[0])
 				return len(serversNow)
 			}, 1)
 		})
@@ -397,9 +401,11 @@ func TestEtcdWatchChangesWithBlacklist(t *testing.T) {
 			e.Init()
 			e.running = true
 
-			serversBefore, err := e.GetServersByType(table.server.Type)
-			assert.NoError(t, err)
-			assert.Equal(t, 1, len(serversBefore))
+			for _, domain := range table.server.Domains {
+				serversBefore, err := e.GetServersByDomain(domain)
+				assert.NoError(t, err)
+				assert.Equal(t, 1, len(serversBefore))
+			}
 
 			// Add all servers to ETCD
 			for _, serverToAdd := range table.serversToAdd {
@@ -446,15 +452,15 @@ func TestParallelGetter(t *testing.T) {
 	_, cli := helpers.GetTestEtcd(t)
 
 	serversToAdd := []*Server{
-		NewServer("frontend-1", "type1", true),
-		NewServer("frontend-2", "type2", true),
-		NewServer("frontend-3", "type3", true),
-		NewServer("frontend-4", "type4", true),
-		NewServer("frontend-5", "type5", true),
-		NewServer("frontend-6", "type6", true),
-		NewServer("frontend-7", "type7", true),
-		NewServer("frontend-8", "type8", true),
-		NewServer("frontend-9", "type9", true),
+		NewServer("frontend-1", "type1", true, WithDomain("type1")),
+		NewServer("frontend-2", "type2", true, WithDomain("type1")),
+		NewServer("frontend-3", "type3", true, WithDomain("type1")),
+		NewServer("frontend-4", "type4", true, WithDomain("type1")),
+		NewServer("frontend-5", "type5", true, WithDomain("type1")),
+		NewServer("frontend-6", "type6", true, WithDomain("type1")),
+		NewServer("frontend-7", "type7", true, WithDomain("type1")),
+		NewServer("frontend-8", "type8", true, WithDomain("type1")),
+		NewServer("frontend-9", "type9", true, WithDomain("type1")),
 	}
 
 	// Add server
@@ -469,7 +475,7 @@ func TestParallelGetter(t *testing.T) {
 
 	parallelGetter := newParallelGetter(cli, 5)
 	for _, serverToAdd := range serversToAdd {
-		payload := []byte("{\"id\":\"" + serverToAdd.ID + "\",\"type\":\"" + serverToAdd.Type + "\",\"frontend\":true,\"hostname\":\"" + serverToAdd.ID + "\",\"metadata\":{\"region\":\"us\"}}")
+		payload := []byte("{\"id\":\"" + serverToAdd.ID + "\",\"type\":\"" + serverToAdd.Type + "\",\"domains\":[\"" + serverToAdd.Domains[0] + "\"],\"frontend\":true,\"hostname\":\"" + serverToAdd.ID + "\",\"metadata\":{\"region\":\"us\"}}")
 		parallelGetter.addWorkWithPayload(serverToAdd.Type, serverToAdd.ID, payload)
 	}
 
@@ -500,7 +506,7 @@ func TestEtcdWatcherCompactionErrorHandling(t *testing.T) {
 	config.SyncServers.Interval = 100 * time.Millisecond
 	_, cli := helpers.GetTestEtcd(t)
 
-	server := NewServer("test-server", "test-type", false)
+	server := NewServer("test-server", "test-type", false, WithDomain("test-type"))
 	e := getEtcdSD(t, config, server, cli)
 	e.Init()
 

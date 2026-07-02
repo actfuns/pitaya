@@ -74,6 +74,7 @@ var (
 	ErrReplyShouldBeNotNull           = errors.New("reply must not be null")
 	ErrReplyShouldBePtr               = errors.New("reply must be a pointer")
 	ErrRequestOnNotify                = errors.New("tried to request a notify route")
+	ErrRouteMissingServerDomain       = errors.New("route is missing domain")
 	ErrRouterNotInitialized           = errors.New("router is not initialized")
 	ErrServerNotFound                 = errors.New("server not found")
 	ErrServiceDiscoveryNotInitialized = errors.New("service discovery client is not initialized")

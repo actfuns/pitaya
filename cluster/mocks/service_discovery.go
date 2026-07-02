@@ -106,19 +106,19 @@ func (mr *MockServiceDiscoveryMockRecorder) GetServers() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServers", reflect.TypeOf((*MockServiceDiscovery)(nil).GetServers))
 }
 
-// GetServersByType mocks base method.
-func (m *MockServiceDiscovery) GetServersByType(serverType string) (map[string]*cluster.Server, error) {
+// GetServersByDomain mocks base method.
+func (m *MockServiceDiscovery) GetServersByDomain(serverType string) (map[string]*cluster.Server, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServersByType", serverType)
+	ret := m.ctrl.Call(m, "GetServersByDomain", serverType)
 	ret0, _ := ret[0].(map[string]*cluster.Server)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetServersByType indicates an expected call of GetServersByType.
-func (mr *MockServiceDiscoveryMockRecorder) GetServersByType(serverType any) *gomock.Call {
+// GetServersByDomain indicates an expected call of GetServersByDomain.
+func (mr *MockServiceDiscoveryMockRecorder) GetServersByDomain(serverType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServersByType", reflect.TypeOf((*MockServiceDiscovery)(nil).GetServersByType), serverType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServersByDomain", reflect.TypeOf((*MockServiceDiscovery)(nil).GetServersByDomain), serverType)
 }
 
 // Init mocks base method.

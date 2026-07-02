@@ -87,8 +87,8 @@ func GetServerByID(id string) (*cluster.Server, error) {
 	return DefaultApp.GetServerByID(id)
 }
 
-func GetServersByType(t string) (map[string]*cluster.Server, error) {
-	return DefaultApp.GetServersByType(t)
+func GetServersByDomain(t string) (map[string]*cluster.Server, error) {
+	return DefaultApp.GetServersByDomain(t)
 }
 
 func GetServers() []*cluster.Server {

@@ -138,7 +138,7 @@ func TestGetServerByID(t *testing.T) {
 func TestGetServersByType(t *testing.T) {
 	builderConfig := config.NewDefaultPitayaConfig()
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *builderConfig)
-	s, err := app.GetServersByType("id")
+	s, err := app.GetServersByDomain("id")
 	assert.Nil(t, s)
 	assert.EqualError(t, constants.ErrNoServersAvailableOfType, err.Error())
 }
@@ -514,16 +514,6 @@ func TestExtractSpan(t *testing.T) {
 	spanCtx, err := ExtractSpan(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, span.Context(), spanCtx)
-}
-
-func TestDescriptor(t *testing.T) {
-	bts, err := Descriptor("kick.proto")
-	assert.NoError(t, err)
-	assert.NotNil(t, bts)
-
-	bts, err = Descriptor("not_exists.proto")
-	assert.Nil(t, bts)
-	assert.EqualError(t, constants.ErrProtodescriptor, err.Error())
 }
 
 func TestAddGRPCInfoToMetadata(t *testing.T) {

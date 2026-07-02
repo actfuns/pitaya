@@ -75,7 +75,7 @@ type Pitaya interface {
 	GetMetricsReporters() []metrics.Reporter
 	GetServer() *cluster.Server
 	GetServerByID(id string) (*cluster.Server, error)
-	GetServersByType(t string) (map[string]*cluster.Server, error)
+	GetServersByDomain(t string) (map[string]*cluster.Server, error)
 	GetServers() []*cluster.Server
 	GetSessionFromCtx(ctx context.Context) session.Session
 	Start()
@@ -259,9 +259,9 @@ func (app *App) GetServerByID(id string) (*cluster.Server, error) {
 	return app.serviceDiscovery.GetServer(id)
 }
 
-// GetServersByType get all servers of type
-func (app *App) GetServersByType(t string) (map[string]*cluster.Server, error) {
-	return app.serviceDiscovery.GetServersByType(t)
+// GetServersByDomain get all servers of type
+func (app *App) GetServersByDomain(t string) (map[string]*cluster.Server, error) {
+	return app.serviceDiscovery.GetServersByDomain(t)
 }
 
 // GetServers get all servers

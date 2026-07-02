@@ -147,7 +147,7 @@ func (gs *GRPCClient) Call(
 		}()
 	}
 
-	res, err := c.(*grpcClient).call(ctxT, &req)
+	res, err := c.(*grpcClient).call(ctxT, req)
 	if err != nil {
 		return nil, err
 	}

@@ -37,7 +37,7 @@ var (
 
 // Route struct
 type Route struct {
-	SvType     string
+	Domain     string
 	Service    string
 	Method     string
 	ServiceOri string
@@ -45,7 +45,7 @@ type Route struct {
 }
 
 // NewRoute creates a new route
-func NewRoute(server, service, method string) *Route {
+func NewRoute(domain, service, method string) *Route {
 	var serviceOri, instance string
 	index := strings.LastIndex(service, "@")
 	if index == -1 {
@@ -54,21 +54,21 @@ func NewRoute(server, service, method string) *Route {
 		serviceOri = service[0:index]
 		instance = service[index+1:]
 	}
-	return &Route{server, service, method, serviceOri, instance}
+	return &Route{domain, service, method, serviceOri, instance}
 }
 
 // String transforms the route into a string
 func (r *Route) String() string {
-	if r.SvType != "" {
-		return fmt.Sprintf("%s.%s.%s", r.SvType, r.Service, r.Method)
+	if r.Domain != "" {
+		return fmt.Sprintf("%s.%s.%s", r.Domain, r.Service, r.Method)
 	}
 	return r.Short()
 }
 
 // StringNotInst transforms the route into a string without the instance
 func (r *Route) StringNotInst() string {
-	if r.SvType != "" {
-		return fmt.Sprintf("%s.%s.%s", r.SvType, r.ServiceOri, r.Method)
+	if r.Domain != "" {
+		return fmt.Sprintf("%s.%s.%s", r.Domain, r.ServiceOri, r.Method)
 	}
 	return r.Short()
 }

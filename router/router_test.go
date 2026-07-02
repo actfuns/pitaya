@@ -19,7 +19,7 @@ var (
 	serverID   = "id"
 	serverType = "serverType"
 	frontend   = true
-	server     = cluster.NewServer(serverID, serverType, frontend)
+	server     = cluster.NewServer(serverID, serverType, frontend, cluster.WithDomain(serverType))
 	servers    = map[string]*cluster.Server{
 		serverID: server,
 	}
@@ -36,10 +36,10 @@ var (
 )
 
 var routerTables = map[string]struct {
-	server     *cluster.Server
-	serverType string
-	rpcType    protos.RPCType
-	err        error
+	server  *cluster.Server
+	doamin  string
+	rpcType protos.RPCType
+	err     error
 }{
 	"test_server_has_route_func":   {server, serverType, protos.RPCType_Sys, nil},
 	"test_server_use_default_func": {server, "notRegisteredType", protos.RPCType_Sys, nil},
@@ -81,14 +81,14 @@ func TestRoute(t *testing.T) {
 			defer ctrl.Finish()
 			mockServiceDiscovery := mocks.NewMockServiceDiscovery(ctrl)
 			mockServiceDiscovery.EXPECT().
-				GetServersByType(table.serverType).
+				GetServersByDomain(table.doamin).
 				Return(servers, table.err)
 
 			router := New()
 			router.AddRoute(serverType, routingFunction)
 			router.SetServiceDiscovery(mockServiceDiscovery)
 
-			retServer, err := router.Route(ctx, table.rpcType, table.serverType, route, &message.Message{
+			retServer, err := router.Route(ctx, table.rpcType, route, &message.Message{
 				Data: []byte{0x01},
 			})
 			assert.Equal(t, table.server, retServer)
@@ -115,7 +115,7 @@ func TestRouteFailIfNullServiceDiscovery(t *testing.T) {
 	t.Parallel()
 
 	router := New()
-	_, err := router.Route(context.Background(), protos.RPCType_Sys, serverType, route.NewRoute(serverType, "service", "method"), &message.Message{
+	_, err := router.Route(context.Background(), protos.RPCType_Sys, route.NewRoute(serverType, "service", "method"), &message.Message{
 		Data: []byte{0x01},
 	})
 	assert.Equal(t, constants.ErrServiceDiscoveryNotInitialized, err)

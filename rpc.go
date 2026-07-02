@@ -23,6 +23,7 @@ package pitaya
 import (
 	"context"
 	"reflect"
+	"slices"
 
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/constants"
@@ -76,11 +77,11 @@ func (app *App) doSendRPC(ctx context.Context, serverID, routeStr string, reply 
 		return err
 	}
 
-	if r.SvType == "" {
+	if r.Domain == "" {
 		return constants.ErrNoServerTypeChosenForRPC
 	}
 
-	if ((r.SvType == app.server.Type && serverID == "") || serverID == app.server.ID) && !app.server.IsLoopbackEnabled() {
+	if ((slices.Contains(app.server.Domains, r.Domain) && serverID == "") || serverID == app.server.ID) && !app.server.IsLoopbackEnabled() {
 		return constants.ErrNonsenseRPC
 	}
 

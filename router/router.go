@@ -86,31 +86,30 @@ func (r *Router) defaultRoute(
 func (r *Router) Route(
 	ctx context.Context,
 	rpcType protos.RPCType,
-	svType string,
 	route *route.Route,
 	msg *message.Message,
 ) (*cluster.Server, error) {
 	if r.serviceDiscovery == nil {
 		return nil, constants.ErrServiceDiscoveryNotInitialized
 	}
-	serversOfType, err := r.serviceDiscovery.GetServersByType(svType)
+	serversOfDomain, err := r.serviceDiscovery.GetServersByDomain(route.Domain)
 	if err != nil {
 		return nil, err
 	}
 	if rpcType == protos.RPCType_User {
 		val := pcontext.GetFromPropagateCtx(ctx, constants.RouteCustomKey)
 		if val == nil {
-			server := r.defaultRoute(serversOfType)
+			server := r.defaultRoute(serversOfDomain)
 			return server, nil
 		}
 	}
-	routeFunc, ok := r.routesMap[svType]
+	routeFunc, ok := r.routesMap[route.Domain]
 	if !ok {
-		logger.Log.Debugf("no specific route for svType: %s, using default route", svType)
-		server := r.defaultRoute(serversOfType)
+		logger.Log.Debugf("no specific route for svType: %s, using default route", route.Domain)
+		server := r.defaultRoute(serversOfDomain)
 		return server, nil
 	}
-	return routeFunc(ctx, rpcType, route, msg.Data, serversOfType)
+	return routeFunc(ctx, rpcType, route, msg.Data, serversOfDomain)
 }
 
 // AddRoute adds a routing function to a server type

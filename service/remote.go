@@ -254,7 +254,7 @@ func (r *RemoteService) DoRPC(ctx context.Context, rpcType protos.RPCType, serve
 	}
 
 	if serverID == "" {
-		target, err := r.router.Route(ctx, rpcType, route.SvType, route, msg)
+		target, err := r.router.Route(ctx, rpcType, route, msg)
 		if err != nil {
 			logger.Log.Errorf("error making call for route %s: %v", route.String(), err)
 			return nil, e.NewError(err, e.ErrInternalCode)
@@ -312,7 +312,7 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 	if err != nil {
 		return nil, err
 	}
-	subCtx, rt, err := util.GetContextFromRequest(&req, r.server.ID)
+	subCtx, rt, err := util.GetContextFromRequest(req, r.server.ID)
 	if taskId := ctx.Value(constants.TaskIDKey); taskId != nil {
 		subCtx = context.WithValue(subCtx, constants.TaskIDKey, taskId)
 	}
@@ -351,7 +351,7 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 		if err == nil {
 			result := make(chan *protos.Response, 1)
 			err = r.taskSevice.Submit(subCtx, dispatchId, func(tctx context.Context) {
-				result <- processRemoteMessage(tctx, &req, r, rt)
+				result <- processRemoteMessage(tctx, req, r, rt)
 			})
 			if err == nil {
 				timer := time.NewTimer(5 * time.Second)
@@ -585,13 +585,11 @@ func (r *RemoteService) remoteCall(
 	session session.Session,
 	msg *message.Message,
 ) (*protos.Response, error) {
-	svType := route.SvType
-
 	var err error
 	target := server
 
 	if target == nil {
-		target, err = r.router.Route(ctx, rpcType, svType, route, msg)
+		target, err = r.router.Route(ctx, rpcType, route, msg)
 		if err != nil {
 			logger.Log.Errorf("error making call for route %s: %v", route.String(), err)
 			return nil, e.NewError(err, e.ErrInternalCode)

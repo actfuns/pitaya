@@ -260,8 +260,13 @@ func (sd *etcdServiceDiscovery) deleteServer(serverID string) {
 		sv := actual.(*Server)
 		sd.serverMapByID.Delete(sv.ID)
 		sd.writeLockScope(func() {
-			if svMap, ok := sd.serverMapByType[sv.Type]; ok {
-				delete(svMap, sv.ID)
+			for _, svType := range sv.Domains {
+				if svMap, ok := sd.serverMapByType[svType]; ok {
+					delete(svMap, sv.ID)
+					if len(svMap) == 0 {
+						delete(sd.serverMapByType, svType)
+					}
+				}
 			}
 		})
 		sd.notifyListeners(DEL, sv)
@@ -295,8 +300,8 @@ func getServerFromEtcd(cli *clientv3.Client, serverType, serverID string) (*Serv
 	return parseServer(svEInfo.Kvs[0].Value)
 }
 
-// GetServersByType returns a slice with all the servers of a certain type
-func (sd *etcdServiceDiscovery) GetServersByType(serverType string) (map[string]*Server, error) {
+// GetServersByDomain returns a slice with all the servers of a certain type
+func (sd *etcdServiceDiscovery) GetServersByDomain(serverType string) (map[string]*Server, error) {
 	sd.mapByTypeLock.RLock()
 	defer sd.mapByTypeLock.RUnlock()
 	if m, ok := sd.serverMapByType[serverType]; ok && len(m) > 0 {
@@ -641,12 +646,14 @@ func (sd *etcdServiceDiscovery) revoke() error {
 func (sd *etcdServiceDiscovery) addServer(sv *Server) {
 	if actual, loaded := sd.serverMapByID.LoadOrStore(sv.ID, sv); !loaded {
 		sd.writeLockScope(func() {
-			mapSvByType, ok := sd.serverMapByType[sv.Type]
-			if !ok {
-				mapSvByType = make(map[string]*Server)
-				sd.serverMapByType[sv.Type] = mapSvByType
+			for _, svType := range sv.Domains {
+				mapSvByType, ok := sd.serverMapByType[svType]
+				if !ok {
+					mapSvByType = make(map[string]*Server)
+					sd.serverMapByType[svType] = mapSvByType
+				}
+				mapSvByType[sv.ID] = sv
 			}
-			mapSvByType[sv.ID] = sv
 		})
 		if sv.ID != sd.server.ID {
 			sd.notifyListeners(ADD, sv)

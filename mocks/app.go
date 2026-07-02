@@ -192,19 +192,19 @@ func (mr *MockPitayaMockRecorder) GetServers() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServers", reflect.TypeOf((*MockPitaya)(nil).GetServers))
 }
 
-// GetServersByType mocks base method.
-func (m *MockPitaya) GetServersByType(t string) (map[string]*cluster.Server, error) {
+// GetServersByDomain mocks base method.
+func (m *MockPitaya) GetServersByDomain(t string) (map[string]*cluster.Server, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServersByType", t)
+	ret := m.ctrl.Call(m, "GetServersByDomain", t)
 	ret0, _ := ret[0].(map[string]*cluster.Server)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetServersByType indicates an expected call of GetServersByType.
-func (mr *MockPitayaMockRecorder) GetServersByType(t any) *gomock.Call {
+// GetServersByDomain indicates an expected call of GetServersByDomain.
+func (mr *MockPitayaMockRecorder) GetServersByDomain(t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServersByType", reflect.TypeOf((*MockPitaya)(nil).GetServersByType), t)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServersByDomain", reflect.TypeOf((*MockPitaya)(nil).GetServersByDomain), t)
 }
 
 // GetSessionFromCtx mocks base method.

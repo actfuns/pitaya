@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"time"
 
@@ -281,12 +282,14 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		return
 	}
 
-	if r.SvType == "" {
-		r.SvType = h.server.Type
+	if r.Domain == "" {
+		logger.Log.Errorf("route missing server type: %s", msg.Route)
+		a.AnswerWithError(ctx, msg.ID, e.NewError(constants.ErrRouteMissingServerDomain, e.ErrBadRequestCode))
+		return
 	}
 
 	if err := h.taskService.Submit(ctx, fmt.Sprintf("pitaya:handler:%d", session.ID()), func(tctx context.Context) {
-		if r.SvType == h.server.Type {
+		if slices.Contains(h.server.Domains, r.Domain) {
 			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
 			h.localProcess(tctx, a, r, msg)
 		} else {

@@ -84,7 +84,7 @@ func BuildRequest(
 	session session.Session,
 	msg *message.Message,
 	thisServer *Server,
-) (protos.Request, error) {
+) (*protos.Request, error) {
 	return buildRequest(ctx, rpcType, route, session, msg, thisServer)
 }
 
@@ -95,8 +95,8 @@ func buildRequest(
 	session session.Session,
 	msg *message.Message,
 	thisServer *Server,
-) (protos.Request, error) {
-	req := protos.Request{
+) (*protos.Request, error) {
+	req := &protos.Request{
 		Type: rpcType,
 		Msg: &protos.Msg{
 			Route: route.String(),
