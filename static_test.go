@@ -167,7 +167,7 @@ func TestStaticGetServersByType(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			app := mocks.NewMockPitaya(ctrl)
-			app.EXPECT().GetServersByType(row.typ).Return(row.server, row.err)
+			app.EXPECT().GetServersByDomain(row.typ).Return(row.server, row.err)
 
 			DefaultApp = app
 			server, err := GetServersByDomain(row.typ)
