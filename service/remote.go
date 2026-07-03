@@ -153,31 +153,29 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 
 	if err == nil {
 		c = pcontext.AddToPropagateCtx(c, constants.RequestShardKey, req.Msg.ShardKey)
+		result := make(chan *protos.Response, 1)
+		err = r.taskSevice.Submit(c, req.Msg.ShardKey, func(tctx context.Context) {
+			result <- processRemoteMessage(tctx, req, r)
+		})
 		if err == nil {
-			result := make(chan *protos.Response, 1)
-			err = r.taskSevice.Submit(c, req.Msg.ShardKey, func(tctx context.Context) {
-				result <- processRemoteMessage(tctx, req, r)
-			})
-			if err == nil {
-				reqTimeout := pcontext.GetFromPropagateCtx(c, constants.RequestTimeout)
-				if reqTimeout != nil {
-					var timeout time.Duration
-					timeout, err = time.ParseDuration(reqTimeout.(string))
-					if err == nil {
-						timer := time.NewTimer(timeout)
-						defer timer.Stop()
+			reqTimeout := pcontext.GetFromPropagateCtx(c, constants.RequestTimeout)
+			if reqTimeout != nil {
+				var timeout time.Duration
+				timeout, err = time.ParseDuration(reqTimeout.(string))
+				if err == nil {
+					timer := time.NewTimer(timeout)
+					defer timer.Stop()
 
-						select {
-						case <-timer.C:
-							err = constants.ErrRPCRequestTimeout
-						case res = <-result:
-							return res, nil
-						}
+					select {
+					case <-timer.C:
+						err = constants.ErrRPCRequestTimeout
+					case res = <-result:
+						return res, nil
 					}
-				} else {
-					res = <-result
-					return res, nil
 				}
+			} else {
+				res = <-result
+				return res, nil
 			}
 		}
 	}
