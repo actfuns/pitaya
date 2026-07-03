@@ -64,7 +64,6 @@ var (
 	ErrNotImplemented                 = errors.New("method not implemented")
 	ErrNotifyOnRequest                = errors.New("tried to notify a request route")
 	ErrOnCloseBackend                 = errors.New("onclose callbacks are not allowed on backend servers")
-	ErrProtodescriptor                = errors.New("failed to get protobuf message descriptor")
 	ErrPushingToUsers                 = errors.New("failed to push message to users, check array with failed uids")
 	ErrRPCRequestTimeout              = errors.New("rpc client: request timeout")
 	ErrRPCClientNotInitialized        = errors.New("RPC client is not running")
