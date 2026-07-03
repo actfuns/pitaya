@@ -215,6 +215,7 @@ func (builder *Builder) Build() Pitaya {
 		}
 
 		builder.Router.SetServiceDiscovery(builder.ServiceDiscovery)
+		builder.Router.SetServer(builder.Server)
 
 		remoteService = service.NewRemoteService(
 			builder.RPCClient,

@@ -176,19 +176,19 @@ func TestAddRoute(t *testing.T) {
 	builderConfig := config.NewDefaultPitayaConfig()
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *builderConfig).(*App)
 	app.router = nil
-	err := app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (string, *cluster.Server, error) {
+	err := app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
 		return route.Domain, nil, nil
 	})
 	assert.EqualError(t, constants.ErrRouterNotInitialized, err.Error())
 
 	app.router = router.New()
-	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (string, *cluster.Server, error) {
+	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
 		return route.Domain, nil, nil
 	})
 	assert.NoError(t, err)
 
 	app.running = true
-	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (string, *cluster.Server, error) {
+	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
 		return route.Domain, nil, nil
 	})
 	assert.EqualError(t, constants.ErrChangeRouteWhileRunning, err.Error())

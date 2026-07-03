@@ -388,7 +388,7 @@ func TestRemoteServiceRemoteCall(t *testing.T) {
 			router.SetServiceDiscovery(mockServiceDiscovery)
 			mockServiceDiscovery.EXPECT().GetServersByDomain(table.route.Domain).Return(map[string]*cluster.Server{"sv": {Type: "sv"}}, nil).AnyTimes()
 
-			router.AddRoute(table.route.Domain, func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte, servers map[string]*cluster.Server) (string, *cluster.Server, error) {
+			router.AddRoute(table.route.Domain, func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
 				return route.Domain, &cluster.Server{}, table.routeErr
 			})
 			svc := NewRemoteService(mockRPCClient, nil, nil, nil, nil, router, nil, nil, sessionPool, nil, pipeline.NewHandlerHooks(), nil, nil)

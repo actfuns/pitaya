@@ -34,10 +34,10 @@ const (
 
 const (
 	// SessionPushRoute is the route used for updating session
-	SessionPushRoute = "sys.pushsession"
+	SessionPushRoute = "sys.sys.pushsession"
 
 	// SessionBindRoute is the route used for binding session
-	SessionBindRoute = "sys.bindsession"
+	SessionBindRoute = "sys.sys.bindsession"
 
 	// KickRoute is the route used for kicking an user
 	KickRoute = "sys.sys.kick"

@@ -22,9 +22,7 @@ package router
 
 import (
 	"context"
-	"math/rand"
 	"strconv"
-	"time"
 
 	"github.com/topfreegames/pitaya/v2/cluster"
 	"github.com/topfreegames/pitaya/v2/conn/message"
@@ -37,6 +35,7 @@ import (
 
 // Router struct
 type Router struct {
+	server           *cluster.Server
 	serviceDiscovery cluster.ServiceDiscovery
 	routesMap        map[string]RoutingFunc
 }
@@ -47,7 +46,6 @@ type RoutingFunc func(
 	rpcType protos.RPCType,
 	route *route.Route,
 	payload []byte,
-	servers map[string]*cluster.Server,
 ) (string, *cluster.Server, error)
 
 type Session interface {
@@ -67,34 +65,39 @@ func (r *Router) SetServiceDiscovery(sd cluster.ServiceDiscovery) {
 	r.serviceDiscovery = sd
 }
 
+// SetServer sets the server
+func (r *Router) SetServer(server *cluster.Server) {
+	r.server = server
+}
+
 func (r *Router) defaultRoute(
 	ctx context.Context,
-	server *cluster.Server,
 	rpcType protos.RPCType,
 	route *route.Route,
-	servers map[string]*cluster.Server,
-) (string, *cluster.Server) {
-	if rpcType == protos.RPCType_Sys && server != nil {
+) (string, *cluster.Server, error) {
+	if rpcType == protos.RPCType_Sys && r.server != nil {
 		sessionVal, ok := ctx.Value(constants.SessionCtxKey).(session.Session)
 		if !ok {
-			return route.Domain, server
+			return route.Domain, r.server, nil
 		}
-		return strconv.FormatInt(sessionVal.ID(), 10), server
+		return strconv.FormatInt(sessionVal.ID(), 10), r.server, nil
 	}
-	srvList := make([]*cluster.Server, 0)
-	s := rand.NewSource(time.Now().Unix())
-	rnd := rand.New(s)
-	for _, v := range servers {
-		srvList = append(srvList, v)
+
+	servers, err := r.serviceDiscovery.GetServersByDomain(route.Domain)
+	if err != nil {
+		return "", nil, err
 	}
-	sv := srvList[rnd.Intn(len(srvList))]
-	return route.Domain, sv
+
+	for _, srv := range servers {
+		return route.Domain, srv, nil
+	}
+
+	return "", nil, constants.ErrNoServersAvailableOfType
 }
 
 // Resolve gets the right server to use in the call
 func (r *Router) Resolve(
 	ctx context.Context,
-	server *cluster.Server,
 	rpcType protos.RPCType,
 	route *route.Route,
 	msg *message.Message,
@@ -102,17 +105,12 @@ func (r *Router) Resolve(
 	if r.serviceDiscovery == nil {
 		return "", nil, constants.ErrServiceDiscoveryNotInitialized
 	}
-	serversOfDomain, err := r.serviceDiscovery.GetServersByDomain(route.Domain)
-	if err != nil {
-		return "", nil, err
-	}
 	routeFunc, ok := r.routesMap[route.Domain]
 	if !ok {
 		logger.Log.Debugf("no specific route for svType: %s, using default route", route.Domain)
-		shardKey, server := r.defaultRoute(ctx, server, rpcType, route, serversOfDomain)
-		return shardKey, server, nil
+		return r.defaultRoute(ctx, rpcType, route)
 	}
-	return routeFunc(ctx, rpcType, route, msg.Data, serversOfDomain)
+	return routeFunc(ctx, rpcType, route, msg.Data)
 }
 
 // AddRoute adds a routing function to a server type

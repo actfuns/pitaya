@@ -293,7 +293,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		return
 	}
 
-	shardKey, target, err := h.router.Resolve(ctx, h.server, protos.RPCType_Sys, r, msg)
+	shardKey, target, err := h.router.Resolve(ctx, protos.RPCType_Sys, r, msg)
 	if err != nil {
 		logger.Log.Errorf("error making call for route %s: %v", msg.Route, err)
 		a.AnswerWithError(ctx, msg.ID, e.NewError(constants.ErrRouteMissingServerDomain, e.ErrInternalCode))
