@@ -64,7 +64,7 @@ func TestCall(t *testing.T) {
 	sess.EXPECT().GetDataEncoded().Return(nil).Times(2)
 	sess.EXPECT().SetRequestInFlight(gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
 
-	expected, err := buildRequest(ctx, rpcType, r, sess, msg, g.server)
+	expected, err := buildRequest(ctx, rpcType, sess, msg, g.server)
 	assert.NoError(t, err)
 
 	mockPitayaClient.EXPECT().Call(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, in *protos.Request, opts ...grpc.CallOption) (*protos.Response, error) {
