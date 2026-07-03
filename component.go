@@ -21,23 +21,30 @@
 package pitaya
 
 import (
+	"slices"
+
 	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/topfreegames/pitaya/v2/prpc"
 )
 
 type regComp struct {
+	desc *prpc.ServiceDesc
 	comp component.Component
-	opts []component.Option
 }
 
 // Register register a component with options
-func (app *App) Register(c component.Component, options ...component.Option) {
-	app.handlerComp = append(app.handlerComp, regComp{c, options})
-}
+func (app *App) Register(desc *prpc.ServiceDesc, comp component.Component) {
+	if desc.DomainName == "" {
+		logger.Log.Fatalf("service %q must have a non-empty DomainName", desc.ServiceName)
+	}
 
-// RegisterRemote register a remote component with options
-func (app *App) RegisterRemote(c component.Component, options ...component.Option) {
-	app.remoteComp = append(app.remoteComp, regComp{c, options})
+	if !slices.Contains(app.server.Domains, desc.DomainName) {
+		app.server.Domains = append(app.server.Domains, desc.DomainName)
+	}
+
+	app.handlerService.Register(desc, comp)
+	app.handlerComp = append(app.handlerComp, regComp{desc, comp})
 }
 
 func (app *App) startupComponents() {
@@ -51,38 +58,7 @@ func (app *App) startupComponents() {
 		c.comp.AfterInit()
 	}
 
-	// remote component initialize hooks
-	for _, c := range app.remoteComp {
-		c.comp.Init()
-	}
-
-	// remote component after initialize hooks
-	for _, c := range app.remoteComp {
-		c.comp.AfterInit()
-	}
-
-	// register all components
-	for _, c := range app.handlerComp {
-		if err := app.handlerService.Register(c.comp, c.opts); err != nil {
-			logger.Log.Errorf("Failed to register handler: %s", err.Error())
-		}
-	}
-
-	// register all remote components
-	for _, c := range app.remoteComp {
-		if app.remoteService == nil {
-			logger.Log.Warn("registered a remote component but remoteService is not running! skipping...")
-		} else {
-			if err := app.remoteService.Register(c.comp, c.opts); err != nil {
-				logger.Log.Errorf("Failed to register remote: %s", err.Error())
-			}
-		}
-	}
-
 	app.handlerService.DumpServices()
-	if app.remoteService != nil {
-		app.remoteService.DumpServices()
-	}
 }
 
 func (app *App) shutdownComponents() {
@@ -95,15 +71,5 @@ func (app *App) shutdownComponents() {
 	// reverse call `Shutdown` hooks
 	for i := length - 1; i >= 0; i-- {
 		app.handlerComp[i].comp.Shutdown()
-	}
-
-	length = len(app.remoteComp)
-	for i := length - 1; i >= 0; i-- {
-		app.remoteComp[i].comp.BeforeShutdown()
-	}
-
-	// reverse call `Shutdown` hooks
-	for i := length - 1; i >= 0; i-- {
-		app.remoteComp[i].comp.Shutdown()
 	}
 }

@@ -33,7 +33,7 @@ const file_pitaya_proto_rawDesc = "" +
 	"\n" +
 	"PushToUser\x12\f.protos.Push\x1a\x10.protos.Response\"\x00\x128\n" +
 	"\x11SessionBindRemote\x12\x0f.protos.BindMsg\x1a\x10.protos.Response\"\x00\x121\n" +
-	"\bKickUser\x12\x0f.protos.KickMsg\x1a\x12.protos.KickAnswer\"\x00B<Z)github.com/topfreegames/pitaya/pkg/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\bKickUser\x12\x0f.protos.KickMsg\x1a\x12.protos.KickAnswer\"\x00B;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var file_pitaya_proto_goTypes = []any{
 	(*Request)(nil),    // 0: protos.Request

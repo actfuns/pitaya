@@ -119,7 +119,7 @@ const file_kick_proto_rawDesc = "" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\"$\n" +
 	"\n" +
 	"KickAnswer\x12\x16\n" +
-	"\x06kicked\x18\x01 \x01(\bR\x06kickedB<Z)github.com/topfreegames/pitaya/pkg/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\x06kicked\x18\x01 \x01(\bR\x06kickedB;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_kick_proto_rawDescOnce sync.Once

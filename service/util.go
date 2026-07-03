@@ -22,51 +22,15 @@ package service
 
 import (
 	"errors"
-	"reflect"
 
-	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/logger"
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/serialize"
 	"github.com/topfreegames/pitaya/v2/util"
-	"google.golang.org/protobuf/proto"
 )
 
 var errInvalidMsg = errors.New("invalid message type provided")
-
-func unmarshalHandlerArg(handler *component.Handler, serializer serialize.Serializer, payload []byte) (interface{}, error) {
-	if handler.IsRawArg {
-		return payload, nil
-	}
-
-	var arg interface{}
-	if handler.Type != nil {
-		arg = reflect.New(handler.Type.Elem()).Interface()
-		err := serializer.Unmarshal(payload, arg)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return arg, nil
-}
-
-func unmarshalRemoteArg(typ reflect.Type, payload []byte) (interface{}, error) {
-	var arg interface{}
-	if typ != nil {
-		arg = reflect.New(typ.Elem()).Interface()
-		pb, ok := arg.(proto.Message)
-		if !ok {
-			return nil, constants.ErrWrongValueType
-		}
-		err := proto.Unmarshal(payload, pb)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return arg, nil
-}
 
 func getMsgType(msgTypeIface interface{}) (message.Type, error) {
 	var msgType message.Type

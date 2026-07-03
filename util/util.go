@@ -226,9 +226,9 @@ func GetContextFromRequest(req *protos.Request, serverID string) (context.Contex
 		ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestIDKey, requestID)
 	}
 
-	route := req.Msg.Route
-	ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, route)
-	ctx = CtxWithDefaultLogger(ctx, route, "")
+	ctx = pcontext.AddToPropagateCtx(ctx, constants.RouteKey, req.Msg.Route)
+	ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestShardKey, req.Msg.ShardKey)
+	ctx = CtxWithDefaultLogger(ctx, req.Msg.Route, "")
 	return ctx, nil
 }
 

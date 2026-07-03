@@ -25,15 +25,15 @@ import (
 
 	e "github.com/topfreegames/pitaya/v2/errors"
 
-	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/protos"
+	pservice "github.com/topfreegames/pitaya/v2/protos/service"
 	"github.com/topfreegames/pitaya/v2/session"
 )
 
 // Sys contains logic for handling sys remotes
 type Sys struct {
-	component.Base
+	pservice.UnimplementedSysPrpcServer
 	sessionPool session.SessionPool
 }
 

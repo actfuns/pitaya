@@ -86,8 +86,21 @@ protos-compile-demo:
 
 protos-compile:
 # 	@cd benchmark/testdata && ./gen_proto.sh
-	@protoc -I pitaya-protos/ pitaya-protos/*.proto --go_out=protos --go-grpc_out=protos --go_opt=module=github.com/topfreegames/pitaya/pkg/protos --go-grpc_opt=module=github.com/topfreegames/pitaya/pkg/protos
-	@protoc -I pitaya-protos/ -I /usr/include pitaya-protos/api/annotations.proto --go_out=protos --go_opt=module=github.com/topfreegames/pitaya/pkg/protos
+	@protoc -I pitaya-protos/ -I /usr/include pitaya-protos/*.proto \
+		--go_out=protos \
+		--go-grpc_out=protos \
+		--go_opt=module=github.com/topfreegames/pitaya/v2/protos \
+		--go-grpc_opt=module=github.com/topfreegames/pitaya/v2/protos
+	@mkdir -p protos/api
+	@protoc -I pitaya-protos/ -I /usr/include pitaya-protos/api/annotations.proto \
+		--go_out=protos \
+		--go_opt=module=github.com/topfreegames/pitaya/v2/protos
+	@mkdir -p protos/service
+	@protoc -I pitaya-protos/ -I /usr/include pitaya-protos/service/*.proto \
+		--go_out=protos \
+		--pitaya-prpc_out=protos \
+		--go_opt=module=github.com/topfreegames/pitaya/v2/protos \
+		--pitaya-prpc_opt=module=github.com/topfreegames/pitaya/v2/protos
 
 rm-test-temp-files:
 	@rm -f cluster/127.0.0.1* 127.0.0.1*

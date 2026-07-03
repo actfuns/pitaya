@@ -174,7 +174,7 @@ const file_msg_proto_rawDesc = "" +
 	"MsgRequest\x10\x00\x12\r\n" +
 	"\tMsgNotify\x10\x01\x12\x0f\n" +
 	"\vMsgResponse\x10\x02\x12\v\n" +
-	"\aMsgPush\x10\x03B<Z)github.com/topfreegames/pitaya/pkg/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\aMsgPush\x10\x03B;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_msg_proto_rawDescOnce sync.Once

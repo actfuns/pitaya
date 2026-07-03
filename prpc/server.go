@@ -4,6 +4,8 @@ package prpc
 
 import (
 	"context"
+
+	"github.com/topfreegames/pitaya/v2/component"
 )
 
 // MethodDesc describes a single handler/remote method for direct registration.
@@ -14,7 +16,7 @@ type MethodDesc struct {
 	// Handler is the function that calls the service method directly.
 	// It receives the service implementation, context, and a decoder function,
 	// and returns the result and error.
-	Handler func(srv interface{}, ctx context.Context, dec func(interface{}) error) (interface{}, error)
+	Handler func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error)
 	// Reentrant indicates this method can be executed concurrently,
 	// bypassing the actor serial queue.
 	Reentrant bool
@@ -39,5 +41,5 @@ type ServiceDesc struct {
 // ServiceRegistrar is the interface for registering services with pitaya.
 // Modeled after grpc.ServiceRegistrar.
 type ServiceRegistrar interface {
-	Register(desc *ServiceDesc, srv interface{})
+	Register(desc *ServiceDesc, srv component.Component)
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/interfaces"
 	"github.com/topfreegames/pitaya/v2/metrics"
+	"github.com/topfreegames/pitaya/v2/prpc"
 	"github.com/topfreegames/pitaya/v2/router"
 	"github.com/topfreegames/pitaya/v2/session"
 	"github.com/topfreegames/pitaya/v2/worker"
@@ -147,20 +148,8 @@ func IsRunning() bool {
 	return DefaultApp.IsRunning()
 }
 
-func RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error {
+func RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error {
 	return DefaultApp.RPC(ctx, routeStr, reply, arg)
-}
-
-func RPCTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error {
-	return DefaultApp.RPCTo(ctx, serverID, routeStr, reply, arg)
-}
-
-func ReliableRPC(routeStr string, metadata map[string]interface{}, reply, arg proto.Message) (jid string, err error) {
-	return DefaultApp.ReliableRPC(routeStr, metadata, reply, arg)
-}
-
-func ReliableRPCWithOptions(routeStr string, metadata map[string]interface{}, reply, arg proto.Message, opts *config.EnqueueOpts) (jid string, err error) {
-	return DefaultApp.ReliableRPCWithOptions(routeStr, metadata, reply, arg, opts)
 }
 
 func SendPushToUsers(route string, v interface{}, uids []string, frontendType string) ([]string, error) {
@@ -215,12 +204,8 @@ func GroupDelete(ctx context.Context, groupName string) error {
 	return DefaultApp.GroupDelete(ctx, groupName)
 }
 
-func Register(c component.Component, options ...component.Option) {
-	DefaultApp.Register(c, options...)
-}
-
-func RegisterRemote(c component.Component, options ...component.Option) {
-	DefaultApp.RegisterRemote(c, options...)
+func Register(desc *prpc.ServiceDesc, comp component.Component) {
+	DefaultApp.Register(desc, comp)
 }
 
 func RegisterModule(module interfaces.Module, name string) error {

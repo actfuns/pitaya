@@ -34,6 +34,7 @@ import (
 	"github.com/topfreegames/pitaya/v2/acceptor"
 	"github.com/topfreegames/pitaya/v2/pipeline"
 	"github.com/topfreegames/pitaya/v2/protos"
+	"github.com/topfreegames/pitaya/v2/prpc"
 	"github.com/topfreegames/pitaya/v2/router"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -66,9 +67,8 @@ type (
 		router           *router.Router
 		remoteService    *RemoteService
 		taskService      *TaskService
-		serializer       serialize.Serializer          // message serializer
-		server           *cluster.Server               // server obj
-		services         map[string]*component.Service // all registered service
+		serializer       serialize.Serializer // message serializer
+		server           *cluster.Server      // server obj
 		metricsReporters []metrics.Reporter
 		agentFactory     agent.AgentFactory
 		handlerPool      *HandlerPool
@@ -90,7 +90,6 @@ func NewHandlerService(
 	handlerPool *HandlerPool,
 ) *HandlerService {
 	h := &HandlerService{
-		services:         make(map[string]*component.Service),
 		router:           router,
 		decoder:          packetDecoder,
 		serializer:       serializer,
@@ -109,21 +108,14 @@ func NewHandlerService(
 }
 
 // Register registers components
-func (h *HandlerService) Register(comp component.Component, opts []component.Option) error {
-	s := component.NewService(comp, opts)
-
-	if _, ok := h.services[s.Name]; ok {
-		return fmt.Errorf("handler: service already defined: %s", s.Name)
-	}
-
-	if err := s.ExtractHandler(); err != nil {
-		return err
-	}
-
-	// register all handlers
-	h.services[s.Name] = s
-	for name, handler := range s.Handlers {
-		h.handlerPool.Register(s.Name, name, handler)
+func (h *HandlerService) Register(desc *prpc.ServiceDesc, comp component.Component) error {
+	for _, m := range desc.Methods {
+		h.handlerPool.Register(desc.DomainName, desc.ServiceName, m.MethodName, &component.Handler{
+			Fn:        m.Handler,
+			Receiver:  comp,
+			Reentrant: m.Reentrant,
+			Client:    m.Client,
+		})
 	}
 	return nil
 }
@@ -301,7 +293,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	}
 	msg.ShardKey = shardKey
 
-	if err := h.taskService.Submit(ctx, msg.ShardKey, func(tctx context.Context) {
+	if err := h.taskService.Submit(ctx, shardKey, func(tctx context.Context) {
 		if target.ID == h.server.ID {
 			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
 			h.localProcess(tctx, a, r, msg)
@@ -327,7 +319,7 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route 
 		mid = 0
 	}
 
-	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, msg.Route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false)
+	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, msg.Route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false, nil)
 	if msg.Type != message.Notify {
 		if err != nil {
 			logger.Log.LogfWithErrorLevel(err, "handler %s failed to process message: %s", msg.Route, err.Error())
@@ -353,6 +345,6 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route 
 func (h *HandlerService) DumpServices() {
 	handlers := h.handlerPool.GetHandlers()
 	for name := range handlers {
-		logger.Log.Infof("registered handler %s, isRawArg: %v", name, handlers[name].IsRawArg)
+		logger.Log.Infof("registered handler %s", name)
 	}
 }

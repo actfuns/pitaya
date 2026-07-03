@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"strings"
 	"syscall"
 	"time"
 
@@ -44,6 +43,8 @@ import (
 	logging "github.com/topfreegames/pitaya/v2/logger/interfaces"
 	"github.com/topfreegames/pitaya/v2/metrics"
 	mods "github.com/topfreegames/pitaya/v2/modules"
+	pservice "github.com/topfreegames/pitaya/v2/protos/service"
+	"github.com/topfreegames/pitaya/v2/prpc"
 	"github.com/topfreegames/pitaya/v2/remote"
 	"github.com/topfreegames/pitaya/v2/router"
 	"github.com/topfreegames/pitaya/v2/serialize"
@@ -86,19 +87,7 @@ type Pitaya interface {
 	RegisterRPCJob(rpcJob worker.RPCJob) error
 	IsRunning() bool
 
-	RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message) error
-	RPCTo(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message) error
-	ReliableRPC(
-		routeStr string,
-		metadata map[string]interface{},
-		reply, arg proto.Message,
-	) (jid string, err error)
-	ReliableRPCWithOptions(
-		routeStr string,
-		metadata map[string]interface{},
-		reply, arg proto.Message,
-		opts *config.EnqueueOpts,
-	) (jid string, err error)
+	RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error
 
 	SendPushToUsers(route string, v interface{}, uids []string, frontendType string) ([]string, error)
 	SendKickToUsers(uids []string, frontendType string) ([]string, error)
@@ -115,8 +104,7 @@ type Pitaya interface {
 	GroupRenewTTL(ctx context.Context, groupName string) error
 	GroupDelete(ctx context.Context, groupName string) error
 
-	Register(c component.Component, options ...component.Option)
-	RegisterRemote(c component.Component, options ...component.Option)
+	Register(desc *prpc.ServiceDesc, comp component.Component)
 
 	RegisterModule(module interfaces.Module, name string) error
 	RegisterModuleAfter(module interfaces.Module, name string) error
@@ -154,7 +142,6 @@ type App struct {
 	taskService       *service.TaskService
 	timerService      *service.TimerService
 	handlerComp       []regComp
-	remoteComp        []regComp
 	modulesMap        map[string]interfaces.Module
 	modulesArr        []moduleWrapper
 	sessionModulesArr []sessionModuleWrapper
@@ -207,7 +194,6 @@ func NewApp(
 		serializer:        serializer,
 		router:            router,
 		handlerComp:       make([]regComp, 0),
-		remoteComp:        make([]regComp, 0),
 		modulesMap:        make(map[string]interfaces.Module),
 		modulesArr:        []moduleWrapper{},
 		sessionModulesArr: []sessionModuleWrapper{},
@@ -281,11 +267,7 @@ func SetLogger(l logging.Logger) {
 }
 
 func (app *App) initSysRemotes() {
-	sys := remote.NewSys(app.sessionPool)
-	app.RegisterRemote(sys,
-		component.WithName("sys"),
-		component.WithNameFunc(strings.ToLower),
-	)
+	pservice.RegisterSysPrpcServer(app, remote.NewSys(app.sessionPool))
 }
 
 func (app *App) periodicMetrics() {

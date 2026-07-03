@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/topfreegames/pitaya/v2/protos"
+	protos "github.com/topfreegames/pitaya/v2/protos/api"
 )
 
 const version = "0.1.0"

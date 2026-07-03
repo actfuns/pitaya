@@ -7,8 +7,9 @@ import (
 	"strings"
 	"unicode"
 
-	_ "github.com/topfreegames/pitaya/v2/protos"
+	protos "github.com/topfreegames/pitaya/v2/protos/api"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -24,13 +25,6 @@ const (
 
 const fileDescriptorProtoPackageFieldNumber = 2
 const fileDescriptorProtoSyntaxFieldNumber = 12
-
-// Extension field numbers (must match ext.proto)
-const (
-	pitayaDomainField    = 50000
-	pitayaReentrantField = 50001
-	pitayaClientField    = 50002
-)
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -121,16 +115,13 @@ func readServiceDomain(service *protogen.Service) string {
 	if opts == nil {
 		return ""
 	}
-	ref := opts.ProtoReflect()
-	var domain string
-	ref.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
-		if fd.Number() == pitayaDomainField {
-			domain = v.String()
-			return false
+	if proto.HasExtension(opts, protos.E_Domain) {
+		v := proto.GetExtension(opts, protos.E_Domain)
+		if s, ok := v.(string); ok {
+			return s
 		}
-		return true
-	})
-	return domain
+	}
+	return ""
 }
 
 func readMethodClient(method *protogen.Method) bool {
@@ -138,16 +129,13 @@ func readMethodClient(method *protogen.Method) bool {
 	if opts == nil {
 		return false
 	}
-	ref := opts.ProtoReflect()
-	var client bool
-	ref.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
-		if fd.Number() == pitayaClientField {
-			client = v.Bool()
-			return false
+	if proto.HasExtension(opts, protos.E_Client) {
+		v := proto.GetExtension(opts, protos.E_Client)
+		if b, ok := v.(bool); ok {
+			return b
 		}
-		return true
-	})
-	return client
+	}
+	return false
 }
 
 func readMethodReentrant(method *protogen.Method) bool {
@@ -155,16 +143,13 @@ func readMethodReentrant(method *protogen.Method) bool {
 	if opts == nil {
 		return false
 	}
-	ref := opts.ProtoReflect()
-	var reentrant bool
-	ref.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
-		if fd.Number() == pitayaReentrantField {
-			reentrant = v.Bool()
-			return false
+	if proto.HasExtension(opts, protos.E_Reentrant) {
+		v := proto.GetExtension(opts, protos.E_Reentrant)
+		if b, ok := v.(bool); ok {
+			return b
 		}
-		return true
-	})
-	return reentrant
+	}
+	return false
 }
 
 func genService(g *protogen.GeneratedFile, service *protogen.Service) {
@@ -176,7 +161,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	// Full method name constants
 	g.P("const (")
 	for _, method := range service.Methods {
-		fmSymbol := fmt.Sprintf("%s_%s_FullMethodName", svcName, method.GoName)
+		fmSymbol := fmt.Sprintf("PRPC_%s_%s_FullMethodName", svcName, method.GoName)
 		fmName := fmt.Sprintf("/%s/%s", serviceFullName, method.Desc.Name())
 		g.P(fmSymbol, ` = "`, fmName, `"`)
 	}
@@ -249,7 +234,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	g.P()
 
 	// ServiceDesc
-	descVar := svcName + "_ServiceDesc"
+	descVar := "PRPC_" + svcName + "_ServiceDesc"
 	g.P("// ", descVar, " is the ", prpcPackage.Ident("ServiceDesc"), " for ", svcName, " service.")
 	g.P("var ", descVar, " = &", prpcPackage.Ident("ServiceDesc"), "{")
 	if domain != "" {
@@ -314,12 +299,13 @@ func serverSignature(g *protogen.GeneratedFile, method *protogen.Method) string 
 }
 
 func genHandlerFunc(g *protogen.GeneratedFile, method *protogen.Method, svcName string) string {
-	hname := fmt.Sprintf("_%s_%s_Handler", svcName, method.GoName)
+	hname := fmt.Sprintf("_PRPC_%s_%s_Handler", svcName, method.GoName)
 
-	g.P("func ", hname, "(srv interface{}, ctx ", contextPackage.Ident("Context"), ", dec func(interface{}) error) (interface{}, error) {")
+	g.P("func ", hname, "(srv interface{}, ctx ", contextPackage.Ident("Context"), ", dec func(ctx ", contextPackage.Ident("Context"), ", arg interface{}) (", contextPackage.Ident("Context"), ", interface{}, error)) (interface{}, error) {")
 	g.P("in := new(", method.Input.GoIdent, ")")
-	g.P("if err := dec(in); err != nil { return nil, err }")
-	g.P("return srv.(", svcName, "PrpcServer).", method.GoName, "(ctx, in)")
+	g.P("ctx, result, err := dec(ctx, in)")
+	g.P("if err != nil { return nil, err }")
+	g.P("return srv.(", svcName, "PrpcServer).", method.GoName, "(ctx, result.(*", method.Input.GoIdent, "))")
 	g.P("}")
 	return hname
 }

@@ -25,6 +25,11 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 	}, nil
 }
 
+func (ts *TaskService) NewAnonymousTaskId() string {
+	seq := atomic.AddUint64(&ts.taskSeq, 1)
+	return fmt.Sprintf("pitaya:task:anonymous:%d", seq)
+}
+
 func (ts *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {
 	return ts.pool.Submit(ctx, id, task)
 }
@@ -34,8 +39,7 @@ func (ts *TaskService) SubmitWithTimeout(ctx context.Context, id string, timeout
 }
 
 func (ts *TaskService) SubmitAnonymous(ctx context.Context, task func(context.Context)) error {
-	seq := atomic.AddUint64(&ts.taskSeq, 1)
-	return ts.pool.Submit(ctx, fmt.Sprintf("pitaya:task:anonymous:%d_%d", time.Now().UnixMilli(), seq), task)
+	return ts.pool.Submit(ctx, ts.NewAnonymousTaskId(), task)
 }
 
 func (ts *TaskService) Shutdown() {

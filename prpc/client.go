@@ -1,14 +1,21 @@
 package prpc
 
-import "context"
+import (
+	"context"
+
+	"github.com/topfreegames/pitaya/v2/config"
+)
 
 // CallOption is an optional configuration for an RPC call.
 type CallOption func(*CallOptions)
 
 // CallOptions holds all configurable options for an RPC call.
 type CallOptions struct {
-	ServerID string // target server ID, empty means any
-	OneWay   bool   // fire-and-forget, no response expected
+	ServerID    string                 // target server ID, empty means any
+	OneWay      bool                   // fire-and-forget, no response expected
+	Reliable    bool                   // reliable RPC, retries on failure
+	Metadata    map[string]interface{} // metadata to be passed to the server
+	EnqueueOpts *config.EnqueueOpts    // enqueue options
 }
 
 // WithServerID sets the target server ID for the RPC call.
@@ -22,6 +29,15 @@ func WithServerID(id string) CallOption {
 func WithOneWay() CallOption {
 	return func(o *CallOptions) {
 		o.OneWay = true
+	}
+}
+
+// WithReliable sets the call as reliable (enqueued).
+func WithReliable(metadata map[string]interface{}, opts *config.EnqueueOpts) CallOption {
+	return func(c *CallOptions) {
+		c.Reliable = true
+		c.Metadata = metadata
+		c.EnqueueOpts = opts
 	}
 }
 

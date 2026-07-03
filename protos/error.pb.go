@@ -101,7 +101,7 @@ const file_error_proto_rawDesc = "" +
 	"\x05level\x18\x04 \x01(\x05R\x05level\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B<Z)github.com/topfreegames/pitaya/pkg/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_error_proto_rawDescOnce sync.Once
