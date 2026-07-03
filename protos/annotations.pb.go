@@ -66,26 +66,71 @@ var file_api_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 
 // Extension fields to descriptorpb.ServiceOptions.
 var (
+	// domain specifies the server type for routing (e.g. "room", "game").
+	// Used by protoc-gen-pitaya-prpc to determine the target server type.
+	// Usage:
+	//
+	//	service Room {
+	//	  option (pitaya.domain) = "room";
+	//	  rpc Join(JoinReq) returns (JoinResp);
+	//	}
+	//
 	// optional string domain = 50000;
 	E_Domain = &file_api_annotations_proto_extTypes[0]
 )
 
 // Extension fields to descriptorpb.MethodOptions.
 var (
+	// reentrant marks a method as reentrant (Orleans-style).
+	// When true, the method can be executed concurrently without blocking
+	// the actor serial queue (e.g., for DB I/O operations).
+	// Default: false.
+	// Usage:
+	//
+	//	rpc Query(QueryReq) returns (QueryResp) {
+	//	  option (pitaya.reentrant) = true;
+	//	}
+	//
 	// optional bool reentrant = 50001;
 	E_Reentrant = &file_api_annotations_proto_extTypes[1]
+	// client marks a method as a client-facing handler.
+	// When true, the method is registered in both the remote service (for RPC)
+	// and the handler service (for direct client connections via WebSocket/TCP).
+	// Default: false (only accessible via RPC).
+	// Usage:
+	//
+	//	rpc Join(JoinReq) returns (JoinResp) {
+	//	  option (pitaya.client) = true;
+	//	}
+	//
 	// optional bool client = 50002;
 	E_Client = &file_api_annotations_proto_extTypes[2]
 )
 
 // Extension fields to descriptorpb.EnumOptions.
 var (
+	// errors marks an enum as an error code definition.
+	// When true, protoc-gen-pitaya-errors generates typed error variables.
+	// Usage:
+	//
+	//	enum ErrorCode {
+	//	  option (pitaya.errors) = true;
+	//	  ErrOK = 0;
+	//	  ErrNotFound = 1001;
+	//	}
+	//
 	// optional bool errors = 50003;
 	E_Errors = &file_api_annotations_proto_extTypes[3]
 )
 
 // Extension fields to descriptorpb.EnumValueOptions.
 var (
+	// error_level specifies the severity level for this error value.
+	// Maps to errors.Error.Level field. Default: 0.
+	// Usage:
+	//
+	//	ErrCritical = 2001 [(pitaya.error_level) = 2];
+	//
 	// optional int32 error_level = 50005;
 	E_ErrorLevel = &file_api_annotations_proto_extTypes[4]
 )
