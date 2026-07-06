@@ -460,9 +460,6 @@ func (ns *NatsRPCServer) subscribe(topic string) (*nats.Subscription, error) {
 	return ns.conn.ChanSubscribe(topic, ns.subChan)
 }
 
-func (ns *NatsRPCServer) stop() {
-}
-
 func (ns *NatsRPCServer) reportMetrics() {
 	if len(ns.metricsReporters) == 0 {
 		return

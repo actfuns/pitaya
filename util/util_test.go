@@ -22,7 +22,6 @@ package util
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -35,8 +34,6 @@ import (
 	"github.com/topfreegames/pitaya/v2/serialize/mocks"
 	"go.uber.org/mock/gomock"
 )
-
-var update = flag.Bool("update", false, "update .golden files")
 
 type someStruct struct {
 	A int

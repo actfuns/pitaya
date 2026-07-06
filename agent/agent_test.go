@@ -701,7 +701,7 @@ func TestAgentResponseMID(t *testing.T) {
 			if reflect.TypeOf(table.data) != reflect.TypeOf([]byte{}) {
 				mockSerializer.EXPECT().Marshal(table.data).Return([]byte("ok"), nil)
 			}
-			expected := pendingWrite{ctx: ctx, data: []byte("ok!"), err: nil}
+			expected := pendingWrite{ctx: ctx, data: []byte("ok!")}
 			var err error
 			if table.msgErr {
 				mockSerializer.EXPECT().Unmarshal(gomock.Any(), gomock.Any()).Return(nil)
@@ -1182,12 +1182,8 @@ func TestAgentHeartbeat(t *testing.T) {
 
 	die := false
 	go func() {
-		for {
-			select {
-			case <-ag.chDie:
-				die = true
-			}
-		}
+		<-ag.chDie
+		die = true
 	}()
 
 	go ag.heartbeat()
@@ -1217,12 +1213,8 @@ func TestAgentHeartbeatExitsIfConnError(t *testing.T) {
 
 	die := false
 	go func() {
-		for {
-			select {
-			case <-ag.chDie:
-				die = true
-			}
-		}
+		<-ag.chDie
+		die = true
 	}()
 
 	go ag.heartbeat()
@@ -1321,12 +1313,8 @@ func TestAgentHandle(t *testing.T) {
 	wg.Add(1)
 	closed := false
 	go func() {
-		for {
-			select {
-			case <-ag.chDie:
-				closed = true
-			}
-		}
+		<-ag.chDie
+		closed = true
 	}()
 
 	mockConn.EXPECT().SetWriteDeadline(gomock.Any()).Return(nil).Times(3)

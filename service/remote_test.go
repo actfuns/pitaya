@@ -44,8 +44,6 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-const ctxModifiedResponse = "response"
-
 func TestNewRemoteService(t *testing.T) {
 	packetEncoder := codec.NewPomeloPacketEncoder()
 	ctrl := gomock.NewController(t)

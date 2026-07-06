@@ -296,7 +296,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	if err := h.taskService.Submit(ctx, shardKey, func(tctx context.Context) {
 		if target.ID == h.server.ID {
 			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
-			h.localProcess(tctx, a, r, msg)
+			h.localProcess(tctx, a, msg)
 		} else {
 			if h.remoteService != nil {
 				metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "remote")
@@ -310,7 +310,7 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	}
 }
 
-func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, route *route.Route, msg *message.Message) {
+func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, msg *message.Message) {
 	var mid uint
 	switch msg.Type {
 	case message.Request:
