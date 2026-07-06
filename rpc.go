@@ -26,6 +26,7 @@ import (
 	"slices"
 
 	"github.com/topfreegames/pitaya/v2/constants"
+	pcontext "github.com/topfreegames/pitaya/v2/context"
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/prpc"
 	"github.com/topfreegames/pitaya/v2/route"
@@ -35,18 +36,37 @@ import (
 // RPC calls a method in a different server
 func (app *App) RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error {
 	opt := applyOptions(opts)
+
+	ctx = pcontext.AddToPropagateCtxMap(ctx, opt.PropagateCtx)
+
 	if opt.Reliable {
-		if opt.EnqueueOpts != nil {
-			_, err := app.worker.EnqueueRPCWithOptions(routeStr, opt.Metadata, reply, arg, opt.EnqueueOpts)
+		meta := opt.ReliableMetadata
+		if meta == nil {
+			meta = make(map[string]interface{})
+		}
+		storedOpt := opt
+		storedOpt.Reliable = false
+		storedOpt.ReliableMetadata = nil
+		storedOpt.ReliableEnqueueOpts = nil
+		meta[constants.ReliableRPCOptionsKey] = storedOpt
+
+		if opt.ReliableEnqueueOpts != nil {
+			_, err := app.worker.EnqueueRPCWithOptions(routeStr, meta, reply, arg, opt.ReliableEnqueueOpts)
 			return err
 		}
-		_, err := app.worker.EnqueueRPC(routeStr, opt.Metadata, reply, arg)
+		_, err := app.worker.EnqueueRPC(routeStr, meta, reply, arg)
 		return err
 	}
-	return app.doSendRPC(ctx, opt.ServerID, routeStr, reply, arg, opt)
+
+	rpcType := protos.RPCType_User
+	if opt.Client {
+		rpcType = protos.RPCType_Sys
+	}
+
+	return app.doSendRPC(ctx, rpcType, opt.ServerID, routeStr, reply, arg, opt)
 }
 
-func (app *App) doSendRPC(ctx context.Context, serverID, routeStr string, reply proto.Message, arg proto.Message, opt prpc.CallOptions) error {
+func (app *App) doSendRPC(ctx context.Context, rpcType protos.RPCType, serverID, routeStr string, reply proto.Message, arg proto.Message, opt prpc.CallOptions) error {
 	if app.rpcServer == nil {
 		return constants.ErrRPCServerNotInitialized
 	}
@@ -68,7 +88,7 @@ func (app *App) doSendRPC(ctx context.Context, serverID, routeStr string, reply 
 		return constants.ErrNonsenseRPC
 	}
 
-	return app.remoteService.RPC(ctx, protos.RPCType_User, serverID, r, reply, arg, opt)
+	return app.remoteService.RPC(ctx, rpcType, serverID, r, reply, arg, opt)
 }
 
 func applyOptions(opts []prpc.CallOption) prpc.CallOptions {

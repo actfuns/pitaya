@@ -11,11 +11,13 @@ type CallOption func(*CallOptions)
 
 // CallOptions holds all configurable options for an RPC call.
 type CallOptions struct {
-	ServerID    string                 // target server ID, empty means any
-	OneWay      bool                   // fire-and-forget, no response expected
-	Reliable    bool                   // reliable RPC, retries on failure
-	Metadata    map[string]interface{} // metadata to be passed to the server
-	EnqueueOpts *config.EnqueueOpts    // enqueue options
+	ServerID            string                 // target server ID, empty means any
+	OneWay              bool                   // fire-and-forget, no response expected
+	Client              bool                   // mark as client-side RPC (Sys type)
+	PropagateCtx        map[string]interface{} // values to inject into the propagate context for RPC calls
+	Reliable            bool                   // reliable RPC, retries on failure
+	ReliableMetadata    map[string]interface{} // metadata to be passed to the server
+	ReliableEnqueueOpts *config.EnqueueOpts    // enqueue options
 }
 
 // WithServerID sets the target server ID for the RPC call.
@@ -32,12 +34,29 @@ func WithOneWay() CallOption {
 	}
 }
 
+// WithPropagateCtx adds a key-value pair that will be propagated through the RPC context.
+func WithPropagateCtx(key string, val interface{}) CallOption {
+	return func(o *CallOptions) {
+		if o.PropagateCtx == nil {
+			o.PropagateCtx = make(map[string]interface{})
+		}
+		o.PropagateCtx[key] = val
+	}
+}
+
+// WithClient marks the RPC as a client-facing call (Sys type).
+func WithClient() CallOption {
+	return func(o *CallOptions) {
+		o.Client = true
+	}
+}
+
 // WithReliable sets the call as reliable (enqueued).
 func WithReliable(metadata map[string]interface{}, opts *config.EnqueueOpts) CallOption {
 	return func(c *CallOptions) {
 		c.Reliable = true
-		c.Metadata = metadata
-		c.EnqueueOpts = opts
+		c.ReliableMetadata = metadata
+		c.ReliableEnqueueOpts = opts
 	}
 }
 

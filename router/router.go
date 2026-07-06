@@ -72,10 +72,9 @@ func (r *Router) SetServer(server *cluster.Server) {
 
 func (r *Router) defaultRoute(
 	ctx context.Context,
-	rpcType protos.RPCType,
 	route *route.Route,
 ) (string, *cluster.Server, error) {
-	if rpcType == protos.RPCType_Sys && r.server != nil {
+	if r.server != nil {
 		sessionVal, ok := ctx.Value(constants.SessionCtxKey).(session.Session)
 		if !ok {
 			return route.Domain, r.server, nil
@@ -108,7 +107,7 @@ func (r *Router) Resolve(
 	routeFunc, ok := r.routesMap[route.Domain]
 	if !ok {
 		logger.Log.Debugf("no specific route for svType: %s, using default route", route.Domain)
-		return r.defaultRoute(ctx, rpcType, route)
+		return r.defaultRoute(ctx, route)
 	}
 	return routeFunc(ctx, rpcType, route, msg.Data)
 }

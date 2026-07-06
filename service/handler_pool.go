@@ -62,6 +62,10 @@ func (h *HandlerPool) ProcessHandlerMessage(
 		}
 	}
 
+	if !handler.Client {
+		return nil, e.NewError(err, e.ErrNotFoundCode)
+	}
+
 	msgType, err := getMsgType(msgTypeIface)
 	if err != nil {
 		return nil, e.NewError(err, e.ErrInternalCode)

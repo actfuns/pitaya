@@ -58,7 +58,7 @@ func TestDefaultRoute(t *testing.T) {
 	router.SetServer(server)
 	route := route.NewRoute(serverType, "service", "method")
 
-	_, retServer, _ := router.defaultRoute(context.Background(), protos.RPCType_Sys, route)
+	_, retServer, _ := router.defaultRoute(context.Background(), route)
 	assert.Equal(t, server, retServer)
 }
 
