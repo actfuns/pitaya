@@ -747,7 +747,7 @@ func TestAgentResponseMIDFullChannel(t *testing.T) {
 	mockMetricsReporters[0].(*metricsmocks.MockReporter).EXPECT().ReportGauge(metrics.ChannelCapacity, gomock.Any(), float64(0))
 	mockMetricsReporters[0].(*metricsmocks.MockReporter).EXPECT().ReportHistogram(metrics.ChannelCapacityHistogram, gomock.Any(), float64(0))
 	go func() {
-		err := ag.ResponseMID(nil, 1, []byte("data"))
+		err := ag.ResponseMID(context.Background(), 1, []byte("data"))
 		assert.NoError(t, err)
 	}()
 	helpers.ShouldEventuallyReceive(t, ag.chSend)
@@ -1076,7 +1076,7 @@ func TestAnswerWithError(t *testing.T) {
 			mockSerializer.EXPECT().Unmarshal(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 			mockEncoder.EXPECT().Encode(packet.Type(packet.Data), gomock.Any()).Return(nil, row.encoderErr).AnyTimes()
 
-			ag.AnswerWithError(nil, uint(rand.Int()), row.answeredErr)
+			ag.AnswerWithError(context.Background(), uint(rand.Int()), row.answeredErr)
 			if row.expectedErr != nil {
 				pWrite := helpers.ShouldEventuallyReceive(t, ag.chSend)
 				assert.Equal(t, pendingWrite{err: row.expectedErr}, pWrite)
@@ -1155,7 +1155,7 @@ func TestAgentAnswerWithError(t *testing.T) {
 			ag := newAgent(nil, nil, encoder, row.serializer, time.Second, time.Second, 1, nil, messageEncoder, nil, sessionPool).(*agentImpl)
 			assert.NotNil(t, ag)
 
-			ag.AnswerWithError(nil, uint(rand.Int()), row.answeredErr)
+			ag.AnswerWithError(context.Background(), uint(rand.Int()), row.answeredErr)
 
 			pWrite := helpers.ShouldEventuallyReceive(t, ag.chSend)
 			assert.Equal(t, row.expectedErr, pWrite.(pendingWrite).err)

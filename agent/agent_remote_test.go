@@ -321,7 +321,7 @@ func TestAgentRemoteSendRequest(t *testing.T) {
 				}
 			}
 
-			resp, err := remote.SendRequest(nil, table.serverID, table.reqRoute, table.data)
+			resp, err := remote.SendRequest(context.Background(), table.serverID, table.reqRoute, table.data)
 			assert.Equal(t, table.err, err)
 			assert.Equal(t, table.resp, resp)
 		})

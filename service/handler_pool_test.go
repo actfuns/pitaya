@@ -142,7 +142,7 @@ func TestProcessHandlerMessage(t *testing.T) {
 				}
 			}
 			handlerHooks := pipeline.NewHandlerHooks()
-			out, err := handlerPool.ProcessHandlerMessage(nil, table.route.String(), mockSerializer, handlerHooks, ss, nil, table.msgType, table.remote, nil)
+			out, err := handlerPool.ProcessHandlerMessage(context.Background(), table.route.String(), mockSerializer, handlerHooks, ss, nil, table.msgType, table.remote, nil)
 			assert.Equal(t, table.out, out)
 			assert.Equal(t, table.err, err)
 		})
@@ -176,7 +176,7 @@ func TestProcessHandlerMessageBrokenBeforePipeline(t *testing.T) {
 	ss.EXPECT().ID().Return(int64(1)).AnyTimes()
 	mockSerializer := mocks.NewMockSerializer(ctrl)
 	mockSerializer.EXPECT().Unmarshal(gomock.Any(), gomock.Any()).Return(nil)
-	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false, nil)
+	out, err := handlerPool.ProcessHandlerMessage(context.Background(), rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false, nil)
 	assert.Nil(t, out)
 	assert.Equal(t, expected, err)
 }
@@ -217,7 +217,7 @@ func TestProcessHandlerMessageBrokenAfterPipeline(t *testing.T) {
 
 	handlerHooks := pipeline.NewHandlerHooks()
 	handlerHooks.AfterHandler = afterHandler
-	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false, nil)
+	out, err := handlerPool.ProcessHandlerMessage(context.Background(), rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false, nil)
 	assert.Nil(t, out)
 	assert.Equal(t, errors.New("oh noes"), err)
 }

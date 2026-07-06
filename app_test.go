@@ -368,8 +368,11 @@ func TestStartAndListenStandalone(t *testing.T) {
 	assert.NotEmpty(t, acc.GetAddr())
 	helpers.ShouldEventuallyReturn(t, func() error {
 		n, err := net.Dial("tcp", acc.GetAddr())
-		defer n.Close()
-		return err
+		if err != nil {
+			return err
+		}
+		n.Close()
+		return nil
 	}, nil, 10*time.Millisecond, 100*time.Millisecond)
 }
 
@@ -416,8 +419,11 @@ func TestStartAndListenCluster(t *testing.T) {
 	assert.NotEmpty(t, acc.GetAddr())
 	helpers.ShouldEventuallyReturn(t, func() error {
 		n, err := net.Dial("tcp", acc.GetAddr())
-		defer n.Close()
-		return err
+		if err != nil {
+			return err
+		}
+		n.Close()
+		return nil
 	}, nil, 10*time.Millisecond, 100*time.Millisecond)
 }
 

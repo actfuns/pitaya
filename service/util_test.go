@@ -81,7 +81,7 @@ func TestGetMsgType(t *testing.T) {
 func TestExecuteBeforePipelineEmpty(t *testing.T) {
 	expected := []byte("ok")
 	beforeHandler := pipeline.NewChannel()
-	_, res, err := beforeHandler.ExecuteBeforePipeline(nil, expected)
+	_, res, err := beforeHandler.ExecuteBeforePipeline(context.Background(), expected)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
@@ -130,7 +130,7 @@ func TestExecuteBeforePipelineError(t *testing.T) {
 func TestExecuteAfterPipelineEmpty(t *testing.T) {
 	expected := []byte("whatever")
 	afterHandler := pipeline.NewAfterChannel()
-	res, err := afterHandler.ExecuteAfterPipeline(nil, expected, nil)
+	res, err := afterHandler.ExecuteAfterPipeline(context.Background(), expected, nil)
 	assert.Equal(t, expected, res)
 	assert.Nil(t, err)
 }
