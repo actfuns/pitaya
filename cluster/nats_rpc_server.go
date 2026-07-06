@@ -285,15 +285,15 @@ func (ns *NatsRPCServer) marshalResponse(res *protos.Response) ([]byte, error) {
 
 		res := &protos.Response{
 			Error: &protos.Error{
-				Code: e.ErrUnknownCode,
-				Msg:  err.Error(),
+				Code:    e.ErrUnknownCode,
+				Message: err.Error(),
 			},
 		}
 		p, _ = proto.Marshal(res)
 	}
 
 	if err == nil && res.Error != nil {
-		err = errors.New(res.Error.Msg)
+		err = errors.New(res.Error.Message)
 	}
 	return p, err
 }
@@ -305,8 +305,8 @@ func (ns *NatsRPCServer) processMessages(threadID int) {
 		if err != nil {
 			ns.responses[threadID] = &protos.Response{
 				Error: &protos.Error{
-					Code: e.ErrInternalCode,
-					Msg:  err.Error(),
+					Code:    e.ErrInternalCode,
+					Message: err.Error(),
 				},
 			}
 

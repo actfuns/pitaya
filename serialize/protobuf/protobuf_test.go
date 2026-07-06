@@ -44,7 +44,7 @@ func TestMarshal(t *testing.T) {
 		raw interface{}
 		err error
 	}{
-		"test_ok":            {&protos.Response{Data: []byte("data"), Error: &protos.Error{Msg: "error"}}, nil},
+		"test_ok":            {&protos.Response{Data: []byte("data"), Error: &protos.Error{Message: "error"}}, nil},
 		"test_not_a_message": {"invalid", constants.ErrWrongValueType},
 	}
 	serializer := NewSerializer()
@@ -81,7 +81,7 @@ func TestUnmarshal(t *testing.T) {
 		dest     interface{}
 		err      error
 	}{
-		"test_ok":           {&protos.Response{Data: []byte("data"), Error: &protos.Error{Msg: "error"}}, data, &dest, nil},
+		"test_ok":           {&protos.Response{Data: []byte("data"), Error: &protos.Error{Message: "error"}}, data, &dest, nil},
 		"test_invalid_dest": {&protos.Response{Data: []byte(nil)}, data, "invalid", constants.ErrWrongValueType},
 	}
 	serializer := NewSerializer()

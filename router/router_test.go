@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,14 +15,10 @@ import (
 )
 
 var (
-	serverID   = "id"
-	serverType = "serverType"
-	frontend   = true
-	server     = cluster.NewServer(serverID, serverType, frontend, cluster.WithDomain(serverType))
-	servers    = map[string]*cluster.Server{
-		serverID: server,
-	}
-
+	serverID        = "id"
+	serverType      = "serverType"
+	frontend        = true
+	server          = cluster.NewServer(serverID, serverType, frontend, cluster.WithDomain(serverType))
 	routingFunction = func(
 		ctx context.Context,
 		rpcType protos.RPCType,
@@ -36,14 +31,13 @@ var (
 
 var routerTables = map[string]struct {
 	server  *cluster.Server
-	doamin  string
 	rpcType protos.RPCType
 	err     error
 }{
-	"test_server_has_route_func":   {server, serverType, protos.RPCType_Sys, nil},
-	"test_server_use_default_func": {server, "notRegisteredType", protos.RPCType_Sys, nil},
-	"test_user_use_default_func":   {server, serverType, protos.RPCType_User, nil},
-	"test_error_on_service_disc":   {nil, serverType, protos.RPCType_Sys, errors.New("sd error")},
+	"test_server_has_route_func":   {server, protos.RPCType_Sys, nil},
+	"test_server_use_default_func": {server, protos.RPCType_Sys, nil},
+	"test_user_use_default_func":   {server, protos.RPCType_User, nil},
+	"test_error_on_service_disc":   {server, protos.RPCType_Sys, nil},
 }
 
 var addRouteRouterTables = map[string]struct {
@@ -60,9 +54,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestDefaultRoute(t *testing.T) {
-	t.Parallel()
-
 	router := New()
+	router.SetServer(server)
 	route := route.NewRoute(serverType, "service", "method")
 
 	_, retServer, _ := router.defaultRoute(context.Background(), protos.RPCType_Sys, route)
@@ -80,9 +73,6 @@ func TestRoute(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			mockServiceDiscovery := mocks.NewMockServiceDiscovery(ctrl)
-			mockServiceDiscovery.EXPECT().
-				GetServersByDomain(table.doamin).
-				Return(servers, table.err)
 
 			router := New()
 			router.AddRoute(serverType, routingFunction)

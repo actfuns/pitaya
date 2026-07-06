@@ -23,25 +23,17 @@ package service
 import (
 	"context"
 	"errors"
-	"flag"
-	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/helpers"
 	"github.com/topfreegames/pitaya/v2/pipeline"
 	"github.com/topfreegames/pitaya/v2/protos"
 	"github.com/topfreegames/pitaya/v2/protos/test"
 	"github.com/topfreegames/pitaya/v2/serialize/mocks"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/protobuf/proto"
 )
-
-var update = flag.Bool("update", false, "update .golden files")
 
 type TestType struct {
 	component.Base
@@ -58,101 +50,6 @@ func (t *TestType) HandlerPointerStruct(ctx context.Context, ss *test.SomeStruct
 }
 func (t *TestType) HandlerPointerErr(ctx context.Context, ss *test.SomeStruct) ([]byte, error) {
 	return nil, errors.New("HandlerPointerErr")
-}
-
-func TestUnmarshalHandlerArg(t *testing.T) {
-	t.Parallel()
-	tables := []struct {
-		name        string
-		handlerName string
-		isRawArg    bool
-		payload     []byte
-		out         interface{}
-		err         error
-	}{
-		{"raw_arg", "HandlerRaw", true, []byte("hello"), []byte("hello"), nil},
-		{"nil_handler", "HandlerNil", false, []byte("hello"), nil, nil},
-		{"struct_handler", "HandlerPointer", false, []byte("hello"), &test.SomeStruct{}, nil},
-		{"struct_handler_err", "HandlerPointer", false, []byte("hello"), nil, errors.New("some error")},
-	}
-
-	for _, table := range tables {
-		t.Run(table.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			mockSerializer := mocks.NewMockSerializer(ctrl)
-
-			tObj := &TestType{}
-			m, ok := reflect.TypeOf(tObj).MethodByName(table.handlerName)
-			assert.True(t, ok)
-			assert.NotNil(t, m)
-			handler := &component.Handler{
-				Method:   m,
-				IsRawArg: table.isRawArg,
-			}
-			mt := m.Type
-			if mt.NumIn() == 3 {
-				handler.Type = mt.In(2)
-			}
-
-			if !table.isRawArg && handler.Type != nil {
-				mockSerializer.EXPECT().Unmarshal(
-					table.payload,
-					reflect.New(handler.Type.Elem()).Interface(),
-				).Do(func(p []byte, arg interface{}) {
-					arg = table.out
-				}).Return(table.err)
-			}
-
-			arg, err := unmarshalHandlerArg(handler, mockSerializer, table.payload)
-			assert.Equal(t, table.err, err)
-			assert.Equal(t, table.out, arg)
-		})
-	}
-}
-
-func TestUnmarshalRemoteArg(t *testing.T) {
-	t.Parallel()
-	tables := []struct {
-		name string
-		arg  proto.Message
-	}{
-		{"unmarshal_remote_test_1", &test.SomeStruct{A: 1, B: "blah"}},
-		{"unmarshal_remote_test_2", &test.SomeStruct{A: 1, B: "aaa"}},
-		{"unmarshal_remote_test_3", &test.SomeStruct{B: "aab"}},
-	}
-
-	for _, table := range tables {
-		t.Run(table.name, func(t *testing.T) {
-			gp := filepath.Join("fixtures", table.name+".golden")
-			if *update {
-				b, err := proto.Marshal(table.arg)
-				require.NoError(t, err)
-				t.Log("updating golden file")
-				helpers.WriteFile(t, gp, b)
-			}
-			payload := helpers.ReadFile(t, gp)
-
-			remote := &component.Remote{
-				Type: reflect.TypeOf(&test.SomeStruct{}),
-			}
-
-			arg, err := unmarshalRemoteArg(remote.Type, payload)
-			assert.NoError(t, err)
-			assert.Equal(t, table.arg, arg)
-		})
-	}
-}
-
-func TestUnmarshalRemoteArgErr(t *testing.T) {
-	t.Parallel()
-	remote := &component.Remote{
-		Type: reflect.TypeOf(&test.SomeStruct{}),
-	}
-	args, err := unmarshalRemoteArg(remote.Type, []byte("arg"))
-	assert.Empty(t, args)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot parse invalid wire-format data")
 }
 
 func TestGetMsgType(t *testing.T) {

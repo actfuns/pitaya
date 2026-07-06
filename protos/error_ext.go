@@ -18,4 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package pitaya
+package protos
+
+import (
+	"errors"
+)
+
+type PitayaError interface {
+	error
+	GetCode() int32
+	GetMessage() string
+	GetLevel() int32
+	GetMetadata() map[string]string
+}
+
+func (e *Error) Error() string {
+	return e.Message
+}
+
+func (e *Error) Is(target error) bool {
+	if e == nil || target == nil {
+		return false
+	}
+
+	var pErr PitayaError
+	if errors.As(target, &pErr) {
+		return e.Code == pErr.GetCode()
+	}
+
+	return false
+}

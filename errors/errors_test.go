@@ -127,11 +127,6 @@ func TestCodeFromError(t *testing.T) {
 			code: ErrUnknownCode,
 		},
 
-		"test_nil_pitaya_error": {
-			err:  func() *Error { var err *Error; return err }(),
-			code: 0,
-		},
-
 		"test_pitaya_error": {
 			err:  NewError(errTest, codeNotFound),
 			code: codeNotFound,

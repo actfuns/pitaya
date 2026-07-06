@@ -39,7 +39,7 @@ func TestPoolCapacity(t *testing.T) {
 	// 提交第一个任务
 	pool.Submit(context.Background(), "1", func(ctx context.Context) {
 		defer wg.Done()
-		time.Sleep(2000 * time.Minute)
+		time.Sleep(100 * time.Millisecond)
 		t.Log("Task 1 executed")
 	})
 

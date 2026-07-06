@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package protos;
+package protos.service;
 option go_package = "github.com/topfreegames/pitaya/v2/protos/service";
 
 import "response.proto";

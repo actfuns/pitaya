@@ -236,7 +236,7 @@ func (ns *NatsRPCClient) Call(
 		}
 		err = &errors.Error{
 			Code:     res.Error.Code,
-			Message:  res.Error.Msg,
+			Message:  res.Error.Message,
 			Metadata: res.Error.Metadata,
 		}
 		return nil, err

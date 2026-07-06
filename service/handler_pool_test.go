@@ -24,14 +24,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/constants"
 	e "github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/pipeline"
 	"github.com/topfreegames/pitaya/v2/protos/test"
@@ -45,8 +43,8 @@ func TestGetHandlerExists(t *testing.T) {
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	expected := &component.Handler{}
 	handlerPool := NewHandlerPool()
-	handlerPool.handlers[rt.Short()] = expected
-	defer func() { delete(handlerPool.handlers, rt.Short()) }()
+	handlerPool.handlers[rt.String()] = expected
+	defer func() { delete(handlerPool.handlers, rt.String()) }()
 
 	h, err := handlerPool.getHandler(rt.String())
 	assert.NoError(t, err)
@@ -67,23 +65,41 @@ func TestProcessHandlerMessage(t *testing.T) {
 
 	handlerPool := NewHandlerPool()
 
-	m, ok := reflect.TypeOf(tObj).MethodByName("HandlerPointerRaw")
-	assert.True(t, ok)
-	assert.NotNil(t, m)
-	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
-	handlerPool.handlers[rt.Short()] = &component.Handler{Receiver: reflect.ValueOf(tObj), Method: m, Type: m.Type.In(2)}
+	rt := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
+	handlerPool.handlers[rt.String()] = &component.Handler{
+		Receiver: tObj,
+		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+			arg := &test.SomeStruct{}
+			if _, _, err := dec(ctx, arg); err != nil {
+				return nil, err
+			}
+			return tObj.HandlerPointerRaw(ctx, arg)
+		},
+	}
 
-	m, ok = reflect.TypeOf(tObj).MethodByName("HandlerPointerErr")
-	assert.True(t, ok)
-	assert.NotNil(t, m)
-	rtErr := route.NewRoute("", uuid.New().String(), uuid.New().String())
-	handlerPool.handlers[rtErr.Short()] = &component.Handler{Receiver: reflect.ValueOf(tObj), Method: m, Type: m.Type.In(2)}
+	rtErr := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
+	handlerPool.handlers[rtErr.String()] = &component.Handler{
+		Receiver: tObj,
+		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+			arg := &test.SomeStruct{}
+			if _, _, err := dec(ctx, arg); err != nil {
+				return nil, err
+			}
+			return tObj.HandlerPointerErr(ctx, arg)
+		},
+	}
 
-	m, ok = reflect.TypeOf(tObj).MethodByName("HandlerPointerStruct")
-	assert.True(t, ok)
-	assert.NotNil(t, m)
-	rtSt := route.NewRoute("", uuid.New().String(), uuid.New().String())
-	handlerPool.handlers[rtSt.Short()] = &component.Handler{Receiver: reflect.ValueOf(tObj), Method: m, Type: m.Type.In(2)}
+	rtSt := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
+	handlerPool.handlers[rtSt.String()] = &component.Handler{
+		Receiver: tObj,
+		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+			arg := &test.SomeStruct{}
+			if _, _, err := dec(ctx, arg); err != nil {
+				return nil, err
+			}
+			return tObj.HandlerPointerStruct(ctx, arg)
+		},
+	}
 
 	tables := []struct {
 		name         string
@@ -91,26 +107,23 @@ func TestProcessHandlerMessage(t *testing.T) {
 		errSerReturn error
 		errSerialize error
 		outSerialize interface{}
-		handlerType  message.Type
 		msgType      interface{}
 		remote       bool
 		out          []byte
 		err          error
 	}{
-		{"invalid_route", route.NewRoute("", "no", "no"), nil, nil, nil, message.Request, nil, false, nil, e.NewError(errors.New("pitaya/handler: no.no not found"), e.ErrNotFoundCode)},
-		{"invalid_msg_type", rt, nil, nil, nil, message.Request, nil, false, nil, e.NewError(errInvalidMsg, e.ErrInternalCode)},
-		{"request_on_notify", rt, nil, nil, nil, message.Notify, message.Request, false, nil, e.NewError(constants.ErrRequestOnNotify, e.ErrBadRequestCode)},
-		{"failed_handle_args_unmarshal", rt, nil, errors.New("some error"), &test.SomeStruct{}, message.Request, message.Request, false, nil, e.NewError(errors.New("some error"), e.ErrBadRequestCode)},
-		{"failed_pcall", rtErr, nil, nil, &test.SomeStruct{A: 1, B: "ok"}, message.Request, message.Request, false, nil, errors.New("HandlerPointerErr")},
-		{"failed_serialize_return", rtSt, errors.New("ser ret error"), nil, &test.SomeStruct{A: 1, B: "ok"}, message.Request, message.Request, false, []byte("failed"), nil},
-		{"ok", rt, nil, nil, &test.SomeStruct{}, message.Request, message.Request, false, []byte("ok"), nil},
-		{"notify_on_request", rt, nil, nil, &test.SomeStruct{}, message.Request, message.Notify, false, []byte("ok"), nil},
-		{"remote_notify", rt, nil, nil, &test.SomeStruct{}, message.Notify, message.Notify, true, []byte("ack"), nil},
+		{"invalid_route", route.NewRoute("", "no", "no"), nil, nil, nil, nil, false, nil, e.NewError(errors.New("pitaya/handler: .no.no not found"), e.ErrNotFoundCode)},
+		{"invalid_msg_type", rt, nil, nil, nil, nil, false, nil, e.NewError(errInvalidMsg, e.ErrInternalCode)},
+		{"failed_handle_args_unmarshal", rt, nil, errors.New("some error"), &test.SomeStruct{}, message.Request, false, nil, errors.New("some error")},
+		{"failed_pcall", rtErr, nil, nil, &test.SomeStruct{A: 1, B: "ok"}, message.Request, false, nil, errors.New("HandlerPointerErr")},
+		{"failed_serialize_return", rtSt, errors.New("ser ret error"), nil, &test.SomeStruct{A: 1, B: "ok"}, message.Request, false, []byte("failed"), nil},
+		{"ok", rt, nil, nil, &test.SomeStruct{}, message.Request, false, []byte("ok"), nil},
+		{"notify_on_request", rt, nil, nil, &test.SomeStruct{}, message.Notify, false, []byte("ok"), nil},
+		{"remote_notify", rt, nil, nil, &test.SomeStruct{}, message.Notify, true, []byte{}, nil},
 	}
 
 	for _, table := range tables {
 		t.Run(table.name, func(t *testing.T) {
-			handlerPool.handlers[rt.Short()].MessageType = table.handlerType
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			ss := session_mocks.NewMockSession(ctrl)
@@ -129,7 +142,7 @@ func TestProcessHandlerMessage(t *testing.T) {
 				}
 			}
 			handlerHooks := pipeline.NewHandlerHooks()
-			out, err := handlerPool.ProcessHandlerMessage(nil, table.route.String(), mockSerializer, handlerHooks, ss, nil, table.msgType, table.remote)
+			out, err := handlerPool.ProcessHandlerMessage(nil, table.route.String(), mockSerializer, handlerHooks, ss, nil, table.msgType, table.remote, nil)
 			assert.Equal(t, table.out, out)
 			assert.Equal(t, table.err, err)
 		})
@@ -140,7 +153,15 @@ func TestProcessHandlerMessageBrokenBeforePipeline(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	handlerPool := NewHandlerPool()
-	handlerPool.handlers[rt.Short()] = &component.Handler{}
+	handlerPool.handlers[rt.String()] = &component.Handler{
+		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+			arg := &test.SomeStruct{}
+			if _, _, err := dec(ctx, arg); err != nil {
+				return nil, err
+			}
+			return []byte("ok"), nil
+		},
+	}
 	expected := errors.New("oh noes")
 	before := func(ctx context.Context, in interface{}) (context.Context, interface{}, error) {
 		return ctx, nil, expected
@@ -153,19 +174,27 @@ func TestProcessHandlerMessageBrokenBeforePipeline(t *testing.T) {
 	ss := session_mocks.NewMockSession(ctrl)
 	ss.EXPECT().UID().Return("uid").AnyTimes()
 	ss.EXPECT().ID().Return(int64(1)).AnyTimes()
-	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), nil, handlerHooks, ss, nil, message.Request, false)
+	mockSerializer := mocks.NewMockSerializer(ctrl)
+	mockSerializer.EXPECT().Unmarshal(gomock.Any(), gomock.Any()).Return(nil)
+	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false, nil)
 	assert.Nil(t, out)
 	assert.Equal(t, expected, err)
 }
 
 func TestProcessHandlerMessageBrokenAfterPipeline(t *testing.T) {
 	tObj := &TestType{}
-	m, ok := reflect.TypeOf(tObj).MethodByName("HandlerPointerRaw")
-	assert.True(t, ok)
-	assert.NotNil(t, m)
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	handlerPool := NewHandlerPool()
-	handlerPool.handlers[rt.Short()] = &component.Handler{Receiver: reflect.ValueOf(tObj), Method: m, Type: m.Type.In(2)}
+	handlerPool.handlers[rt.String()] = &component.Handler{
+		Receiver: tObj,
+		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+			arg := &test.SomeStruct{}
+			if _, _, err := dec(ctx, arg); err != nil {
+				return nil, err
+			}
+			return tObj.HandlerPointerRaw(ctx, arg)
+		},
+	}
 
 	after := func(ctx context.Context, out interface{}, err error) (interface{}, error) {
 		return nil, errors.New("oh noes")
@@ -188,7 +217,7 @@ func TestProcessHandlerMessageBrokenAfterPipeline(t *testing.T) {
 
 	handlerHooks := pipeline.NewHandlerHooks()
 	handlerHooks.AfterHandler = afterHandler
-	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false)
+	out, err := handlerPool.ProcessHandlerMessage(nil, rt.String(), mockSerializer, handlerHooks, ss, nil, message.Request, false, nil)
 	assert.Nil(t, out)
 	assert.Equal(t, errors.New("oh noes"), err)
 }

@@ -26,7 +26,7 @@ var File_service_sys_proto protoreflect.FileDescriptor
 
 const file_service_sys_proto_rawDesc = "" +
 	"\n" +
-	"\x11service/sys.proto\x12\x06protos\x1a\x0eresponse.proto\x1a\n" +
+	"\x11service/sys.proto\x12\x0eprotos.service\x1a\x0eresponse.proto\x1a\n" +
 	"kick.proto\x1a\rsession.proto\x1a\x15api/annotations.proto2\xb1\x01\n" +
 	"\x03Sys\x126\n" +
 	"\vBindSession\x12\x0f.protos.Session\x1a\x10.protos.Response\"\x04\x88\xb5\x18\x01\x126\n" +
@@ -40,12 +40,12 @@ var file_service_sys_proto_goTypes = []any{
 	(*protos.KickAnswer)(nil), // 3: protos.KickAnswer
 }
 var file_service_sys_proto_depIdxs = []int32{
-	0, // 0: protos.Sys.BindSession:input_type -> protos.Session
-	0, // 1: protos.Sys.PushSession:input_type -> protos.Session
-	1, // 2: protos.Sys.Kick:input_type -> protos.KickMsg
-	2, // 3: protos.Sys.BindSession:output_type -> protos.Response
-	2, // 4: protos.Sys.PushSession:output_type -> protos.Response
-	3, // 5: protos.Sys.Kick:output_type -> protos.KickAnswer
+	0, // 0: protos.service.Sys.BindSession:input_type -> protos.Session
+	0, // 1: protos.service.Sys.PushSession:input_type -> protos.Session
+	1, // 2: protos.service.Sys.Kick:input_type -> protos.KickMsg
+	2, // 3: protos.service.Sys.BindSession:output_type -> protos.Response
+	2, // 4: protos.service.Sys.PushSession:output_type -> protos.Response
+	3, // 5: protos.service.Sys.Kick:output_type -> protos.KickAnswer
 	3, // [3:6] is the sub-list for method output_type
 	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

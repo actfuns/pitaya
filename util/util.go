@@ -127,7 +127,7 @@ func FileExists(filename string) bool {
 func GetErrorFromPayload(serializer serialize.Serializer, payload []byte) error {
 	pErr := &protos.Error{Code: e.ErrUnknownCode}
 	_ = serializer.Unmarshal(payload, pErr)
-	return &e.Error{Code: pErr.Code, Message: pErr.Msg, Metadata: pErr.Metadata}
+	return &e.Error{Code: pErr.Code, Level: pErr.Level, Message: pErr.Message, Metadata: pErr.Metadata}
 }
 
 // GetErrorPayload creates and serializes an error payload
@@ -135,14 +135,17 @@ func GetErrorPayload(serializer serialize.Serializer, err error) ([]byte, error)
 	code := e.ErrUnknownCode
 	msg := err.Error()
 	metadata := map[string]string{}
+	level := interfaces.ErrorLevel
 	if val, ok := err.(e.PitayaError); ok {
 		code = val.GetCode()
 		metadata = val.GetMetadata()
-		msg = val.GetMsg()
+		msg = val.GetMessage()
+		level = val.GetLevel()
 	}
 	errPayload := &protos.Error{
-		Code: code,
-		Msg:  msg,
+		Code:    code,
+		Message: msg,
+		Level:   level,
 	}
 	if len(metadata) > 0 {
 		errPayload.Metadata = metadata

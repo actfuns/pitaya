@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	PRPC_Sys_BindSession_FullMethodName = "/protos.Sys/BindSession"
-	PRPC_Sys_PushSession_FullMethodName = "/protos.Sys/PushSession"
-	PRPC_Sys_Kick_FullMethodName        = "/protos.Sys/Kick"
+	PRPC_Sys_BindSession_FullMethodName = "/protos.service.Sys/BindSession"
+	PRPC_Sys_PushSession_FullMethodName = "/protos.service.Sys/PushSession"
+	PRPC_Sys_Kick_FullMethodName        = "/protos.service.Sys/Kick"
 )
 
 // SysPrpcClient is the client API for Sys service.

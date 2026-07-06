@@ -34,10 +34,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/topfreegames/pitaya/v2/cluster"
 	"github.com/topfreegames/pitaya/v2/component"
-	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/interfaces"
 	"github.com/topfreegames/pitaya/v2/metrics"
 	"github.com/topfreegames/pitaya/v2/mocks"
+	"github.com/topfreegames/pitaya/v2/prpc"
 	"github.com/topfreegames/pitaya/v2/session"
 	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
 	"github.com/topfreegames/pitaya/v2/worker"
@@ -338,93 +338,6 @@ func TestStaticRPC(t *testing.T) {
 
 			DefaultApp = app
 			require.Equal(t, row.returned, RPC(ctx, routeStr, reply, arg))
-		})
-	}
-}
-
-func TestStaticRPCTo(t *testing.T) {
-	ctx := context.Background()
-	routeStr := "route"
-	serverId := uuid.New().String()
-	var reply proto.Message
-	var arg proto.Message
-
-	tables := []struct {
-		name     string
-		returned error
-	}{
-		{"Success", nil},
-		{"Error", errors.New("error")},
-	}
-
-	for _, row := range tables {
-		t.Run(row.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-
-			app := mocks.NewMockPitaya(ctrl)
-			app.EXPECT().RPCTo(ctx, serverId, routeStr, reply, arg).Return(row.returned)
-
-			DefaultApp = app
-			require.Equal(t, row.returned, RPCTo(ctx, serverId, routeStr, reply, arg))
-		})
-	}
-}
-
-func TestStaticReliableRPC(t *testing.T) {
-	tables := []struct {
-		name     string
-		route    string
-		metadata map[string]interface{}
-		reply    proto.Message
-		arg      proto.Message
-		jid      string
-		err      error
-	}{
-		{"Success", "route", map[string]interface{}{}, nil, nil, "jid", nil},
-		{"Error", "route", map[string]interface{}{}, nil, nil, "", errors.New("error")},
-	}
-
-	for _, row := range tables {
-		t.Run(row.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-
-			app := mocks.NewMockPitaya(ctrl)
-			app.EXPECT().ReliableRPC(row.route, row.metadata, row.reply, row.arg).Return(row.jid, row.err)
-
-			DefaultApp = app
-			jid, err := ReliableRPC(row.route, row.metadata, row.reply, row.arg)
-			require.Equal(t, row.err, err)
-			require.Equal(t, row.jid, jid)
-		})
-	}
-}
-
-func TestStaticReliableRPCWithOptions(t *testing.T) {
-	tables := []struct {
-		name     string
-		route    string
-		metadata map[string]interface{}
-		reply    proto.Message
-		arg      proto.Message
-		opts     *config.EnqueueOpts
-		jid      string
-		err      error
-	}{
-		{"Success", "route", map[string]interface{}{}, nil, nil, nil, "jid", nil},
-		{"Error", "route", map[string]interface{}{}, nil, nil, nil, "", errors.New("error")},
-	}
-
-	for _, row := range tables {
-		t.Run(row.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-
-			app := mocks.NewMockPitaya(ctrl)
-			app.EXPECT().ReliableRPCWithOptions(row.route, row.metadata, row.reply, row.arg, row.opts).Return(row.jid, row.err)
-
-			DefaultApp = app
-			jid, err := ReliableRPCWithOptions(row.route, row.metadata, row.reply, row.arg, row.opts)
-			require.Equal(t, row.err, err)
-			require.Equal(t, row.jid, jid)
 		})
 	}
 }
@@ -774,27 +687,15 @@ func TestStaticGroupDelete(t *testing.T) {
 }
 
 func TestStaticRegister(t *testing.T) {
-	var c component.Component
-	options := []component.Option{}
+	comp := &component.Base{}
 	ctrl := gomock.NewController(t)
 
+	desc := &prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}
 	app := mocks.NewMockPitaya(ctrl)
-	app.EXPECT().Register(c, options)
+	app.EXPECT().Register(desc, comp)
 
 	DefaultApp = app
-	Register(c, options...)
-}
-
-func TestStaticRegisterRemote(t *testing.T) {
-	var c component.Component
-	options := []component.Option{}
-	ctrl := gomock.NewController(t)
-
-	app := mocks.NewMockPitaya(ctrl)
-	app.EXPECT().RegisterRemote(c, options)
-
-	DefaultApp = app
-	RegisterRemote(c, options...)
+	Register(desc, comp)
 }
 
 func TestStaticRegisterModule(t *testing.T) {

@@ -22,8 +22,10 @@ package errors
 
 import (
 	"errors"
+	"maps"
 
 	"github.com/topfreegames/pitaya/v2/logger/interfaces"
+	"github.com/topfreegames/pitaya/v2/protos"
 )
 
 // ErrUnknownCode is a string code representing an unknown error
@@ -57,21 +59,11 @@ const ErrTaskRunnerBusy int32 = 503
 // ErrSessionNotFound is a string code representing the session not found error
 const ErrSessionNotFound int32 = 460
 
-type PitayaError interface {
-	Error() string
-	GetCode() int32
-	GetMsg() string
-	GetLevel() int32
-	GetMetadata() map[string]string
-}
+// Error is an error with a code and message.
+type Error = protos.Error
 
-// Error is an error with a code, message and metadata
-type Error struct {
-	Code     int32
-	Level    int32
-	Message  string
-	Metadata map[string]string
-}
+// PitayaError is an error with a code, message and metadata.
+type PitayaError = protos.PitayaError
 
 // New ctor
 func New(code int32, level int32, message string, metadata ...map[string]string) *Error {
@@ -100,7 +92,7 @@ func NewError(err error, code int32, metadata ...map[string]string) *Error {
 		e := &Error{
 			Code:    pitayaErr.GetCode(),
 			Level:   pitayaErr.GetLevel(),
-			Message: pitayaErr.GetMsg(),
+			Message: pitayaErr.GetMessage(),
 		}
 
 		if mdata := pitayaErr.GetMetadata(); len(mdata) > 0 {
@@ -124,35 +116,13 @@ func NewError(err error, code int32, metadata ...map[string]string) *Error {
 	return e
 }
 
-func (e *Error) GetCode() int32 {
-	return e.Code
-}
-
-func (e *Error) GetMsg() string {
-	return e.Message
-}
-
-func (e *Error) GetLevel() int32 {
-	return e.Level
-}
-
-func (e *Error) GetMetadata() map[string]string {
-	return e.Metadata
-}
-
-func (e *Error) Error() string {
-	return e.Message
-}
-
 func mergeMetadatas(pitayaErr *Error, metadata map[string]string) {
 	if pitayaErr.Metadata == nil {
 		pitayaErr.Metadata = metadata
 		return
 	}
 
-	for key, value := range metadata {
-		pitayaErr.Metadata[key] = value
-	}
+	maps.Copy(pitayaErr.Metadata, metadata)
 }
 
 // CodeFromError returns the code of error.
@@ -166,10 +136,6 @@ func CodeFromError(err error) int32 {
 	pitayaErr, ok := err.(PitayaError)
 	if !ok {
 		return ErrUnknownCode
-	}
-
-	if pitayaErr == nil {
-		return 0
 	}
 
 	return pitayaErr.GetCode()

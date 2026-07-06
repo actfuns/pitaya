@@ -161,8 +161,8 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 
 	res := &protos.Response{
 		Error: &protos.Error{
-			Code: e.ErrInternalCode,
-			Msg:  err.Error(),
+			Code:    e.ErrInternalCode,
+			Message: err.Error(),
 		},
 	}
 	logger.WithCtx(ctx).Errorf("[remote] failed to process remote message for route '%s': %v", req.Msg.Route, err)
@@ -264,7 +264,7 @@ func (r *RemoteService) RPC(ctx context.Context, rpcType protos.RPCType, serverI
 		return &e.Error{
 			Code:     res.Error.Code,
 			Level:    res.Error.Level,
-			Message:  res.Error.Msg,
+			Message:  res.Error.Message,
 			Metadata: res.Error.Metadata,
 		}
 	}
@@ -320,8 +320,8 @@ func (r *RemoteService) Loopback(ctx context.Context, rpcType protos.RPCType, ro
 
 	res = &protos.Response{
 		Error: &protos.Error{
-			Code: e.ErrInternalCode,
-			Msg:  err.Error(),
+			Code:    e.ErrInternalCode,
+			Message: err.Error(),
 		},
 	}
 	logger.WithCtx(ctx).Errorf("[remote] failed to process loopback message for route '%s': %v", req.Msg.Route, err)
@@ -338,8 +338,8 @@ func (r *RemoteService) dispatchRemoteMessage(
 		logger.WithCtx(ctx).Warnf("pitaya/remote: %s not found", req.Msg.Route)
 		return &protos.Response{
 			Error: &protos.Error{
-				Code: e.ErrNotFoundCode,
-				Msg:  "route not found",
+				Code:    e.ErrNotFoundCode,
+				Message: "route not found",
 				Metadata: map[string]string{
 					"route": req.Msg.Route,
 				},
@@ -354,8 +354,8 @@ func (r *RemoteService) dispatchRemoteMessage(
 		if req.Msg.ShardKey == "" {
 			return &protos.Response{
 				Error: &protos.Error{
-					Code: e.ErrInternalCode,
-					Msg:  "shard key is required for non-reentrant methods",
+					Code:    e.ErrInternalCode,
+					Message: "shard key is required for non-reentrant methods",
 				},
 			}, nil
 		}
@@ -404,8 +404,8 @@ func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteSer
 	default:
 		return &protos.Response{
 			Error: &protos.Error{
-				Code: e.ErrBadRequestCode,
-				Msg:  "invalid rpc type",
+				Code:    e.ErrBadRequestCode,
+				Message: "invalid rpc type",
 				Metadata: map[string]string{
 					"route": req.GetMsg().GetRoute(),
 				},
@@ -420,8 +420,8 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 			logger.WithCtx(ctx).Errorf("panic: %v", r)
 			response = &protos.Response{
 				Error: &protos.Error{
-					Code: e.ErrInternalCode,
-					Msg:  fmt.Sprintf("%v", r),
+					Code:    e.ErrInternalCode,
+					Message: fmt.Sprintf("%v", r),
 				},
 			}
 		}
@@ -451,12 +451,12 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
 			code = val.GetCode()
-			msg = val.GetMsg()
+			msg = val.GetMessage()
 			response.Error.Level = val.GetLevel()
 			response.Error.Metadata = val.GetMetadata()
 		}
 		response.Error.Code = code
-		response.Error.Msg = msg
+		response.Error.Message = msg
 		logger.WithCtx(ctx).LogfWithErrorLevel(err, "RPC %s failed to process message: %s", req.Msg.Route, err.Error())
 		return
 	}
@@ -468,8 +468,8 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 			if b, ok = ret.([]byte); !ok {
 				response = &protos.Response{
 					Error: &protos.Error{
-						Code: e.ErrUnknownCode,
-						Msg:  constants.ErrWrongValueType.Error(),
+						Code:    e.ErrUnknownCode,
+						Message: constants.ErrWrongValueType.Error(),
 					},
 				}
 				return
@@ -477,8 +477,8 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		} else if b, err = proto.Marshal(pb); err != nil {
 			response = &protos.Response{
 				Error: &protos.Error{
-					Code: e.ErrUnknownCode,
-					Msg:  err.Error(),
+					Code:    e.ErrUnknownCode,
+					Message: err.Error(),
 				},
 			}
 			return
@@ -507,8 +507,8 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, h
 		logger.Log.Warn("pitaya/handler: cannot instantiate remote agent")
 		response = &protos.Response{
 			Error: &protos.Error{
-				Code: e.ErrInternalCode,
-				Msg:  err.Error(),
+				Code:    e.ErrInternalCode,
+				Message: err.Error(),
 			},
 		}
 		return
@@ -523,12 +523,12 @@ func (r *RemoteService) handleRPCSys(ctx context.Context, req *protos.Request, h
 		msg := err.Error()
 		if val, ok := err.(e.PitayaError); ok {
 			code = val.GetCode()
-			msg = val.GetMsg()
+			msg = val.GetMessage()
 			response.Error.Level = val.GetLevel()
 			response.Error.Metadata = val.GetMetadata()
 		}
 		response.Error.Code = code
-		response.Error.Msg = msg
+		response.Error.Message = msg
 		logger.WithCtx(ctx).LogfWithErrorLevel(err, "Remote handler %s failed to process message: %s", req.Msg.Route, err.Error())
 	} else {
 		response = &protos.Response{Data: ret}

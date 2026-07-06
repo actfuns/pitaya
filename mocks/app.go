@@ -16,9 +16,9 @@ import (
 
 	cluster "github.com/topfreegames/pitaya/v2/cluster"
 	component "github.com/topfreegames/pitaya/v2/component"
-	config "github.com/topfreegames/pitaya/v2/config"
 	interfaces "github.com/topfreegames/pitaya/v2/interfaces"
 	metrics "github.com/topfreegames/pitaya/v2/metrics"
+	prpc "github.com/topfreegames/pitaya/v2/prpc"
 	router "github.com/topfreegames/pitaya/v2/router"
 	session "github.com/topfreegames/pitaya/v2/session"
 	worker "github.com/topfreegames/pitaya/v2/worker"
@@ -51,17 +51,17 @@ func (m *MockPitaya) EXPECT() *MockPitayaMockRecorder {
 }
 
 // AddRoute mocks base method.
-func (m *MockPitaya) AddRoute(serverType string, routingFunction router.RoutingFunc) error {
+func (m *MockPitaya) AddRoute(domain string, routingFunction router.RoutingFunc) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddRoute", serverType, routingFunction)
+	ret := m.ctrl.Call(m, "AddRoute", domain, routingFunction)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddRoute indicates an expected call of AddRoute.
-func (mr *MockPitayaMockRecorder) AddRoute(serverType, routingFunction any) *gomock.Call {
+func (mr *MockPitayaMockRecorder) AddRoute(domain, routingFunction any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoute", reflect.TypeOf((*MockPitaya)(nil).AddRoute), serverType, routingFunction)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoute", reflect.TypeOf((*MockPitaya)(nil).AddRoute), domain, routingFunction)
 }
 
 // ClearInterval mocks base method.
@@ -407,48 +407,34 @@ func (mr *MockPitayaMockRecorder) IsRunning() *gomock.Call {
 }
 
 // RPC mocks base method.
-func (m *MockPitaya) RPC(ctx context.Context, routeStr string, reply, arg proto.Message) error {
+func (m *MockPitaya) RPC(ctx context.Context, routeStr string, reply, arg proto.Message, opts ...prpc.CallOption) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RPC", ctx, routeStr, reply, arg)
+	varargs := []any{ctx, routeStr, reply, arg}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RPC", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RPC indicates an expected call of RPC.
-func (mr *MockPitayaMockRecorder) RPC(ctx, routeStr, reply, arg any) *gomock.Call {
+func (mr *MockPitayaMockRecorder) RPC(ctx, routeStr, reply, arg any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPC", reflect.TypeOf((*MockPitaya)(nil).RPC), ctx, routeStr, reply, arg)
-}
-
-// RPCTo mocks base method.
-func (m *MockPitaya) RPCTo(ctx context.Context, serverID, routeStr string, reply, arg proto.Message) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RPCTo", ctx, serverID, routeStr, reply, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RPCTo indicates an expected call of RPCTo.
-func (mr *MockPitayaMockRecorder) RPCTo(ctx, serverID, routeStr, reply, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPCTo", reflect.TypeOf((*MockPitaya)(nil).RPCTo), ctx, serverID, routeStr, reply, arg)
+	varargs := append([]any{ctx, routeStr, reply, arg}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPC", reflect.TypeOf((*MockPitaya)(nil).RPC), varargs...)
 }
 
 // Register mocks base method.
-func (m *MockPitaya) Register(c component.Component, options ...component.Option) {
+func (m *MockPitaya) Register(desc *prpc.ServiceDesc, comp component.Component) {
 	m.ctrl.T.Helper()
-	varargs := []any{c}
-	for _, a := range options {
-		varargs = append(varargs, a)
-	}
-	m.ctrl.Call(m, "Register", varargs...)
+	m.ctrl.Call(m, "Register", desc, comp)
 }
 
 // Register indicates an expected call of Register.
-func (mr *MockPitayaMockRecorder) Register(c any, options ...any) *gomock.Call {
+func (mr *MockPitayaMockRecorder) Register(desc, comp any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{c}, options...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockPitaya)(nil).Register), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockPitaya)(nil).Register), desc, comp)
 }
 
 // RegisterModule mocks base method.
@@ -505,53 +491,6 @@ func (m *MockPitaya) RegisterRPCJob(rpcJob worker.RPCJob) error {
 func (mr *MockPitayaMockRecorder) RegisterRPCJob(rpcJob any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterRPCJob", reflect.TypeOf((*MockPitaya)(nil).RegisterRPCJob), rpcJob)
-}
-
-// RegisterRemote mocks base method.
-func (m *MockPitaya) RegisterRemote(c component.Component, options ...component.Option) {
-	m.ctrl.T.Helper()
-	varargs := []any{c}
-	for _, a := range options {
-		varargs = append(varargs, a)
-	}
-	m.ctrl.Call(m, "RegisterRemote", varargs...)
-}
-
-// RegisterRemote indicates an expected call of RegisterRemote.
-func (mr *MockPitayaMockRecorder) RegisterRemote(c any, options ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{c}, options...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterRemote", reflect.TypeOf((*MockPitaya)(nil).RegisterRemote), varargs...)
-}
-
-// ReliableRPC mocks base method.
-func (m *MockPitaya) ReliableRPC(routeStr string, metadata map[string]any, reply, arg proto.Message) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReliableRPC", routeStr, metadata, reply, arg)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReliableRPC indicates an expected call of ReliableRPC.
-func (mr *MockPitayaMockRecorder) ReliableRPC(routeStr, metadata, reply, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReliableRPC", reflect.TypeOf((*MockPitaya)(nil).ReliableRPC), routeStr, metadata, reply, arg)
-}
-
-// ReliableRPCWithOptions mocks base method.
-func (m *MockPitaya) ReliableRPCWithOptions(routeStr string, metadata map[string]any, reply, arg proto.Message, opts *config.EnqueueOpts) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReliableRPCWithOptions", routeStr, metadata, reply, arg, opts)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReliableRPCWithOptions indicates an expected call of ReliableRPCWithOptions.
-func (mr *MockPitayaMockRecorder) ReliableRPCWithOptions(routeStr, metadata, reply, arg, opts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReliableRPCWithOptions", reflect.TypeOf((*MockPitaya)(nil).ReliableRPCWithOptions), routeStr, metadata, reply, arg, opts)
 }
 
 // SendKickToUsers mocks base method.

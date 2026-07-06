@@ -24,9 +24,9 @@ const (
 type Error struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          int32                  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Msg           string                 `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Level         int32                  `protobuf:"varint,4,opt,name=level,proto3" json:"level,omitempty"`
+	Level         int32                  `protobuf:"varint,2,opt,name=level,proto3" json:"level,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,9 +68,16 @@ func (x *Error) GetCode() int32 {
 	return 0
 }
 
-func (x *Error) GetMsg() string {
+func (x *Error) GetLevel() int32 {
 	if x != nil {
-		return x.Msg
+		return x.Level
+	}
+	return 0
+}
+
+func (x *Error) GetMessage() string {
+	if x != nil {
+		return x.Message
 	}
 	return ""
 }
@@ -82,23 +89,16 @@ func (x *Error) GetMetadata() map[string]string {
 	return nil
 }
 
-func (x *Error) GetLevel() int32 {
-	if x != nil {
-		return x.Level
-	}
-	return 0
-}
-
 var File_error_proto protoreflect.FileDescriptor
 
 const file_error_proto_rawDesc = "" +
 	"\n" +
-	"\verror.proto\x12\x06protos\"\xb9\x01\n" +
+	"\verror.proto\x12\x06protos\"\xc1\x01\n" +
 	"\x05Error\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x10\n" +
-	"\x03msg\x18\x02 \x01(\tR\x03msg\x127\n" +
-	"\bmetadata\x18\x03 \x03(\v2\x1b.protos.Error.MetadataEntryR\bmetadata\x12\x14\n" +
-	"\x05level\x18\x04 \x01(\x05R\x05level\x1a;\n" +
+	"\x04code\x18\x01 \x01(\x05R\x04code\x12\x14\n" +
+	"\x05level\x18\x02 \x01(\x05R\x05level\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x127\n" +
+	"\bmetadata\x18\x04 \x03(\v2\x1b.protos.Error.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"

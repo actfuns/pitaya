@@ -47,6 +47,7 @@ import (
 	pcontext "github.com/topfreegames/pitaya/v2/context"
 	e "github.com/topfreegames/pitaya/v2/errors"
 	"github.com/topfreegames/pitaya/v2/helpers"
+	"github.com/topfreegames/pitaya/v2/logger/interfaces"
 	"github.com/topfreegames/pitaya/v2/metrics"
 	metricsmocks "github.com/topfreegames/pitaya/v2/metrics/mocks"
 	"github.com/topfreegames/pitaya/v2/mocks"
@@ -406,8 +407,9 @@ func TestAgentSendSerializeErr(t *testing.T) {
 
 	expectedBT := []byte("bla")
 	mockSerializer.EXPECT().Marshal(&protos.Error{
-		Code: e.ErrUnknownCode,
-		Msg:  expectedErr.Error(),
+		Code:    e.ErrUnknownCode,
+		Message: expectedErr.Error(),
+		Level:   interfaces.ErrorLevel,
 	}).Return(expectedBT, nil)
 	m := &message.Message{
 		Type:  expected.typ,
@@ -626,6 +628,7 @@ func TestAgentResponseMIDFailsIfClosedAgent(t *testing.T) {
 	mockEncoder := codecmocks.NewMockPacketEncoder(ctrl)
 	heartbeatAndHandshakeMocks(mockEncoder)
 	mockMessageEncoder := messagemocks.NewMockEncoder(ctrl)
+	mockMessageEncoder.EXPECT().IsCompressionEnabled().Return(false).AnyTimes()
 	mockMetricsReporter := metricsmocks.NewMockReporter(ctrl)
 
 	mockSerializer := serializemocks.NewMockSerializer(ctrl)
@@ -1022,6 +1025,9 @@ func TestAgentSendHandshakeResponse(t *testing.T) {
 
 func TestAnswerWithError(t *testing.T) {
 	unknownError := e.NewError(errors.New(""), e.ErrUnknownCode)
+	// When mock serializer is used, GetErrorFromPayload reads back
+	// a zero-value error because Marshal/Unmarshal don't actually round-trip.
+	unknownErrorZero := &e.Error{Code: unknownError.Code, Message: unknownError.Message}
 	table := []struct {
 		name          string
 		answeredErr   error
@@ -1034,7 +1040,7 @@ func TestAnswerWithError(t *testing.T) {
 			answeredErr:   assert.AnError,
 			encoderErr:    nil,
 			getPayloadErr: nil,
-			expectedErr:   unknownError,
+			expectedErr:   unknownErrorZero,
 		},
 		{
 			name:          "should not answer if fails to get payload",
@@ -1519,7 +1525,6 @@ func TestAgentWriteChSendWriteTimeout(t *testing.T) {
 // error payload whose metadata is large enough to compress smaller than
 // the source. It asserts that pendingWrite.err carries the original code.
 func TestAgentResponseMIDPreservesErrorCodeWithCompression(t *testing.T) {
-	originalCode := "PIT-COMPRESSION-TEST"
 	originalMsg := "an error whose payload is large enough to compress"
 	originalMetadata := map[string]string{
 		"contextual_field_a": "contextual value a worth some bytes",
@@ -1577,11 +1582,11 @@ func TestAgentResponseMIDPreservesErrorCodeWithCompression(t *testing.T) {
 	recovered, ok := recv.err.(*e.Error)
 	require.Truef(t, ok, "pendingWrite.err must be *errors.Error, got %T", recv.err)
 
-	assert.Equalf(t, originalCode, recovered.Code,
+	assert.Equalf(t, originalErr.Code, recovered.Code,
 		"pendingWrite.err.Code was %q, expected %q — compression likely mutated m.Data "+
 			"before GetErrorFromPayload read it; the metric `code` tag will be wrong for "+
 			"any error whose payload compresses smaller than the source",
-		recovered.Code, originalCode)
+		recovered.Code, originalErr.Code)
 	assert.Equal(t, originalMsg, recovered.Message)
 	assert.Equal(t, originalMetadata, recovered.Metadata)
 }

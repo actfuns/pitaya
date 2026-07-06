@@ -297,7 +297,7 @@ func TestAgentRemoteSendRequest(t *testing.T) {
 			assert.NotNil(t, remote)
 
 			if table.reqRoute == "" {
-				table.reqRoute = "bla.bla"
+				table.reqRoute = "bla.bla.bla"
 
 				serializeRet := []byte("ok")
 				if reflect.TypeOf(table.data) == reflect.TypeOf(([]byte)(nil)) {

@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/config"
+	"github.com/topfreegames/pitaya/v2/prpc"
 )
 
 type MyComp struct {
@@ -44,38 +45,28 @@ func (m *MyComp) Shutdown() {
 func TestRegister(t *testing.T) {
 	config := config.NewDefaultPitayaConfig()
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *config).(*App)
+	before := len(app.handlerComp)
 	b := &component.Base{}
-	app.Register(b)
-	assert.Equal(t, 1, len(app.handlerComp))
-	assert.Equal(t, regComp{b, nil}, app.handlerComp[0])
-}
-
-func TestRegisterRemote(t *testing.T) {
-	config := config.NewDefaultPitayaConfig()
-	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *config).(*App)
-	before := app.remoteComp
-	b := &component.Base{}
-	app.RegisterRemote(b)
-	assert.Equal(t, len(before)+1, len(app.remoteComp))
-	assert.Equal(t, regComp{b, nil}, app.remoteComp[len(before)])
+	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}, b)
+	assert.Equal(t, before+1, len(app.handlerComp))
 }
 
 func TestStartupComponents(t *testing.T) {
 	app := NewDefaultApp(true, "testtype", Standalone, map[string]string{}, *config.NewDefaultPitayaConfig()).(*App)
 
-	app.Register(&MyComp{})
-	app.RegisterRemote(&MyComp{})
+	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}, &MyComp{})
 	app.startupComponents()
-	assert.Equal(t, true, app.handlerComp[0].comp.(*MyComp).running)
+	idx := len(app.handlerComp) - 1
+	assert.Equal(t, true, app.handlerComp[idx].comp.(*MyComp).running)
 }
 
 func TestShutdownComponents(t *testing.T) {
 	app := NewDefaultApp(true, "testtype", Standalone, map[string]string{}, *config.NewDefaultPitayaConfig()).(*App)
 
-	app.Register(&MyComp{})
-	app.RegisterRemote(&MyComp{})
+	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}, &MyComp{})
 	app.startupComponents()
 
 	app.shutdownComponents()
-	assert.Equal(t, false, app.handlerComp[0].comp.(*MyComp).running)
+	idx := len(app.handlerComp) - 1
+	assert.Equal(t, false, app.handlerComp[idx].comp.(*MyComp).running)
 }

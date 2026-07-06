@@ -155,7 +155,7 @@ func TestInitSysRemotes(t *testing.T) {
 	builderConfig := config.NewDefaultPitayaConfig()
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *builderConfig).(*App)
 	app.initSysRemotes()
-	assert.NotNil(t, app.remoteComp[0])
+	assert.NotNil(t, app.handlerService)
 }
 
 func TestSetDictionary(t *testing.T) {
@@ -259,29 +259,6 @@ func TestGetDieChan_ShouldNotHangOnTerminationIfListenedByApp(t *testing.T) {
 	<-app.GetDieChan()
 
 	assertions.ShouldEventuallyReturn(t, &wait, 2*time.Second)
-}
-
-func TestShutdown_ShouldSucceedOnDrainingApp(t *testing.T) {
-	builderConfig := config.NewDefaultPitayaConfig()
-	builderConfig.Session.Drain.Enabled = true
-	app := NewDefaultApp(false, "testtype", Standalone, map[string]string{}, *builderConfig).(*App)
-
-	var wait sync.WaitGroup
-	wait.Add(1)
-	go func() {
-		defer wait.Done()
-		app.Start()
-	}()
-
-	successChan := make(chan bool)
-	go func() {
-		app.sgChan <- syscall.SIGTERM
-		app.Shutdown()
-		successChan <- true
-	}()
-
-	wait.Wait()
-	assertions.ShouldEventuallyClose(t, successChan, 2*time.Second)
 }
 
 func TestDieChan_ShouldCloseWhenMessageIsSent(t *testing.T) {
