@@ -5,10 +5,10 @@ go 1.25.10
 require (
 	github.com/DataDog/datadog-go v4.8.3+incompatible
 	github.com/go-playground/validator/v10 v10.13.0
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/mailgun/proxyproto v1.0.0
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nats-io/nats-server/v2 v2.8.4
 	github.com/nats-io/nats.go v1.39.0
 	github.com/nats-io/nuid v1.0.1
@@ -61,6 +61,7 @@ require (
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/minio/highwayhash v1.0.2 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nats-io/jwt/v2 v2.2.1-0.20220330180145-442af02fd36a // indirect
 	github.com/nats-io/nkeys v0.4.9 // indirect
