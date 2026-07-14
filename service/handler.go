@@ -269,7 +269,6 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	}
 	ctx = tracing.StartSpan(ctx, msg.Route, tags)
 	ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
-	ctx = pcontext.AddToPropagateCtx(ctx, constants.RequestUidKey, session.UID())
 
 	r, err := route.Decode(msg.Route)
 	if err != nil {
@@ -285,13 +284,14 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 		return
 	}
 
-	shardKey, target, err := h.router.Resolve(ctx, protos.RPCType_Sys, r, msg)
+	sctx, shardKey, target, err := h.router.Resolve(ctx, protos.RPCType_Sys, r, msg)
 	if err != nil {
 		logger.Log.Errorf("error making call for route %s: %v", msg.Route, err)
 		a.AnswerWithError(ctx, msg.ID, e.NewError(constants.ErrRouteMissingServerDomain, e.ErrInternalCode))
 		return
 	}
 	msg.ShardKey = shardKey
+	ctx = sctx
 
 	if err := h.taskService.Submit(ctx, shardKey, func(tctx context.Context) {
 		if target.ID == h.server.ID {

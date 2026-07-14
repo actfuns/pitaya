@@ -73,9 +73,6 @@ var StartTimeKey = "req-start-time"
 // RequestIDKey is the key holding the request id to be sent over the context
 var RequestIDKey = "request.id"
 
-// RequestUidKey is the context key where the user id will be set
-var RequestUidKey = "request.uid"
-
 // RequestShardKey is the key holding the request instance to be sent over the context
 var RequestShardKey = "request.shardKey"
 

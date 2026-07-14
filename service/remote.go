@@ -224,13 +224,14 @@ func (r *RemoteService) DoRPC(ctx context.Context, rpcType protos.RPCType, serve
 	}
 
 	if serverID == "" {
-		shardKey, target, err := r.router.Resolve(ctx, rpcType, route, msg)
+		sctx, shardKey, target, err := r.router.Resolve(ctx, rpcType, route, msg)
 		if err != nil {
 			logger.Log.Errorf("error making call for route %s: %v", msg.Route, err)
 			return nil, e.NewError(err, e.ErrInternalCode)
 		}
 		serverID = target.ID
 		msg.ShardKey = shardKey
+		ctx = sctx
 	}
 
 	if serverID == r.server.ID && r.server.IsLoopbackEnabled() {

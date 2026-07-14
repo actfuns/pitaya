@@ -37,7 +37,7 @@ import (
 func (app *App) RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error {
 	opt := applyOptions(opts)
 
-	ctx = pcontext.AddToPropagateCtxMap(ctx, opt.PropagateCtx)
+	ctx = pcontext.AddPairsToPropagateCtx(ctx, opt.PropagateCtx...)
 
 	if opt.Reliable {
 		meta := opt.ReliableMetadata

@@ -34,14 +34,20 @@ func AddToPropagateCtx(ctx context.Context, key string, val interface{}) context
 	return context.WithValue(ctx, constants.PropagateCtxKey, propagate)
 }
 
-// AddToPropagateCtxMap adds multiple key-value pairs to the propagate context.
-func AddToPropagateCtxMap(ctx context.Context, values map[string]interface{}) context.Context {
-	if len(values) == 0 {
+// KeyValuePair represents a key-value pair for propagating context values.
+type KeyValuePair struct {
+	Key   string
+	Value interface{}
+}
+
+// AddPairsToPropagateCtx adds multiple key-value pairs to the propagate context.
+func AddPairsToPropagateCtx(ctx context.Context, pairs ...KeyValuePair) context.Context {
+	if len(pairs) == 0 {
 		return ctx
 	}
 	propagate := ToMap(ctx)
-	for k, v := range values {
-		propagate[k] = v
+	for _, p := range pairs {
+		propagate[p.Key] = p.Value
 	}
 	return context.WithValue(ctx, constants.PropagateCtxKey, propagate)
 }

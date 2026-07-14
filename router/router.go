@@ -46,7 +46,7 @@ type RoutingFunc func(
 	rpcType protos.RPCType,
 	route *route.Route,
 	payload []byte,
-) (string, *cluster.Server, error)
+) (context.Context, string, *cluster.Server, error)
 
 type Session interface {
 	GetId() int64
@@ -73,25 +73,25 @@ func (r *Router) SetServer(server *cluster.Server) {
 func (r *Router) defaultRoute(
 	ctx context.Context,
 	route *route.Route,
-) (string, *cluster.Server, error) {
+) (context.Context, string, *cluster.Server, error) {
 	if r.server != nil {
 		sessionVal, ok := ctx.Value(constants.SessionCtxKey).(session.Session)
 		if !ok {
-			return route.Domain, r.server, nil
+			return ctx, route.Domain, r.server, nil
 		}
-		return strconv.FormatInt(sessionVal.ID(), 10), r.server, nil
+		return ctx, strconv.FormatInt(sessionVal.ID(), 10), r.server, nil
 	}
 
 	servers, err := r.serviceDiscovery.GetServersByDomain(route.Domain)
 	if err != nil {
-		return "", nil, err
+		return ctx, "", nil, err
 	}
 
 	for _, srv := range servers {
-		return route.Domain, srv, nil
+		return ctx, route.Domain, srv, nil
 	}
 
-	return "", nil, constants.ErrNoServersAvailableOfType
+	return ctx, "", nil, constants.ErrNoServersAvailableOfType
 }
 
 // Resolve gets the right server to use in the call
@@ -100,9 +100,9 @@ func (r *Router) Resolve(
 	rpcType protos.RPCType,
 	route *route.Route,
 	msg *message.Message,
-) (string, *cluster.Server, error) {
+) (context.Context, string, *cluster.Server, error) {
 	if r.serviceDiscovery == nil {
-		return "", nil, constants.ErrServiceDiscoveryNotInitialized
+		return ctx, "", nil, constants.ErrServiceDiscoveryNotInitialized
 	}
 	routeFunc, ok := r.routesMap[route.Domain]
 	if !ok {

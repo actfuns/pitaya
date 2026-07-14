@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	protos "github.com/topfreegames/pitaya/v2/protos/api"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
-
-	protos "github.com/topfreegames/pitaya/v2/protos/api"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 const version = "0.1.0"
@@ -21,8 +21,9 @@ func main() {
 		return
 	}
 
-	protogen.Options{}.Run(func(plugin *protogen.Plugin) error {
-		for _, file := range plugin.Files {
+	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
+		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
+		for _, file := range gen.Files {
 			if !file.Generate {
 				continue
 			}
@@ -31,7 +32,7 @@ func main() {
 				continue
 			}
 
-			generateFile(plugin, file)
+			generateFile(gen, file)
 		}
 		return nil
 	})

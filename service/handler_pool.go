@@ -63,7 +63,7 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	}
 
 	if !handler.Client {
-		return nil, e.NewError(err, e.ErrNotFoundCode)
+		return nil, e.NewError(fmt.Errorf("pitaya/handler: %s not found", route), e.ErrNotFoundCode)
 	}
 
 	msgType, err := getMsgType(msgTypeIface)
