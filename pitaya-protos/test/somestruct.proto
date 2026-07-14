@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/topfreegames/pitaya/v2/protos/test";
+option go_package = "github.com/actfuns/pitaya/v2/protos/test";
 
 package test;
 

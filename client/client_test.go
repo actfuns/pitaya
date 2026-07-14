@@ -6,9 +6,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/helpers"
-	"github.com/topfreegames/pitaya/v2/mocks"
+	"github.com/actfuns/pitaya/v2/conn/message"
+	"github.com/actfuns/pitaya/v2/helpers"
+	"github.com/actfuns/pitaya/v2/mocks"
 	"go.uber.org/mock/gomock"
 )
 

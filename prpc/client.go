@@ -3,8 +3,8 @@ package prpc
 import (
 	"context"
 
-	"github.com/topfreegames/pitaya/v2/config"
-	pcontext "github.com/topfreegames/pitaya/v2/context"
+	"github.com/actfuns/pitaya/v2/config"
+	pcontext "github.com/actfuns/pitaya/v2/context"
 	"google.golang.org/protobuf/proto"
 )
 

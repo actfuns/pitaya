@@ -145,7 +145,7 @@ const file_api_annotations_proto_rawDesc = "" +
 	"\x06client\x12\x1e.google.protobuf.MethodOptions\x18҆\x03 \x01(\bR\x06client\x88\x01\x01:9\n" +
 	"\x06errors\x12\x1c.google.protobuf.EnumOptions\x18ӆ\x03 \x01(\bR\x06errors\x88\x01\x01:G\n" +
 	"\verror_level\x12!.google.protobuf.EnumValueOptions\x18Ն\x03 \x01(\x05R\n" +
-	"errorLevel\x88\x01\x01B.Z,github.com/topfreegames/pitaya/v2/protos/apib\x06proto3"
+	"errorLevel\x88\x01\x01B)Z'github.com/actfuns/pitaya/v2/protos/apib\x06proto3"
 
 var file_api_annotations_proto_goTypes = []any{
 	(*descriptorpb.ServiceOptions)(nil),   // 0: google.protobuf.ServiceOptions

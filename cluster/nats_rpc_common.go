@@ -26,7 +26,7 @@ import (
 	"time"
 
 	nats "github.com/nats-io/nats.go"
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/logger"
 )
 
 func getChannel(serverType, serverID string) string {

@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/constants"
-	pcontext "github.com/topfreegames/pitaya/v2/context"
-	"github.com/topfreegames/pitaya/v2/logger"
-	syncx "github.com/topfreegames/pitaya/v2/sync"
+	"github.com/actfuns/pitaya/v2/constants"
+	pcontext "github.com/actfuns/pitaya/v2/context"
+	"github.com/actfuns/pitaya/v2/logger"
+	syncx "github.com/actfuns/pitaya/v2/sync"
 )
 
 const (

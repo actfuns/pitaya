@@ -24,8 +24,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/component"
-	"github.com/topfreegames/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/component"
+	"github.com/actfuns/pitaya/v2/config"
 )
 
 type MyMod struct {

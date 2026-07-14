@@ -1,11 +1,11 @@
-module github.com/topfreegames/pitaya/xk6-pitaya/v2
+module github.com/actfuns/pitaya/xk6-pitaya/v2
 
 go 1.25.10
 
 require (
 	github.com/grafana/sobek v0.0.0-20240613124309-cb36746e8fee
 	github.com/sirupsen/logrus v1.9.3
-	github.com/topfreegames/pitaya/v2 v2.11.16
+	github.com/actfuns/pitaya/v2 v2.11.16
 	go.k6.io/k6 v0.51.0
 )
 
@@ -98,4 +98,4 @@ require (
 	gopkg.in/guregu/null.v3 v3.3.0 // indirect
 )
 
-replace github.com/topfreegames/pitaya/v2 v2.11.14 => ../
+replace github.com/actfuns/pitaya/v2 => ../

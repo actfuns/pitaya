@@ -23,7 +23,7 @@ package cluster
 import (
 	"context"
 
-	"github.com/topfreegames/pitaya/v2/interfaces"
+	"github.com/actfuns/pitaya/v2/interfaces"
 )
 
 // ServiceDiscovery is the interface for a service discovery client

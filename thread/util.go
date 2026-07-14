@@ -3,9 +3,9 @@ package thread
 import (
 	"context"
 
-	"github.com/topfreegames/pitaya/v2/constants"
-	pcontext "github.com/topfreegames/pitaya/v2/context"
-	"github.com/topfreegames/pitaya/v2/util"
+	"github.com/actfuns/pitaya/v2/constants"
+	pcontext "github.com/actfuns/pitaya/v2/context"
+	"github.com/actfuns/pitaya/v2/util"
 )
 
 // GoSafe executes a function in a goroutine and catches panics

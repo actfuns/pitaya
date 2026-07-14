@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/topfreegames/pitaya/v2/session"
-	"github.com/topfreegames/pitaya/v2/session/mocks"
+	"github.com/actfuns/pitaya/v2/session"
+	"github.com/actfuns/pitaya/v2/session/mocks"
 	"go.uber.org/mock/gomock"
 )
 

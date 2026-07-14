@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/logger"
 )
 
 type TaskEntry struct {

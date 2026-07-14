@@ -7,7 +7,7 @@ package mocks
 import (
 	reflect "reflect"
 
-	message "github.com/topfreegames/pitaya/v2/conn/message"
+	message "github.com/actfuns/pitaya/v2/conn/message"
 	gomock "go.uber.org/mock/gomock"
 )
 

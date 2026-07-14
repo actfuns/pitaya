@@ -25,7 +25,7 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/logger"
 )
 
 const (

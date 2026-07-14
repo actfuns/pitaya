@@ -158,7 +158,7 @@ const file_request_proto_rawDesc = "" +
 	"\bmetadata\x18\x05 \x01(\fR\bmetadata*\x1c\n" +
 	"\aRPCType\x12\a\n" +
 	"\x03Sys\x10\x00\x12\b\n" +
-	"\x04User\x10\x01B;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\x04User\x10\x01B6Z#github.com/actfuns/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_request_proto_rawDescOnce sync.Once

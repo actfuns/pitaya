@@ -8,9 +8,10 @@ package service
 
 import (
 	context "context"
-	component "github.com/topfreegames/pitaya/v2/component"
-	protos "github.com/topfreegames/pitaya/v2/protos"
-	prpc "github.com/topfreegames/pitaya/v2/prpc"
+
+	component "github.com/actfuns/pitaya/v2/component"
+	protos "github.com/actfuns/pitaya/v2/protos"
+	prpc "github.com/actfuns/pitaya/v2/prpc"
 )
 
 const (

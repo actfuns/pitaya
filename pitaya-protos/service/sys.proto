@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package protos.service;
-option go_package = "github.com/topfreegames/pitaya/v2/protos/service";
+option go_package = "github.com/actfuns/pitaya/v2/protos/service";
 
 import "response.proto";
 import "kick.proto";

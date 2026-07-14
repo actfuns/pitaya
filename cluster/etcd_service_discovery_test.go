@@ -27,9 +27,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/helpers"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/helpers"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )

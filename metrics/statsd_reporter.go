@@ -24,8 +24,8 @@ import (
 	"fmt"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/logger"
 )
 
 // Client is the interface to required dogstatsd functions

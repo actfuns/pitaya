@@ -81,7 +81,7 @@ const file_bind_proto_rawDesc = "" +
 	"bind.proto\x12\x06protos\"-\n" +
 	"\aBindMsg\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\x12\x10\n" +
-	"\x03fid\x18\x02 \x01(\tR\x03fidB;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\x03fid\x18\x02 \x01(\tR\x03fidB6Z#github.com/actfuns/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_bind_proto_rawDescOnce sync.Once

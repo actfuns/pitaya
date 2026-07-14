@@ -23,9 +23,9 @@ package modules
 import (
 	"context"
 
-	"github.com/topfreegames/pitaya/v2/cluster"
-	"github.com/topfreegames/pitaya/v2/logger"
-	"github.com/topfreegames/pitaya/v2/session"
+	"github.com/actfuns/pitaya/v2/cluster"
+	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/session"
 )
 
 // UniqueSession module watches for sessions using the same UID and kicks them

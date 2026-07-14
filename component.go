@@ -23,9 +23,9 @@ package pitaya
 import (
 	"slices"
 
-	"github.com/topfreegames/pitaya/v2/component"
-	"github.com/topfreegames/pitaya/v2/logger"
-	"github.com/topfreegames/pitaya/v2/prpc"
+	"github.com/actfuns/pitaya/v2/component"
+	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/prpc"
 )
 
 type regComp struct {

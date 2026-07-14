@@ -28,10 +28,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/logger"
-	"github.com/topfreegames/pitaya/v2/util"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/util"
 
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	logutil "go.etcd.io/etcd/client/pkg/v3/logutil"

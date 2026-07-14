@@ -26,7 +26,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/logger"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 )

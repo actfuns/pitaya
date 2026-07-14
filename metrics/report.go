@@ -26,11 +26,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/errors"
-	"github.com/topfreegames/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/errors"
+	"github.com/actfuns/pitaya/v2/logger"
 
-	pcontext "github.com/topfreegames/pitaya/v2/context"
+	pcontext "github.com/actfuns/pitaya/v2/context"
 )
 
 // ReportTimingFromCtx reports the latency from the context

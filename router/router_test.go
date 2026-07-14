@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/cluster"
-	"github.com/topfreegames/pitaya/v2/cluster/mocks"
-	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/protos"
-	"github.com/topfreegames/pitaya/v2/route"
+	"github.com/actfuns/pitaya/v2/cluster"
+	"github.com/actfuns/pitaya/v2/cluster/mocks"
+	"github.com/actfuns/pitaya/v2/conn/message"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/route"
 	"go.uber.org/mock/gomock"
 )
 

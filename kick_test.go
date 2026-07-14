@@ -26,11 +26,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	clustermocks "github.com/topfreegames/pitaya/v2/cluster/mocks"
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/protos"
-	sessionmocks "github.com/topfreegames/pitaya/v2/session/mocks"
+	clustermocks "github.com/actfuns/pitaya/v2/cluster/mocks"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/protos"
+	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
 	"go.uber.org/mock/gomock"
 )
 

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/lang"
+	"github.com/actfuns/pitaya/v2/lang"
 )
 
 // errTimeout indicates a timeout.

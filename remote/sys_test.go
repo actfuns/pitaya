@@ -26,9 +26,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/protos"
-	"github.com/topfreegames/pitaya/v2/session/mocks"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/session/mocks"
 	"go.uber.org/mock/gomock"
 )
 

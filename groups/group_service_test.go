@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/topfreegames/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/constants"
 )
 
 func testCreateDuplicatedGroup(gs GroupService, t *testing.T) {

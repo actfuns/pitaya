@@ -23,11 +23,11 @@ package logger
 import (
 	"testing"
 
-	"github.com/topfreegames/pitaya/v2/errors"
-	"github.com/topfreegames/pitaya/v2/logger/interfaces"
+	"github.com/actfuns/pitaya/v2/errors"
+	"github.com/actfuns/pitaya/v2/logger/interfaces"
 
 	"github.com/stretchr/testify/assert"
-	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
+	logruswrapper "github.com/actfuns/pitaya/v2/logger/logrus"
 )
 
 func TestInitLogrusLogger(t *testing.T) {

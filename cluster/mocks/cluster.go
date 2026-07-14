@@ -8,11 +8,11 @@ import (
 	context "context"
 	reflect "reflect"
 
-	cluster "github.com/topfreegames/pitaya/v2/cluster"
-	message "github.com/topfreegames/pitaya/v2/conn/message"
-	protos "github.com/topfreegames/pitaya/v2/protos"
-	route "github.com/topfreegames/pitaya/v2/route"
-	session "github.com/topfreegames/pitaya/v2/session"
+	cluster "github.com/actfuns/pitaya/v2/cluster"
+	message "github.com/actfuns/pitaya/v2/conn/message"
+	protos "github.com/actfuns/pitaya/v2/protos"
+	route "github.com/actfuns/pitaya/v2/route"
+	session "github.com/actfuns/pitaya/v2/session"
 	gomock "go.uber.org/mock/gomock"
 )
 

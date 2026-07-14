@@ -24,8 +24,8 @@ import (
 	"errors"
 	"maps"
 
-	"github.com/topfreegames/pitaya/v2/logger/interfaces"
-	"github.com/topfreegames/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/logger/interfaces"
+	"github.com/actfuns/pitaya/v2/protos"
 )
 
 // ErrUnknownCode is a string code representing an unknown error

@@ -80,7 +80,7 @@ const file_response_proto_rawDesc = "" +
 	"\x0eresponse.proto\x12\x06protos\x1a\verror.proto\"C\n" +
 	"\bResponse\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12#\n" +
-	"\x05error\x18\x02 \x01(\v2\r.protos.ErrorR\x05errorB;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\x05error\x18\x02 \x01(\v2\r.protos.ErrorR\x05errorB6Z#github.com/actfuns/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_response_proto_rawDescOnce sync.Once

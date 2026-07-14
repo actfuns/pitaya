@@ -7,8 +7,8 @@
 package service
 
 import (
-	protos "github.com/topfreegames/pitaya/v2/protos"
-	_ "github.com/topfreegames/pitaya/v2/protos/api"
+	protos "github.com/actfuns/pitaya/v2/protos"
+	_ "github.com/actfuns/pitaya/v2/protos/api"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -31,7 +31,7 @@ const file_service_sys_proto_rawDesc = "" +
 	"\x03Sys\x126\n" +
 	"\vBindSession\x12\x0f.protos.Session\x1a\x10.protos.Response\"\x04\x88\xb5\x18\x01\x126\n" +
 	"\vPushSession\x12\x0f.protos.Session\x1a\x10.protos.Response\"\x04\x88\xb5\x18\x01\x121\n" +
-	"\x04Kick\x12\x0f.protos.KickMsg\x1a\x12.protos.KickAnswer\"\x04\x88\xb5\x18\x01\x1a\a\x82\xb5\x18\x03sysB2Z0github.com/topfreegames/pitaya/v2/protos/serviceb\x06proto3"
+	"\x04Kick\x12\x0f.protos.KickMsg\x1a\x12.protos.KickAnswer\"\x04\x88\xb5\x18\x01\x1a\a\x82\xb5\x18\x03sysB-Z+github.com/actfuns/pitaya/v2/protos/serviceb\x06proto3"
 
 var file_service_sys_proto_goTypes = []any{
 	(*protos.Session)(nil),    // 0: protos.Session

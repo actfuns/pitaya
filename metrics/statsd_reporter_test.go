@@ -28,8 +28,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/config"
-	metricsmocks "github.com/topfreegames/pitaya/v2/metrics/mocks"
+	"github.com/actfuns/pitaya/v2/config"
+	metricsmocks "github.com/actfuns/pitaya/v2/metrics/mocks"
 	"go.uber.org/mock/gomock"
 )
 

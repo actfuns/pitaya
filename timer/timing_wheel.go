@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/lang"
-	"github.com/topfreegames/pitaya/v2/thread"
+	"github.com/actfuns/pitaya/v2/lang"
+	"github.com/actfuns/pitaya/v2/thread"
 )
 
 const drainWorkers = 8

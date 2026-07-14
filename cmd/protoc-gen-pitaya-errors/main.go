@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	protos "github.com/topfreegames/pitaya/v2/protos/api"
+	protos "github.com/actfuns/pitaya/v2/protos/api"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -97,7 +97,7 @@ func generateFile(plugin *protogen.Plugin, file *protogen.File) {
 	g.P()
 	g.P("package ", file.GoPackageName)
 	g.P()
-	g.P("import pitayaErr \"github.com/topfreegames/pitaya/v2/errors\"")
+	g.P("import pitayaErr \"github.com/actfuns/pitaya/v2/errors\"")
 	g.P()
 
 	g.P("var (")

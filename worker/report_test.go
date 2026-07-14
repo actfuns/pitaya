@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/topfreegames/pitaya/v2/metrics"
-	"github.com/topfreegames/pitaya/v2/metrics/mocks"
+	"github.com/actfuns/pitaya/v2/metrics"
+	"github.com/actfuns/pitaya/v2/metrics/mocks"
 	"go.uber.org/mock/gomock"
 )
 

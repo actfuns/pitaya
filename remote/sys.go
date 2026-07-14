@@ -23,12 +23,12 @@ package remote
 import (
 	"context"
 
-	e "github.com/topfreegames/pitaya/v2/errors"
+	e "github.com/actfuns/pitaya/v2/errors"
 
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/protos"
-	pservice "github.com/topfreegames/pitaya/v2/protos/service"
-	"github.com/topfreegames/pitaya/v2/session"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/protos"
+	pservice "github.com/actfuns/pitaya/v2/protos/service"
+	"github.com/actfuns/pitaya/v2/session"
 )
 
 // Sys contains logic for handling sys remotes

@@ -29,14 +29,14 @@ import (
 	"time"
 
 	nats "github.com/nats-io/nats.go"
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/constants"
-	e "github.com/topfreegames/pitaya/v2/errors"
-	"github.com/topfreegames/pitaya/v2/logger"
-	"github.com/topfreegames/pitaya/v2/metrics"
-	"github.com/topfreegames/pitaya/v2/protos"
-	"github.com/topfreegames/pitaya/v2/session"
-	"github.com/topfreegames/pitaya/v2/util"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/constants"
+	e "github.com/actfuns/pitaya/v2/errors"
+	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/metrics"
+	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/session"
+	"github.com/actfuns/pitaya/v2/util"
 	"google.golang.org/protobuf/proto"
 )
 

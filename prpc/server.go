@@ -5,7 +5,7 @@ package prpc
 import (
 	"context"
 
-	"github.com/topfreegames/pitaya/v2/component"
+	"github.com/actfuns/pitaya/v2/component"
 )
 
 // MethodDesc describes a single handler/remote method for direct registration.

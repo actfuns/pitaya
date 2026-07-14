@@ -1,6 +1,6 @@
 # xk6-pitaya
 
-`xk6-pitaya` is a [k6](https://go.k6.io/k6) extension that provides a [Pitaya](https://github.com/topfreegames/pitaya) client implementation.
+`xk6-pitaya` is a [k6](https://go.k6.io/k6) extension that provides a [Pitaya](https://github.com/actfuns/pitaya) client implementation.
 
 # Usage
 
@@ -11,7 +11,7 @@ go install go.k6.io/xk6/cmd/xk6@latest
 
 GOWORK=off xk6 build \
   --verbose \
-  --with github.com/topfreegames/pitaya/xk6-pitaya/v2@01338f1=./ \
+  --with github.com/actfuns/pitaya/xk6-pitaya/v2@01338f1=./ \
   --output ./k6-pitaya
 ```
 
@@ -154,8 +154,8 @@ by cloning the repo and building with replace:
 
 ```shell
 xk6 build \
-  --with github.com/topfreegames/pitaya/xk6-pitaya/v2@01338f1 \
-  --replace github.com/topfreegames/pitaya/v2=./ \
+  --with github.com/actfuns/pitaya/xk6-pitaya/v2@01338f1 \
+  --replace github.com/actfuns/pitaya/v2=./ \
   --output ./k6-pitaya
 ```
 

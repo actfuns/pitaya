@@ -24,10 +24,10 @@ import (
 	"context"
 
 	"github.com/sirupsen/logrus"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/logger/interfaces"
-	logruswrapper "github.com/topfreegames/pitaya/v2/logger/logrus"
-	zapwrapper "github.com/topfreegames/pitaya/v2/logger/zap"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/logger/interfaces"
+	logruswrapper "github.com/actfuns/pitaya/v2/logger/logrus"
+	zapwrapper "github.com/actfuns/pitaya/v2/logger/zap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

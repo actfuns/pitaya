@@ -23,8 +23,8 @@ package groups
 import (
 	"testing"
 
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/helpers"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/helpers"
 	"go.etcd.io/etcd/server/v3/embed"
 )
 

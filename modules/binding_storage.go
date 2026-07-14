@@ -25,12 +25,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/topfreegames/pitaya/v2/cluster"
-	"github.com/topfreegames/pitaya/v2/config"
-	"github.com/topfreegames/pitaya/v2/constants"
-	"github.com/topfreegames/pitaya/v2/logger"
-	"github.com/topfreegames/pitaya/v2/session"
-	"github.com/topfreegames/pitaya/v2/util"
+	"github.com/actfuns/pitaya/v2/cluster"
+	"github.com/actfuns/pitaya/v2/config"
+	"github.com/actfuns/pitaya/v2/constants"
+	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/session"
+	"github.com/actfuns/pitaya/v2/util"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/namespace"
 )

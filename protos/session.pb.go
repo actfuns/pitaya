@@ -89,7 +89,7 @@ const file_session_proto_rawDesc = "" +
 	"\aSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03uid\x18\x02 \x01(\tR\x03uid\x12\x12\n" +
-	"\x04data\x18\x03 \x01(\fR\x04dataB;Z(github.com/topfreegames/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
+	"\x04data\x18\x03 \x01(\fR\x04dataB6Z#github.com/actfuns/pitaya/v2/protos\xaa\x02\x0eNPitaya.Protosb\x06proto3"
 
 var (
 	file_session_proto_rawDescOnce sync.Once

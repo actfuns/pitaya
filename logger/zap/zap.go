@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/topfreegames/pitaya/v2/errors"
-	"github.com/topfreegames/pitaya/v2/logger/interfaces"
+	"github.com/actfuns/pitaya/v2/errors"
+	"github.com/actfuns/pitaya/v2/logger/interfaces"
 )
 
 type zapImpl struct {

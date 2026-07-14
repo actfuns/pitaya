@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/topfreegames/pitaya/v2/metrics"
-	"github.com/topfreegames/pitaya/v2/mocks"
+	"github.com/actfuns/pitaya/v2/metrics"
+	"github.com/actfuns/pitaya/v2/mocks"
 	"go.uber.org/mock/gomock"
 )
 

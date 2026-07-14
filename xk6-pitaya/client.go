@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/grafana/sobek"
-	"github.com/topfreegames/pitaya/v2/client"
-	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/session"
+	"github.com/actfuns/pitaya/v2/client"
+	"github.com/actfuns/pitaya/v2/conn/message"
+	"github.com/actfuns/pitaya/v2/session"
 	"go.k6.io/k6/js/modules"
 	"go.k6.io/k6/metrics"
 )

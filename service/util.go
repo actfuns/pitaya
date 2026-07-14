@@ -23,11 +23,11 @@ package service
 import (
 	"errors"
 
-	"github.com/topfreegames/pitaya/v2/conn/message"
-	"github.com/topfreegames/pitaya/v2/logger"
-	"github.com/topfreegames/pitaya/v2/protos"
-	"github.com/topfreegames/pitaya/v2/serialize"
-	"github.com/topfreegames/pitaya/v2/util"
+	"github.com/actfuns/pitaya/v2/conn/message"
+	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/serialize"
+	"github.com/actfuns/pitaya/v2/util"
 )
 
 var errInvalidMsg = errors.New("invalid message type provided")

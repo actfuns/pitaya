@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	protos "github.com/topfreegames/pitaya/v2/protos/api"
+	protos "github.com/actfuns/pitaya/v2/protos/api"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -19,8 +19,8 @@ const version = "0.1.0"
 
 const (
 	contextPackage   = protogen.GoImportPath("context")
-	componentPackage = protogen.GoImportPath("github.com/topfreegames/pitaya/v2/component")
-	prpcPackage      = protogen.GoImportPath("github.com/topfreegames/pitaya/v2/prpc")
+	componentPackage = protogen.GoImportPath("github.com/actfuns/pitaya/v2/component")
+	prpcPackage      = protogen.GoImportPath("github.com/actfuns/pitaya/v2/prpc")
 )
 
 const fileDescriptorProtoPackageFieldNumber = 2

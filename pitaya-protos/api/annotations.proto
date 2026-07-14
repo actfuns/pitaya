@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package pitaya;
-option go_package = "github.com/topfreegames/pitaya/v2/protos/api";
+option go_package = "github.com/actfuns/pitaya/v2/protos/api";
 
 import "google/protobuf/descriptor.proto";
 
