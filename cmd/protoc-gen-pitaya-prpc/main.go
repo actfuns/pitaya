@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	protos "github.com/actfuns/pitaya/v2/protos/api"
+	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -21,6 +22,7 @@ const (
 	contextPackage   = protogen.GoImportPath("context")
 	componentPackage = protogen.GoImportPath("github.com/actfuns/pitaya/v2/component")
 	prpcPackage      = protogen.GoImportPath("github.com/actfuns/pitaya/v2/prpc")
+	errorsPackage    = protogen.GoImportPath("errors")
 )
 
 const fileDescriptorProtoPackageFieldNumber = 2
@@ -124,32 +126,28 @@ func readServiceDomain(service *protogen.Service) string {
 	return ""
 }
 
-func readMethodClient(method *protogen.Method) bool {
+func readMethodOption(method *protogen.Method) (client bool, reentrant bool, codec bool) {
 	opts := method.Desc.Options().(*descriptorpb.MethodOptions)
 	if opts == nil {
-		return false
+		return false, false, false
 	}
-	if proto.HasExtension(opts, protos.E_Client) {
-		v := proto.GetExtension(opts, protos.E_Client)
-		if b, ok := v.(bool); ok {
-			return b
-		}
-	}
-	return false
-}
 
-func readMethodReentrant(method *protogen.Method) bool {
-	opts := method.Desc.Options().(*descriptorpb.MethodOptions)
-	if opts == nil {
-		return false
-	}
-	if proto.HasExtension(opts, protos.E_Reentrant) {
-		v := proto.GetExtension(opts, protos.E_Reentrant)
-		if b, ok := v.(bool); ok {
-			return b
+	// Read pitaya.method option
+	if proto.HasExtension(opts, protos.E_Method) {
+		v := proto.GetExtension(opts, protos.E_Method)
+		if m, ok := v.(*protos.Method); ok && m != nil {
+			client = m.GetClient()
+			reentrant = m.GetReentrant()
+			codec = m.GetCodec()
 		}
 	}
-	return false
+
+	// Auto-set client=true when google.api.http is present
+	if !client && proto.HasExtension(opts, annotations.E_Http) {
+		client = true
+	}
+
+	return client, reentrant, codec
 }
 
 func genService(g *protogen.GeneratedFile, service *protogen.Service) {
@@ -208,6 +206,15 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 		g.AnnotateSymbol(serverType+"."+method.GoName, protogen.Annotation{Location: method.Location})
 		g.P(method.Comments.Leading, serverSignature(g, method))
 	}
+	// Codec hooks
+	for _, method := range service.Methods {
+		_, _, codec := readMethodOption(method)
+		if codec {
+			mn := method.GoName
+			g.P("Unmarshal", mn, "([]byte, *", method.Input.GoIdent, ") error")
+			g.P("Marshal", mn, "(*", method.Output.GoIdent, ") ([]byte, error)")
+		}
+	}
 	g.P("}")
 	g.P()
 
@@ -223,12 +230,26 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 		g.P("return nil, nil")
 		g.P("}")
 	}
+	// Unimplemented codec hooks
+	for _, method := range service.Methods {
+		_, _, codec := readMethodOption(method)
+		if codec {
+			mn := method.GoName
+			g.P("func (Unimplemented", serverType, ") Unmarshal", mn, "(b []byte, v *", method.Input.GoIdent, ") error {")
+			g.P("return ", errorsPackage.Ident("New"), "(\"pitaya: Unmarshal", mn, " not implemented\")")
+			g.P("}")
+			g.P("func (Unimplemented", serverType, ") Marshal", mn, "(v *", method.Output.GoIdent, ") ([]byte, error) {")
+			g.P("return nil, ", errorsPackage.Ident("New"), "(\"pitaya: Marshal", mn, " not implemented\")")
+			g.P("}")
+		}
+	}
 	g.P()
 
 	// Handler functions
 	handlerNames := make([]string, 0, len(service.Methods))
 	for _, method := range service.Methods {
-		hname := genHandlerFunc(g, method, svcName)
+		_, _, codec := readMethodOption(method)
+		hname := genHandlerFunc(g, method, svcName, codec)
 		handlerNames = append(handlerNames, hname)
 	}
 	g.P()
@@ -244,13 +265,13 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	g.P("Methods: []", prpcPackage.Ident("MethodDesc"), "{")
 	for i := range service.Methods {
 		mn := lowerFirst(string(service.Methods[i].Desc.Name()))
-		client := readMethodClient(service.Methods[i])
-		reentrant := readMethodReentrant(service.Methods[i])
+		client, reentrant, codec := readMethodOption(service.Methods[i])
 		g.P("{")
 		g.P("MethodName: ", strconv.Quote(mn), ",")
 		g.P("Handler: ", handlerNames[i], ",")
 		g.P("Client: ", strconv.FormatBool(client), ",")
 		g.P("Reentrant: ", strconv.FormatBool(reentrant), ",")
+		g.P("Codec: ", strconv.FormatBool(codec), ",")
 		g.P("},")
 	}
 	g.P("},")
@@ -298,15 +319,33 @@ func serverSignature(g *protogen.GeneratedFile, method *protogen.Method) string 
 	)
 }
 
-func genHandlerFunc(g *protogen.GeneratedFile, method *protogen.Method, svcName string) string {
+func genHandlerFunc(g *protogen.GeneratedFile, method *protogen.Method, svcName string, codec bool) string {
 	hname := fmt.Sprintf("_PRPC_%s_%s_Handler", svcName, method.GoName)
 
-	g.P("func ", hname, "(srv interface{}, ctx ", contextPackage.Ident("Context"), ", dec func(ctx ", contextPackage.Ident("Context"), ", arg interface{}) (", contextPackage.Ident("Context"), ", interface{}, error)) (interface{}, error) {")
-	g.P("in := new(", method.Input.GoIdent, ")")
-	g.P("ctx, result, err := dec(ctx, in)")
-	g.P("if err != nil { return nil, err }")
-	g.P("return srv.(", svcName, "PrpcServer).", method.GoName, "(ctx, result.(*", method.Input.GoIdent, "))")
-	g.P("}")
+	if codec {
+		g.P("func ", hname, "(srv interface{}, ctx ", contextPackage.Ident("Context"), ", data []byte, prepare func(ctx ", contextPackage.Ident("Context"), ", arg interface{}) (", contextPackage.Ident("Context"), ", interface{}, error)) (interface{}, error) {")
+		g.P("in := new(", method.Input.GoIdent, ")")
+		g.P("if err := srv.(", svcName, "PrpcServer).Unmarshal", method.GoName, "(data, in); err != nil {")
+		g.P("return nil, err")
+		g.P("}")
+		g.P("ctx, arg, err := prepare(ctx, in)")
+		g.P("if err != nil {")
+		g.P("return nil, err")
+		g.P("}")
+		g.P("resp, err := srv.(", svcName, "PrpcServer).", method.GoName, "(ctx, arg.(*", method.Input.GoIdent, "))")
+		g.P("if err != nil {")
+		g.P("return nil, err")
+		g.P("}")
+		g.P("return srv.(", svcName, "PrpcServer).Marshal", method.GoName, "(resp)")
+		g.P("}")
+	} else {
+		g.P("func ", hname, "(srv interface{}, ctx ", contextPackage.Ident("Context"), ", data []byte, prepare func(ctx ", contextPackage.Ident("Context"), ", arg interface{}) (", contextPackage.Ident("Context"), ", interface{}, error)) (interface{}, error) {")
+		g.P("in := new(", method.Input.GoIdent, ")")
+		g.P("ctx, arg, err := prepare(ctx, in)")
+		g.P("if err != nil { return nil, err }")
+		g.P("return srv.(", svcName, "PrpcServer).", method.GoName, "(ctx, arg.(*", method.Input.GoIdent, "))")
+		g.P("}")
+	}
 	return hname
 }
 

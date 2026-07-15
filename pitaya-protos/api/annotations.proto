@@ -16,26 +16,43 @@ extend google.protobuf.ServiceOptions {
   optional string domain = 50000;
 }
 
-extend google.protobuf.MethodOptions {
+// Method describes the behavioral flags of a method.
+// It combines reentrant and client options into a single extension.
+message Method {
   // reentrant marks a method as reentrant (Orleans-style).
   // When true, the method can be executed concurrently without blocking
   // the actor serial queue (e.g., for DB I/O operations).
   // Default: false.
-  // Usage:
-  //   rpc Query(QueryReq) returns (QueryResp) {
-  //     option (pitaya.reentrant) = true;
-  //   }
-  optional bool reentrant = 50001;
+  bool reentrant = 1;
 
   // client marks a method as a client-facing handler.
   // When true, the method is registered in both the remote service (for RPC)
   // and the handler service (for direct client connections via WebSocket/TCP).
   // Default: false (only accessible via RPC).
+  bool client = 2;
+
+  // codec enables UnmarshalXxx / MarshalXxx hooks for this method.
+  // When true, generated code adds UnmarshalXxx and MarshalXxx methods
+  // to the server interface and calls them in the handler.
+  // This allows custom byte-level processing before unmarshal and after marshal.
+  // Default: false.
+  bool codec = 3;
+}
+
+extend google.protobuf.MethodOptions {
+  // method specifies the behavioral flags of a method,
+  // including reentrant, client, and codec options.
   // Usage:
-  //   rpc Join(JoinReq) returns (JoinResp) {
-  //     option (pitaya.client) = true;
+  //   rpc Query(QueryReq) returns (QueryResp) {
+  //     option (pitaya.method) = { reentrant: true, client: true, codec: true };
   //   }
-  optional bool client = 50002;
+  //   rpc Join(JoinReq) returns (JoinResp) {
+  //     option (pitaya.method) = { client: true };
+  //   }
+  //   rpc Kick(KickMsg) returns (KickAnswer) {
+  //     option (pitaya.method) = { reentrant: true, codec: true };
+  //   }
+  optional Method method = 50001;
 }
 
 extend google.protobuf.EnumOptions {

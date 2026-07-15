@@ -12,14 +12,14 @@ service Sys {
   option (pitaya.domain) = "sys";
 
   rpc BindSession(Session) returns (Response) {
-    option (pitaya.reentrant) = true;
+    option (pitaya.method) = { reentrant: true };
   }
 
   rpc PushSession(Session) returns (Response) {
-    option (pitaya.reentrant) = true;
+    option (pitaya.method) = { reentrant: true };
   }
 
   rpc Kick(KickMsg) returns (KickAnswer) {
-    option (pitaya.reentrant) = true;
+    option (pitaya.method) = { reentrant: true };
   }
 }

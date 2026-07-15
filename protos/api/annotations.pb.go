@@ -11,6 +11,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	descriptorpb "google.golang.org/protobuf/types/descriptorpb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,6 +21,81 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// Method describes the behavioral flags of a method.
+// It combines reentrant and client options into a single extension.
+type Method struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// reentrant marks a method as reentrant (Orleans-style).
+	// When true, the method can be executed concurrently without blocking
+	// the actor serial queue (e.g., for DB I/O operations).
+	// Default: false.
+	Reentrant bool `protobuf:"varint,1,opt,name=reentrant,proto3" json:"reentrant,omitempty"`
+	// client marks a method as a client-facing handler.
+	// When true, the method is registered in both the remote service (for RPC)
+	// and the handler service (for direct client connections via WebSocket/TCP).
+	// Default: false (only accessible via RPC).
+	Client bool `protobuf:"varint,2,opt,name=client,proto3" json:"client,omitempty"`
+	// codec enables UnmarshalXxx / MarshalXxx hooks for this method.
+	// When true, generated code adds UnmarshalXxx and MarshalXxx methods
+	// to the server interface and calls them in the handler.
+	// This allows custom byte-level processing before unmarshal and after marshal.
+	// Default: false.
+	Codec         bool `protobuf:"varint,3,opt,name=codec,proto3" json:"codec,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Method) Reset() {
+	*x = Method{}
+	mi := &file_api_annotations_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Method) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Method) ProtoMessage() {}
+
+func (x *Method) ProtoReflect() protoreflect.Message {
+	mi := &file_api_annotations_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Method.ProtoReflect.Descriptor instead.
+func (*Method) Descriptor() ([]byte, []int) {
+	return file_api_annotations_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Method) GetReentrant() bool {
+	if x != nil {
+		return x.Reentrant
+	}
+	return false
+}
+
+func (x *Method) GetClient() bool {
+	if x != nil {
+		return x.Client
+	}
+	return false
+}
+
+func (x *Method) GetCodec() bool {
+	if x != nil {
+		return x.Codec
+	}
+	return false
+}
 
 var file_api_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
@@ -32,18 +108,10 @@ var file_api_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	},
 	{
 		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
-		ExtensionType: (*bool)(nil),
+		ExtensionType: (*Method)(nil),
 		Field:         50001,
-		Name:          "pitaya.reentrant",
-		Tag:           "varint,50001,opt,name=reentrant",
-		Filename:      "api/annotations.proto",
-	},
-	{
-		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
-		ExtensionType: (*bool)(nil),
-		Field:         50002,
-		Name:          "pitaya.client",
-		Tag:           "varint,50002,opt,name=client",
+		Name:          "pitaya.method",
+		Tag:           "bytes,50001,opt,name=method",
 		Filename:      "api/annotations.proto",
 	},
 	{
@@ -81,30 +149,22 @@ var (
 
 // Extension fields to descriptorpb.MethodOptions.
 var (
-	// reentrant marks a method as reentrant (Orleans-style).
-	// When true, the method can be executed concurrently without blocking
-	// the actor serial queue (e.g., for DB I/O operations).
-	// Default: false.
+	// method specifies the behavioral flags of a method,
+	// including reentrant, client, and codec options.
 	// Usage:
 	//
 	//	rpc Query(QueryReq) returns (QueryResp) {
-	//	  option (pitaya.reentrant) = true;
+	//	  option (pitaya.method) = { reentrant: true, client: true, codec: true };
 	//	}
-	//
-	// optional bool reentrant = 50001;
-	E_Reentrant = &file_api_annotations_proto_extTypes[1]
-	// client marks a method as a client-facing handler.
-	// When true, the method is registered in both the remote service (for RPC)
-	// and the handler service (for direct client connections via WebSocket/TCP).
-	// Default: false (only accessible via RPC).
-	// Usage:
-	//
 	//	rpc Join(JoinReq) returns (JoinResp) {
-	//	  option (pitaya.client) = true;
+	//	  option (pitaya.method) = { client: true };
+	//	}
+	//	rpc Kick(KickMsg) returns (KickAnswer) {
+	//	  option (pitaya.method) = { reentrant: true, codec: true };
 	//	}
 	//
-	// optional bool client = 50002;
-	E_Client = &file_api_annotations_proto_extTypes[2]
+	// optional pitaya.Method method = 50001;
+	E_Method = &file_api_annotations_proto_extTypes[1]
 )
 
 // Extension fields to descriptorpb.EnumOptions.
@@ -120,7 +180,7 @@ var (
 	//	}
 	//
 	// optional bool errors = 50003;
-	E_Errors = &file_api_annotations_proto_extTypes[3]
+	E_Errors = &file_api_annotations_proto_extTypes[2]
 )
 
 // Extension fields to descriptorpb.EnumValueOptions.
@@ -132,37 +192,54 @@ var (
 	//	ErrCritical = 2001 [(pitaya.error_level) = 2];
 	//
 	// optional int32 error_level = 50005;
-	E_ErrorLevel = &file_api_annotations_proto_extTypes[4]
+	E_ErrorLevel = &file_api_annotations_proto_extTypes[3]
 )
 
 var File_api_annotations_proto protoreflect.FileDescriptor
 
 const file_api_annotations_proto_rawDesc = "" +
 	"\n" +
-	"\x15api/annotations.proto\x12\x06pitaya\x1a google/protobuf/descriptor.proto:<\n" +
-	"\x06domain\x12\x1f.google.protobuf.ServiceOptions\x18І\x03 \x01(\tR\x06domain\x88\x01\x01:A\n" +
-	"\treentrant\x12\x1e.google.protobuf.MethodOptions\x18ц\x03 \x01(\bR\treentrant\x88\x01\x01:;\n" +
-	"\x06client\x12\x1e.google.protobuf.MethodOptions\x18҆\x03 \x01(\bR\x06client\x88\x01\x01:9\n" +
+	"\x15api/annotations.proto\x12\x06pitaya\x1a google/protobuf/descriptor.proto\"T\n" +
+	"\x06Method\x12\x1c\n" +
+	"\treentrant\x18\x01 \x01(\bR\treentrant\x12\x16\n" +
+	"\x06client\x18\x02 \x01(\bR\x06client\x12\x14\n" +
+	"\x05codec\x18\x03 \x01(\bR\x05codec:<\n" +
+	"\x06domain\x12\x1f.google.protobuf.ServiceOptions\x18І\x03 \x01(\tR\x06domain\x88\x01\x01:K\n" +
+	"\x06method\x12\x1e.google.protobuf.MethodOptions\x18ц\x03 \x01(\v2\x0e.pitaya.MethodR\x06method\x88\x01\x01:9\n" +
 	"\x06errors\x12\x1c.google.protobuf.EnumOptions\x18ӆ\x03 \x01(\bR\x06errors\x88\x01\x01:G\n" +
 	"\verror_level\x12!.google.protobuf.EnumValueOptions\x18Ն\x03 \x01(\x05R\n" +
 	"errorLevel\x88\x01\x01B)Z'github.com/actfuns/pitaya/v2/protos/apib\x06proto3"
 
+var (
+	file_api_annotations_proto_rawDescOnce sync.Once
+	file_api_annotations_proto_rawDescData []byte
+)
+
+func file_api_annotations_proto_rawDescGZIP() []byte {
+	file_api_annotations_proto_rawDescOnce.Do(func() {
+		file_api_annotations_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_annotations_proto_rawDesc), len(file_api_annotations_proto_rawDesc)))
+	})
+	return file_api_annotations_proto_rawDescData
+}
+
+var file_api_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_api_annotations_proto_goTypes = []any{
-	(*descriptorpb.ServiceOptions)(nil),   // 0: google.protobuf.ServiceOptions
-	(*descriptorpb.MethodOptions)(nil),    // 1: google.protobuf.MethodOptions
-	(*descriptorpb.EnumOptions)(nil),      // 2: google.protobuf.EnumOptions
-	(*descriptorpb.EnumValueOptions)(nil), // 3: google.protobuf.EnumValueOptions
+	(*Method)(nil),                        // 0: pitaya.Method
+	(*descriptorpb.ServiceOptions)(nil),   // 1: google.protobuf.ServiceOptions
+	(*descriptorpb.MethodOptions)(nil),    // 2: google.protobuf.MethodOptions
+	(*descriptorpb.EnumOptions)(nil),      // 3: google.protobuf.EnumOptions
+	(*descriptorpb.EnumValueOptions)(nil), // 4: google.protobuf.EnumValueOptions
 }
 var file_api_annotations_proto_depIdxs = []int32{
-	0, // 0: pitaya.domain:extendee -> google.protobuf.ServiceOptions
-	1, // 1: pitaya.reentrant:extendee -> google.protobuf.MethodOptions
-	1, // 2: pitaya.client:extendee -> google.protobuf.MethodOptions
-	2, // 3: pitaya.errors:extendee -> google.protobuf.EnumOptions
-	3, // 4: pitaya.error_level:extendee -> google.protobuf.EnumValueOptions
+	1, // 0: pitaya.domain:extendee -> google.protobuf.ServiceOptions
+	2, // 1: pitaya.method:extendee -> google.protobuf.MethodOptions
+	3, // 2: pitaya.errors:extendee -> google.protobuf.EnumOptions
+	4, // 3: pitaya.error_level:extendee -> google.protobuf.EnumValueOptions
+	0, // 4: pitaya.method:type_name -> pitaya.Method
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	0, // [0:5] is the sub-list for extension extendee
+	4, // [4:5] is the sub-list for extension type_name
+	0, // [0:4] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
 }
 
@@ -177,12 +254,13 @@ func file_api_annotations_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_annotations_proto_rawDesc), len(file_api_annotations_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   0,
-			NumExtensions: 5,
+			NumMessages:   1,
+			NumExtensions: 4,
 			NumServices:   0,
 		},
 		GoTypes:           file_api_annotations_proto_goTypes,
 		DependencyIndexes: file_api_annotations_proto_depIdxs,
+		MessageInfos:      file_api_annotations_proto_msgTypes,
 		ExtensionInfos:    file_api_annotations_proto_extTypes,
 	}.Build()
 	File_api_annotations_proto = out.File

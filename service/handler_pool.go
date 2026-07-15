@@ -80,9 +80,11 @@ func (h *HandlerPool) ProcessHandlerMessage(
 		}
 	}()
 
-	pre := func(ctx context.Context, arg interface{}) (context.Context, interface{}, error) {
-		if err := serializer.Unmarshal(data, arg); err != nil {
-			return ctx, nil, err
+	prepare := func(ctx context.Context, arg interface{}) (context.Context, interface{}, error) {
+		if !handler.Codec {
+			if err := serializer.Unmarshal(data, arg); err != nil {
+				return ctx, nil, err
+			}
 		}
 
 		ctx, arg, err = handlerHooks.BeforeHandler.ExecuteBeforePipeline(ctx, arg)
@@ -94,7 +96,7 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	}
 	logger.Debugf("SID=%d, Data=%s", session.ID(), data)
 
-	resp, err := handler.Fn(handler.Receiver, ctx, pre)
+	resp, err := handler.Fn(handler.Receiver, ctx, data, prepare)
 	if remote && msgType == message.Notify {
 		// This is a special case and should only happen with nats rpc client
 		// because we used nats request we have to answer to it or else a timeout

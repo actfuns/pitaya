@@ -26,8 +26,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/conn/message"
 	e "github.com/actfuns/pitaya/v2/errors"
@@ -36,6 +34,8 @@ import (
 	"github.com/actfuns/pitaya/v2/route"
 	"github.com/actfuns/pitaya/v2/serialize/mocks"
 	session_mocks "github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
@@ -68,9 +68,10 @@ func TestProcessHandlerMessage(t *testing.T) {
 	rt := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
 	handlerPool.handlers[rt.String()] = &component.Handler{
 		Receiver: tObj,
-		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+		Client:   true,
+		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
-			if _, _, err := dec(ctx, arg); err != nil {
+			if _, _, err := prepare(ctx, arg); err != nil {
 				return nil, err
 			}
 			return tObj.HandlerPointerRaw(ctx, arg)
@@ -80,9 +81,10 @@ func TestProcessHandlerMessage(t *testing.T) {
 	rtErr := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
 	handlerPool.handlers[rtErr.String()] = &component.Handler{
 		Receiver: tObj,
-		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+		Client:   true,
+		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
-			if _, _, err := dec(ctx, arg); err != nil {
+			if _, _, err := prepare(ctx, arg); err != nil {
 				return nil, err
 			}
 			return tObj.HandlerPointerErr(ctx, arg)
@@ -92,9 +94,10 @@ func TestProcessHandlerMessage(t *testing.T) {
 	rtSt := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
 	handlerPool.handlers[rtSt.String()] = &component.Handler{
 		Receiver: tObj,
-		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+		Client:   true,
+		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
-			if _, _, err := dec(ctx, arg); err != nil {
+			if _, _, err := prepare(ctx, arg); err != nil {
 				return nil, err
 			}
 			return tObj.HandlerPointerStruct(ctx, arg)
@@ -154,9 +157,10 @@ func TestProcessHandlerMessageBrokenBeforePipeline(t *testing.T) {
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	handlerPool := NewHandlerPool()
 	handlerPool.handlers[rt.String()] = &component.Handler{
-		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+		Client: true,
+		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
-			if _, _, err := dec(ctx, arg); err != nil {
+			if _, _, err := prepare(ctx, arg); err != nil {
 				return nil, err
 			}
 			return []byte("ok"), nil
@@ -187,9 +191,10 @@ func TestProcessHandlerMessageBrokenAfterPipeline(t *testing.T) {
 	handlerPool := NewHandlerPool()
 	handlerPool.handlers[rt.String()] = &component.Handler{
 		Receiver: tObj,
-		Fn: func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+		Client:   true,
+		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
-			if _, _, err := dec(ctx, arg); err != nil {
+			if _, _, err := prepare(ctx, arg); err != nil {
 				return nil, err
 			}
 			return tObj.HandlerPointerRaw(ctx, arg)

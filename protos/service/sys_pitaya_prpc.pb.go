@@ -8,7 +8,6 @@ package service
 
 import (
 	context "context"
-
 	component "github.com/actfuns/pitaya/v2/component"
 	protos "github.com/actfuns/pitaya/v2/protos"
 	prpc "github.com/actfuns/pitaya/v2/prpc"
@@ -88,29 +87,29 @@ func (UnimplementedSysPrpcServer) Kick(context.Context, *protos.KickMsg) (*proto
 	return nil, nil
 }
 
-func _PRPC_Sys_BindSession_Handler(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+func _PRPC_Sys_BindSession_Handler(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 	in := new(protos.Session)
-	ctx, result, err := dec(ctx, in)
+	ctx, arg, err := prepare(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	return srv.(SysPrpcServer).BindSession(ctx, result.(*protos.Session))
+	return srv.(SysPrpcServer).BindSession(ctx, arg.(*protos.Session))
 }
-func _PRPC_Sys_PushSession_Handler(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+func _PRPC_Sys_PushSession_Handler(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 	in := new(protos.Session)
-	ctx, result, err := dec(ctx, in)
+	ctx, arg, err := prepare(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	return srv.(SysPrpcServer).PushSession(ctx, result.(*protos.Session))
+	return srv.(SysPrpcServer).PushSession(ctx, arg.(*protos.Session))
 }
-func _PRPC_Sys_Kick_Handler(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+func _PRPC_Sys_Kick_Handler(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 	in := new(protos.KickMsg)
-	ctx, result, err := dec(ctx, in)
+	ctx, arg, err := prepare(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	return srv.(SysPrpcServer).Kick(ctx, result.(*protos.KickMsg))
+	return srv.(SysPrpcServer).Kick(ctx, arg.(*protos.KickMsg))
 }
 
 // PRPC_Sys_ServiceDesc is the prpc.ServiceDesc for Sys service.
@@ -123,18 +122,21 @@ var PRPC_Sys_ServiceDesc = &prpc.ServiceDesc{
 			Handler:    _PRPC_Sys_BindSession_Handler,
 			Client:     false,
 			Reentrant:  true,
+			Codec:      false,
 		},
 		{
 			MethodName: "pushSession",
 			Handler:    _PRPC_Sys_PushSession_Handler,
 			Client:     false,
 			Reentrant:  true,
+			Codec:      false,
 		},
 		{
 			MethodName: "kick",
 			Handler:    _PRPC_Sys_Kick_Handler,
 			Client:     false,
 			Reentrant:  true,
+			Codec:      false,
 		},
 	},
 }

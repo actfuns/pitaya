@@ -27,9 +27,10 @@ import (
 type (
 	//Handler represents a message.Message's handler's meta information.
 	Handler struct {
-		Fn        func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error)
+		Fn        func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error)
 		Receiver  interface{}
 		Reentrant bool
 		Client    bool
+		Codec     bool
 	}
 )

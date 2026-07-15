@@ -14,14 +14,17 @@ type MethodDesc struct {
 	// MethodName is the method name as used in routes (lowercase first letter).
 	MethodName string
 	// Handler is the function that calls the service method directly.
-	// It receives the service implementation, context, and a decoder function,
+	// It receives the service implementation, context, the raw request data,
+	// and a prepare function that decodes and runs the pipeline,
 	// and returns the result and error.
-	Handler func(srv interface{}, ctx context.Context, dec func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error)
+	Handler func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error)
 	// Reentrant indicates this method can be executed concurrently,
 	// bypassing the actor serial queue.
 	Reentrant bool
 	// Client marks this method as a client-facing handler.
 	Client bool
+	// Codec enables UnmarshalXxx / MarshalXxx hooks for this method.
+	Codec bool
 }
 
 // ServiceDesc describes a service with its methods for direct registration.

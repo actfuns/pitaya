@@ -429,9 +429,11 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 	}()
 
 	var err error
-	prev := func(ctx context.Context, arg interface{}) (context.Context, interface{}, error) {
-		if err := r.serializer.Unmarshal(req.GetMsg().GetData(), arg); err != nil {
-			return ctx, nil, err
+	prepare := func(ctx context.Context, arg interface{}) (context.Context, interface{}, error) {
+		if !handler.Codec {
+			if err := r.serializer.Unmarshal(req.Msg.Data, arg); err != nil {
+				return ctx, nil, err
+			}
 		}
 
 		ctx, arg, err = r.remoteHooks.BeforeHandler.ExecuteBeforePipeline(ctx, arg)
@@ -442,7 +444,7 @@ func (r *RemoteService) handleRPCUser(ctx context.Context, req *protos.Request, 
 		return ctx, arg, nil
 	}
 
-	ret, err := handler.Fn(handler.Receiver, ctx, prev)
+	ret, err := handler.Fn(handler.Receiver, ctx, req.Msg.Data, prepare)
 	ret, err = r.remoteHooks.AfterHandler.ExecuteAfterPipeline(ctx, ret, err)
 	if err != nil {
 		response = &protos.Response{

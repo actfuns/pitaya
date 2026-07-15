@@ -37,7 +37,6 @@ import (
 	"github.com/actfuns/pitaya/v2/prpc"
 	"github.com/actfuns/pitaya/v2/router"
 
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/actfuns/pitaya/v2/agent"
 	"github.com/actfuns/pitaya/v2/cluster"
 	"github.com/actfuns/pitaya/v2/component"
@@ -53,6 +52,7 @@ import (
 	"github.com/actfuns/pitaya/v2/serialize"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/tracing"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 var (
@@ -115,6 +115,7 @@ func (h *HandlerService) Register(desc *prpc.ServiceDesc, comp component.Compone
 			Receiver:  comp,
 			Reentrant: m.Reentrant,
 			Client:    m.Client,
+			Codec:     m.Codec,
 		})
 	}
 	return nil
