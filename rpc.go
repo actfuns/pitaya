@@ -27,11 +27,14 @@ import (
 
 	"github.com/actfuns/pitaya/v2/constants"
 	pcontext "github.com/actfuns/pitaya/v2/context"
+	e "github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/protos"
 	"github.com/actfuns/pitaya/v2/prpc"
 	"github.com/actfuns/pitaya/v2/route"
 	"google.golang.org/protobuf/proto"
 )
+
+const defaultMaxRPCRedirects = 3
 
 // RPC calls a method in a different server
 func (app *App) RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error {
@@ -88,7 +91,19 @@ func (app *App) doSendRPC(ctx context.Context, rpcType protos.RPCType, serverID,
 		return constants.ErrNonsenseRPC
 	}
 
-	return app.remoteService.RPC(ctx, rpcType, serverID, r, reply, arg, opt)
+	return app.doSendRPCWithRetry(ctx, rpcType, serverID, r, reply, arg, opt, 0)
+}
+
+func (app *App) doSendRPCWithRetry(ctx context.Context, rpcType protos.RPCType, serverID string, r *route.Route, reply proto.Message, arg proto.Message, opt prpc.CallOptions, retryCount int) error {
+	err := app.remoteService.RPC(ctx, rpcType, serverID, r, reply, arg, opt)
+	if err != nil {
+		if pitayaErr, ok := err.(*e.Error); ok && pitayaErr.GetCode() == e.ErrRPCRedirect {
+			if newServerID := pitayaErr.GetMetadata()["server_id"]; newServerID != "" && newServerID != serverID && retryCount < defaultMaxRPCRedirects {
+				return app.doSendRPCWithRetry(ctx, rpcType, newServerID, r, reply, arg, opt, retryCount+1)
+			}
+		}
+	}
+	return err
 }
 
 func applyOptions(opts []prpc.CallOption) prpc.CallOptions {
