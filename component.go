@@ -21,8 +21,6 @@
 package pitaya
 
 import (
-	"slices"
-
 	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/logger"
 	"github.com/actfuns/pitaya/v2/prpc"
@@ -37,10 +35,6 @@ type regComp struct {
 func (app *App) Register(desc *prpc.ServiceDesc, comp component.Component) {
 	if desc.DomainName == "" {
 		logger.Log.Fatalf("service %q must have a non-empty DomainName", desc.ServiceName)
-	}
-
-	if !slices.Contains(app.server.Domains, desc.DomainName) {
-		app.server.Domains = append(app.server.Domains, desc.DomainName)
 	}
 
 	app.handlerService.Register(desc, comp)

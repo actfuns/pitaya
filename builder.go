@@ -1,7 +1,6 @@
 package pitaya
 
 import (
-	"github.com/google/uuid"
 	"github.com/actfuns/pitaya/v2/acceptor"
 	"github.com/actfuns/pitaya/v2/agent"
 	"github.com/actfuns/pitaya/v2/cluster"
@@ -19,6 +18,7 @@ import (
 	"github.com/actfuns/pitaya/v2/service"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/worker"
+	"github.com/google/uuid"
 )
 
 // Builder holds dependency instances for a pitaya App
@@ -59,6 +59,7 @@ func NewBuilderWithConfigs(
 	serverType string,
 	serverMode ServerMode,
 	serverMetadata map[string]string,
+	domains []string,
 	conf *config.Config,
 ) *Builder {
 	pitayaConfig := config.NewPitayaConfig(conf)
@@ -66,6 +67,7 @@ func NewBuilderWithConfigs(
 		isFrontend,
 		serverType,
 		serverMode,
+		domains,
 		serverMetadata,
 		*pitayaConfig,
 	)
@@ -78,6 +80,7 @@ func NewDefaultBuilder(isFrontend bool, serverType string, serverMode ServerMode
 		isFrontend,
 		serverType,
 		serverMode,
+		[]string{serverType},
 		serverMetadata,
 		pitayaConfig,
 	)
@@ -88,6 +91,7 @@ func NewDefaultBuilder(isFrontend bool, serverType string, serverMode ServerMode
 func NewBuilder(isFrontend bool,
 	serverType string,
 	serverMode ServerMode,
+	domains []string,
 	serverMetadata map[string]string,
 	config config.PitayaConfig,
 ) *Builder {
@@ -95,6 +99,7 @@ func NewBuilder(isFrontend bool,
 		uuid.New().String(),
 		serverType,
 		isFrontend,
+		cluster.WithDomain(domains...),
 		cluster.WithMetadata(serverMetadata),
 		cluster.WithLoopbackEnabled(config.Cluster.RPC.Server.LoopbackEnabled),
 	)

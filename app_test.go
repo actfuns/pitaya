@@ -32,10 +32,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/acceptor"
 	"github.com/actfuns/pitaya/v2/cluster"
 	"github.com/actfuns/pitaya/v2/config"
@@ -50,6 +46,10 @@ import (
 	"github.com/actfuns/pitaya/v2/route"
 	"github.com/actfuns/pitaya/v2/router"
 	"github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/google/uuid"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
@@ -176,20 +176,20 @@ func TestAddRoute(t *testing.T) {
 	builderConfig := config.NewDefaultPitayaConfig()
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *builderConfig).(*App)
 	app.router = nil
-	err := app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
-		return route.Domain, nil, nil
+	err := app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (context.Context, string, *cluster.Server, error) {
+		return ctx, route.Domain, nil, nil
 	})
 	assert.EqualError(t, constants.ErrRouterNotInitialized, err.Error())
 
 	app.router = router.New()
-	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
-		return route.Domain, nil, nil
+	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (context.Context, string, *cluster.Server, error) {
+		return ctx, route.Domain, nil, nil
 	})
 	assert.NoError(t, err)
 
 	app.running = true
-	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (string, *cluster.Server, error) {
-		return route.Domain, nil, nil
+	err = app.AddRoute("somesv", func(ctx context.Context, rpcType protos.RPCType, route *route.Route, payload []byte) (context.Context, string, *cluster.Server, error) {
+		return ctx, route.Domain, nil, nil
 	})
 	assert.EqualError(t, constants.ErrChangeRouteWhileRunning, err.Error())
 }

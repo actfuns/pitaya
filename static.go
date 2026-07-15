@@ -24,7 +24,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/spf13/viper"
 	"github.com/actfuns/pitaya/v2/cluster"
 	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/config"
@@ -35,6 +34,7 @@ import (
 	"github.com/actfuns/pitaya/v2/router"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/worker"
+	"github.com/spf13/viper"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -45,6 +45,7 @@ func Configure(
 	isFrontend bool,
 	serverType string,
 	serverMode ServerMode,
+	domains []string,
 	serverMetadata map[string]string,
 	cfgs ...*viper.Viper,
 ) {
@@ -53,6 +54,7 @@ func Configure(
 		serverType,
 		serverMode,
 		serverMetadata,
+		domains,
 		config.NewConfig(cfgs...),
 	)
 	DefaultApp = builder.Build()

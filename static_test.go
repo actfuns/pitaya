@@ -29,9 +29,6 @@ import (
 
 	"github.com/actfuns/pitaya/v2/constants"
 
-	"github.com/google/uuid"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
 	"github.com/actfuns/pitaya/v2/cluster"
 	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/interfaces"
@@ -42,12 +39,15 @@ import (
 	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
 	"github.com/actfuns/pitaya/v2/worker"
 	workermocks "github.com/actfuns/pitaya/v2/worker/mocks"
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 )
 
 func TestStaticConfigure(t *testing.T) {
-	Configure(true, "frontendType", Cluster, map[string]string{}, []*viper.Viper{}...)
+	Configure(true, "frontendType", Cluster, []string{"frontendType"}, map[string]string{}, []*viper.Viper{}...)
 
 	require.NotNil(t, DefaultApp)
 	require.NotNil(t, session.DefaultSessionPool)
