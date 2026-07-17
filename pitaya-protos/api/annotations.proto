@@ -69,7 +69,7 @@ extend google.protobuf.EnumOptions {
 
 extend google.protobuf.EnumValueOptions {
   // error_level specifies the severity level for this error value.
-  // Maps to errors.Error.Level field. Default: 0.
+  // Maps to errors.Error.Level field. Default: 3.
   // Usage:
   //   ErrCritical = 2001 [(pitaya.error_level) = 2];
   optional int32 error_level = 50005;

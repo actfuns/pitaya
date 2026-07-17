@@ -64,7 +64,7 @@ func hasErrorsOption(enum *protogen.Enum) bool {
 func readErrorLevel(value *protogen.EnumValue) int32 {
 	opts := value.Desc.Options()
 	if opts == nil {
-		return 0
+		return 3
 	}
 	if proto.HasExtension(opts, protos.E_ErrorLevel) {
 		v := proto.GetExtension(opts, protos.E_ErrorLevel)
@@ -72,7 +72,7 @@ func readErrorLevel(value *protogen.EnumValue) int32 {
 			return i
 		}
 	}
-	return 0
+	return 3
 }
 
 func generateFile(plugin *protogen.Plugin, file *protogen.File) {
