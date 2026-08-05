@@ -40,7 +40,9 @@ const defaultMaxRPCRedirects = 3
 func (app *App) RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error {
 	opt := applyOptions(opts)
 
-	ctx = pcontext.AddPairsToPropagateCtx(ctx, opt.PropagateCtx...)
+	if len(opt.PropagateCtx) > 0 {
+		ctx = pcontext.AddPairsToPropagateCtx(ctx, opt.PropagateCtx...)
+	}
 
 	if opt.Reliable {
 		meta := opt.ReliableMetadata

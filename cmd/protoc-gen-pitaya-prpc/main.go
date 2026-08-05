@@ -153,14 +153,13 @@ func readMethodOption(method *protogen.Method) (client bool, reentrant bool, cod
 func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	svcName := service.GoName
 	lowerSvc := lowerFirst(string(service.Desc.Name()))
-	serviceFullName := string(service.Desc.FullName())
-	domain := readServiceDomain(service)
+	domain := lowerFirst(readServiceDomain(service))
 
 	// Full method name constants
 	g.P("const (")
 	for _, method := range service.Methods {
-		fmSymbol := fmt.Sprintf("PRPC_%s_%s_FullMethodName", svcName, method.GoName)
-		fmName := fmt.Sprintf("/%s/%s", serviceFullName, method.Desc.Name())
+		fmSymbol := fmt.Sprintf("PRPC_%s_%s_MethodName", upperFirst(svcName), upperFirst(method.GoName))
+		fmName := fmt.Sprintf("%s.%s.%s", domain, lowerSvc, lowerFirst(string(method.Desc.Name())))
 		g.P(fmSymbol, ` = "`, fmName, `"`)
 	}
 	g.P(")")
@@ -373,5 +372,14 @@ func lowerFirst(s string) string {
 	}
 	r := []rune(s)
 	r[0] = unicode.ToLower(r[0])
+	return string(r)
+}
+
+func upperFirst(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
 	return string(r)
 }
