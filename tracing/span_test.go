@@ -27,11 +27,11 @@ import (
 	"os"
 	"testing"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/constants"
 	pcontext "github.com/actfuns/pitaya/v2/context"
 	"github.com/actfuns/pitaya/v2/tracing/jaeger"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
 )
 
 var closer io.Closer

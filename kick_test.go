@@ -24,13 +24,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	clustermocks "github.com/actfuns/pitaya/v2/cluster/mocks"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/protos"
 	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

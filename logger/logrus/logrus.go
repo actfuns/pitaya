@@ -1,9 +1,9 @@
 package logrus
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
+	"github.com/sirupsen/logrus"
 )
 
 type logrusImpl struct {

@@ -25,8 +25,8 @@ import (
 
 	"github.com/actfuns/pitaya/v2/acceptor"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

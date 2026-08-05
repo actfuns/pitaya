@@ -27,12 +27,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/constants"
 	pcontext "github.com/actfuns/pitaya/v2/context"
 	e "github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/metrics/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

@@ -26,10 +26,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/config"
 	metricsmocks "github.com/actfuns/pitaya/v2/metrics/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

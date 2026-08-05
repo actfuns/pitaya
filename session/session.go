@@ -30,11 +30,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	nats "github.com/nats-io/nats.go"
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/logger"
 	"github.com/actfuns/pitaya/v2/networkentity"
 	"github.com/actfuns/pitaya/v2/protos"
+	nats "github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
 )
 

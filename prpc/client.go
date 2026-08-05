@@ -15,7 +15,7 @@ type CallOption func(*CallOptions)
 type CallOptions struct {
 	ServerID            string                  // target server ID, empty means any
 	OneWay              bool                    // fire-and-forget, no response expected
-	Client              bool                    // mark as client-side RPC (Sys type)
+	Handler             bool                    // mark as client-side RPC (Sys type)
 	PropagateCtx        []pcontext.KeyValuePair // values to inject into the propagate context for RPC calls
 	Reliable            bool                    // reliable RPC, retries on failure
 	ReliableMetadata    map[string]interface{}  // metadata to be passed to the server
@@ -43,11 +43,15 @@ func WithPropagateCtx(key string, val interface{}) CallOption {
 	}
 }
 
-// WithClient marks the RPC as a client-facing call (Sys type).
-func WithClient() CallOption {
-	return func(o *CallOptions) {
-		o.Client = true
-	}
+// handlerOption is a shared, stateless option instance.
+// Returning it from WithHandler avoids a closure allocation per call.
+var handlerOption CallOption = func(o *CallOptions) {
+	o.Handler = true
+}
+
+// WithHandler marks the RPC as a client-facing call (Sys type).
+func WithHandler() CallOption {
+	return handlerOption
 }
 
 // WithReliable sets the call as reliable (enqueued).

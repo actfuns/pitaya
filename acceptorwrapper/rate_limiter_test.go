@@ -25,9 +25,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/metrics"
 	"github.com/actfuns/pitaya/v2/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

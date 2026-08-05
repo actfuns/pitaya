@@ -25,13 +25,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/conn/message"
 	"github.com/actfuns/pitaya/v2/pipeline"
 	"github.com/actfuns/pitaya/v2/protos"
 	"github.com/actfuns/pitaya/v2/protos/test"
 	"github.com/actfuns/pitaya/v2/serialize/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

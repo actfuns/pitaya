@@ -4,8 +4,8 @@ import (
 	"net"
 	"sync"
 
-	"github.com/mailgun/proxyproto"
 	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/mailgun/proxyproto"
 )
 
 // Listener is used to wrap an underlying listener,

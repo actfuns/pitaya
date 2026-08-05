@@ -31,13 +31,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	nats "github.com/nats-io/nats.go"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/helpers"
 	"github.com/actfuns/pitaya/v2/networkentity/mocks"
 	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/google/uuid"
+	nats "github.com/nats-io/nats.go"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 )

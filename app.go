@@ -28,7 +28,6 @@ import (
 	"syscall"
 	"time"
 
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/actfuns/pitaya/v2/acceptor"
 	"github.com/actfuns/pitaya/v2/cluster"
 	"github.com/actfuns/pitaya/v2/component"
@@ -52,6 +51,7 @@ import (
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/tracing"
 	"github.com/actfuns/pitaya/v2/worker"
+	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/protobuf/proto"
 )
 

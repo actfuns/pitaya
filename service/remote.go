@@ -334,9 +334,9 @@ func (r *RemoteService) dispatchRemoteMessage(
 	req *protos.Request,
 	timeout time.Duration,
 ) (*protos.Response, error) {
-	h, ok := r.handlerPool.handlers[req.Msg.Route]
-	if !ok {
-		logger.WithCtx(ctx).Warnf("pitaya/remote: %s not found", req.Msg.Route)
+	h, err := r.handlerPool.getHandler(req.Type, req.Msg.Route)
+	if err != nil {
+		logger.WithCtx(ctx).Warnf("[remote] failed to get handler for route '%s': %v", req.Msg.Route, err)
 		return &protos.Response{
 			Error: &protos.Error{
 				Code:    e.ErrNotFoundCode,
@@ -374,7 +374,7 @@ func (r *RemoteService) dispatchRemoteMessage(
 	}
 
 	result := make(chan *protos.Response, 1)
-	err := r.taskSevice.Submit(ctx, taskId, func(tctx context.Context) {
+	err = r.taskSevice.Submit(ctx, taskId, func(tctx context.Context) {
 		result <- processRemoteMessage(tctx, req, r, h)
 	})
 	if err != nil {
@@ -397,10 +397,10 @@ func (r *RemoteService) dispatchRemoteMessage(
 }
 
 func processRemoteMessage(ctx context.Context, req *protos.Request, r *RemoteService, handler *component.Handler) *protos.Response {
-	switch {
-	case req.Type == protos.RPCType_Sys:
+	switch req.Type {
+	case protos.RPCType_Sys:
 		return r.handleRPCSys(ctx, req, handler)
-	case req.Type == protos.RPCType_User:
+	case protos.RPCType_User:
 		return r.handleRPCUser(ctx, req, handler)
 	default:
 		return &protos.Response{

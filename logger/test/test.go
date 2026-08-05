@@ -1,9 +1,9 @@
 package test
 
 import (
-	tests "github.com/sirupsen/logrus/hooks/test"
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
 	lwrapper "github.com/actfuns/pitaya/v2/logger/logrus"
+	tests "github.com/sirupsen/logrus/hooks/test"
 	"io"
 )
 

@@ -64,7 +64,7 @@ func (app *App) RPC(ctx context.Context, routeStr string, reply proto.Message, a
 	}
 
 	rpcType := protos.RPCType_User
-	if opt.Client {
+	if opt.Handler {
 		rpcType = protos.RPCType_Sys
 	}
 

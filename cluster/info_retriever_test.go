@@ -3,9 +3,9 @@ package cluster
 import (
 	"testing"
 
+	"github.com/actfuns/pitaya/v2/config"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/actfuns/pitaya/v2/config"
 )
 
 func TestInfoRetrieverRegion(t *testing.T) {

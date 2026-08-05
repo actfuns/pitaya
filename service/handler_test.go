@@ -26,7 +26,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	agentmocks "github.com/actfuns/pitaya/v2/agent/mocks"
 	"github.com/actfuns/pitaya/v2/cluster"
 	"github.com/actfuns/pitaya/v2/conn/codec"
@@ -40,6 +39,7 @@ import (
 	serializemocks "github.com/actfuns/pitaya/v2/serialize/mocks"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

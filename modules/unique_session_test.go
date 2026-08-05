@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/cluster"
 	clustermocks "github.com/actfuns/pitaya/v2/cluster/mocks"
 	"github.com/actfuns/pitaya/v2/session"
 	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

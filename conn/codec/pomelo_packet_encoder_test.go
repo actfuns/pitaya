@@ -3,8 +3,8 @@ package codec
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/conn/packet"
+	"github.com/stretchr/testify/assert"
 )
 
 func helperConcatBytes(packetType packet.Type, length, data []byte) []byte {

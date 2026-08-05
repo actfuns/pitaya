@@ -7,11 +7,11 @@ import (
 
 	"go.uber.org/mock/gomock"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/helpers"
 	"github.com/actfuns/pitaya/v2/metrics"
 	protosmocks "github.com/actfuns/pitaya/v2/protos/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewGRPCServer(t *testing.T) {

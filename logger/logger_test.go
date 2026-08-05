@@ -26,8 +26,8 @@ import (
 	"github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
 
-	"github.com/stretchr/testify/assert"
 	logruswrapper "github.com/actfuns/pitaya/v2/logger/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInitLogrusLogger(t *testing.T) {

@@ -4,10 +4,10 @@ import (
 	"math"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 

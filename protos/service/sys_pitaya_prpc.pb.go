@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	PRPC_Sys_BindSession_FullMethodName = "/protos.service.Sys/BindSession"
-	PRPC_Sys_PushSession_FullMethodName = "/protos.service.Sys/PushSession"
-	PRPC_Sys_Kick_FullMethodName        = "/protos.service.Sys/Kick"
+	PRPC_Sys_BindSession_MethodName = "sys.sys.bindSession"
+	PRPC_Sys_PushSession_MethodName = "sys.sys.pushSession"
+	PRPC_Sys_Kick_MethodName        = "sys.sys.kick"
 )
 
 // SysPrpcClient is the client API for Sys service.
@@ -36,6 +36,7 @@ func NewSysPrpcClient(app prpc.Client) SysPrpcClient {
 
 func (c *sysPrpcClient) BindSession(ctx context.Context, in *protos.Session, opts ...prpc.CallOption) (*protos.Response, error) {
 	out := new(protos.Response)
+	opts = append(opts, prpc.WithHandler())
 	err := c.app.RPC(ctx, "sys.sys.bindSession", out, in, opts...)
 	if err != nil {
 		return nil, err
@@ -45,6 +46,7 @@ func (c *sysPrpcClient) BindSession(ctx context.Context, in *protos.Session, opt
 
 func (c *sysPrpcClient) PushSession(ctx context.Context, in *protos.Session, opts ...prpc.CallOption) (*protos.Response, error) {
 	out := new(protos.Response)
+	opts = append(opts, prpc.WithHandler())
 	err := c.app.RPC(ctx, "sys.sys.pushSession", out, in, opts...)
 	if err != nil {
 		return nil, err
@@ -54,6 +56,7 @@ func (c *sysPrpcClient) PushSession(ctx context.Context, in *protos.Session, opt
 
 func (c *sysPrpcClient) Kick(ctx context.Context, in *protos.KickMsg, opts ...prpc.CallOption) (*protos.KickAnswer, error) {
 	out := new(protos.KickAnswer)
+	opts = append(opts, prpc.WithHandler())
 	err := c.app.RPC(ctx, "sys.sys.kick", out, in, opts...)
 	if err != nil {
 		return nil, err
@@ -114,27 +117,25 @@ func _PRPC_Sys_Kick_Handler(srv interface{}, ctx context.Context, data []byte, p
 
 // PRPC_Sys_ServiceDesc is the prpc.ServiceDesc for Sys service.
 var PRPC_Sys_ServiceDesc = &prpc.ServiceDesc{
+	Kind:        prpc.KindHandler,
 	DomainName:  "sys",
 	ServiceName: "sys",
 	Methods: []prpc.MethodDesc{
 		{
 			MethodName: "bindSession",
 			Handler:    _PRPC_Sys_BindSession_Handler,
-			Client:     false,
 			Reentrant:  true,
 			Codec:      false,
 		},
 		{
 			MethodName: "pushSession",
 			Handler:    _PRPC_Sys_PushSession_Handler,
-			Client:     false,
 			Reentrant:  true,
 			Codec:      false,
 		},
 		{
 			MethodName: "kick",
 			Handler:    _PRPC_Sys_Kick_Handler,
-			Client:     false,
 			Reentrant:  true,
 			Codec:      false,
 		},

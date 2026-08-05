@@ -8,7 +8,6 @@ import (
 	"unicode"
 
 	protos "github.com/actfuns/pitaya/v2/protos/api"
-	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -55,7 +54,8 @@ func main() {
 
 func fileHasServicesWithDomain(file *protogen.File) bool {
 	for _, service := range file.Services {
-		if readServiceDomain(service) != "" {
+		svc, ok := readServiceOption(service)
+		if ok && serviceOptionComplete(svc) {
 			return true
 		}
 	}
@@ -101,6 +101,10 @@ func protocVersion(gen *protogen.Plugin) string {
 
 func generateFileContent(_ *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile) {
 	for _, service := range file.Services {
+		svc, ok := readServiceOption(service)
+		if !ok || !serviceOptionComplete(svc) {
+			continue
+		}
 		genService(g, service)
 	}
 }
@@ -112,48 +116,71 @@ func genServiceComments(g *protogen.GeneratedFile, service *protogen.Service) {
 	}
 }
 
-func readServiceDomain(service *protogen.Service) string {
+func readServiceOption(service *protogen.Service) (*protos.Service, bool) {
 	opts := service.Desc.Options().(*descriptorpb.ServiceOptions)
 	if opts == nil {
-		return ""
+		return nil, false
 	}
-	if proto.HasExtension(opts, protos.E_Domain) {
-		v := proto.GetExtension(opts, protos.E_Domain)
-		if s, ok := v.(string); ok {
-			return s
+	if proto.HasExtension(opts, protos.E_Service) {
+		v := proto.GetExtension(opts, protos.E_Service)
+		if s, ok := v.(*protos.Service); ok && s != nil {
+			return s, true
 		}
 	}
-	return ""
+	return nil, false
 }
 
-func readMethodOption(method *protogen.Method) (client bool, reentrant bool, codec bool) {
+// serviceOptionComplete reports whether the service option is fully
+// configured: both domain and kind must be set, and kind must be
+// explicitly HANDLER or RPC (not KIND_UNSPECIFIED).
+func serviceOptionComplete(svc *protos.Service) bool {
+	if svc == nil {
+		return false
+	}
+	if svc.GetDomain() == "" {
+		return false
+	}
+	switch svc.GetKind() {
+	case protos.Service_HANDLER, protos.Service_RPC:
+		return true
+	default:
+		return false
+	}
+}
+
+func kindName(kind protos.Service_Kind) string {
+	switch kind {
+	case protos.Service_RPC:
+		return "KindRPC"
+	default:
+		return "KindHandler"
+	}
+}
+
+func readMethodOption(method *protogen.Method) (reentrant bool, codec bool) {
 	opts := method.Desc.Options().(*descriptorpb.MethodOptions)
 	if opts == nil {
-		return false, false, false
+		return false, false
 	}
 
 	// Read pitaya.method option
 	if proto.HasExtension(opts, protos.E_Method) {
 		v := proto.GetExtension(opts, protos.E_Method)
 		if m, ok := v.(*protos.Method); ok && m != nil {
-			client = m.GetClient()
 			reentrant = m.GetReentrant()
 			codec = m.GetCodec()
 		}
 	}
 
-	// Auto-set client=true when google.api.http is present
-	if !client && proto.HasExtension(opts, annotations.E_Http) {
-		client = true
-	}
-
-	return client, reentrant, codec
+	return reentrant, codec
 }
 
 func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	svcName := service.GoName
 	lowerSvc := lowerFirst(string(service.Desc.Name()))
-	domain := lowerFirst(readServiceDomain(service))
+	svcOpt, _ := readServiceOption(service)
+	domain := lowerFirst(svcOpt.GetDomain())
+	kind := svcOpt.GetKind()
 
 	// Full method name constants
 	g.P("const (")
@@ -189,7 +216,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 
 	// Client methods
 	for _, method := range service.Methods {
-		genClientMethod(g, method, domain, lowerSvc)
+		genClientMethod(g, method, domain, lowerSvc, kind)
 	}
 
 	// Server interface
@@ -207,7 +234,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	}
 	// Codec hooks
 	for _, method := range service.Methods {
-		_, _, codec := readMethodOption(method)
+		_, codec := readMethodOption(method)
 		if codec {
 			mn := method.GoName
 			g.P("Unmarshal", mn, "([]byte, *", method.Input.GoIdent, ") error")
@@ -231,7 +258,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	}
 	// Unimplemented codec hooks
 	for _, method := range service.Methods {
-		_, _, codec := readMethodOption(method)
+		_, codec := readMethodOption(method)
 		if codec {
 			mn := method.GoName
 			g.P("func (Unimplemented", serverType, ") Unmarshal", mn, "(b []byte, v *", method.Input.GoIdent, ") error {")
@@ -247,7 +274,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	// Handler functions
 	handlerNames := make([]string, 0, len(service.Methods))
 	for _, method := range service.Methods {
-		_, _, codec := readMethodOption(method)
+		_, codec := readMethodOption(method)
 		hname := genHandlerFunc(g, method, svcName, codec)
 		handlerNames = append(handlerNames, hname)
 	}
@@ -257,18 +284,16 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	descVar := "PRPC_" + svcName + "_ServiceDesc"
 	g.P("// ", descVar, " is the ", prpcPackage.Ident("ServiceDesc"), " for ", svcName, " service.")
 	g.P("var ", descVar, " = &", prpcPackage.Ident("ServiceDesc"), "{")
-	if domain != "" {
-		g.P("DomainName: ", strconv.Quote(domain), ",")
-	}
+	g.P("Kind: ", prpcPackage.Ident(kindName(kind)), ",")
+	g.P("DomainName: ", strconv.Quote(domain), ",")
 	g.P("ServiceName: ", strconv.Quote(lowerSvc), ",")
 	g.P("Methods: []", prpcPackage.Ident("MethodDesc"), "{")
 	for i := range service.Methods {
 		mn := lowerFirst(string(service.Methods[i].Desc.Name()))
-		client, reentrant, codec := readMethodOption(service.Methods[i])
+		reentrant, codec := readMethodOption(service.Methods[i])
 		g.P("{")
 		g.P("MethodName: ", strconv.Quote(mn), ",")
 		g.P("Handler: ", handlerNames[i], ",")
-		g.P("Client: ", strconv.FormatBool(client), ",")
 		g.P("Reentrant: ", strconv.FormatBool(reentrant), ",")
 		g.P("Codec: ", strconv.FormatBool(codec), ",")
 		g.P("},")
@@ -292,7 +317,7 @@ func clientSignature(g *protogen.GeneratedFile, method *protogen.Method) string 
 	return s
 }
 
-func genClientMethod(g *protogen.GeneratedFile, method *protogen.Method, domain, lowerService string) {
+func genClientMethod(g *protogen.GeneratedFile, method *protogen.Method, domain, lowerService string, kind protos.Service_Kind) {
 	mn := lowerFirst(string(method.Desc.Name()))
 	route := lowerService + "." + mn
 	if domain != "" {
@@ -301,6 +326,9 @@ func genClientMethod(g *protogen.GeneratedFile, method *protogen.Method, domain,
 
 	g.P("func (c *", unexport(method.Parent.GoName), "PrpcClient) ", clientSignature(g, method), "{")
 	g.P("out := new(", method.Output.GoIdent, ")")
+	if kind == protos.Service_HANDLER {
+		g.P("opts = append(opts, ", prpcPackage.Ident("WithHandler"), "())")
+	}
 	g.P("err := c.app.RPC(ctx, ", strconv.Quote(route), ", out, in, opts...)")
 	g.P("if err != nil { return nil, err }")
 	g.P("return out, nil")

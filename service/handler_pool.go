@@ -10,6 +10,8 @@ import (
 	e "github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
 	"github.com/actfuns/pitaya/v2/pipeline"
+	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/prpc"
 	"github.com/actfuns/pitaya/v2/serialize"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/util"
@@ -18,23 +20,36 @@ import (
 // HandlerPool ...
 type HandlerPool struct {
 	handlers map[string]*component.Handler // all handler method
+	remotes  map[string]*component.Handler // all remote method
 }
 
 // NewHandlerPool ...
 func NewHandlerPool() *HandlerPool {
 	return &HandlerPool{
 		handlers: make(map[string]*component.Handler),
+		remotes:  make(map[string]*component.Handler),
 	}
 }
 
 // Register ...
-func (h *HandlerPool) Register(domain string, service string, method string, handler *component.Handler) {
-	h.handlers[fmt.Sprintf("%s.%s.%s", domain, service, method)] = handler
+func (h *HandlerPool) Register(kind prpc.Kind, domain string, service string, method string, handler *component.Handler) {
+	switch kind {
+	case prpc.KindHandler:
+		h.handlers[fmt.Sprintf("%s.%s.%s", domain, service, method)] = handler
+	case prpc.KindRPC:
+		h.remotes[fmt.Sprintf("%s.%s.%s", domain, service, method)] = handler
+	}
 }
 
 // GetHandlers ...
-func (h *HandlerPool) GetHandlers() map[string]*component.Handler {
-	return h.handlers
+func (h *HandlerPool) GetHandlers(kind prpc.Kind) map[string]*component.Handler {
+	switch kind {
+	case prpc.KindHandler:
+		return h.handlers
+	case prpc.KindRPC:
+		return h.remotes
+	}
+	return nil
 }
 
 // ProcessHandlerMessage ...
@@ -52,18 +67,17 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
-	ctx = util.CtxWithDefaultLogger(ctx, route, session.UID())
+
+	if session != nil {
+		ctx = context.WithValue(ctx, constants.SessionCtxKey, session)
+		ctx = util.CtxWithDefaultLogger(ctx, route, session.UID())
+	}
 
 	if handler == nil {
-		handler, err = h.getHandler(route)
+		handler, err = h.getHandler(protos.RPCType_Sys, route)
 		if err != nil {
 			return nil, e.NewError(err, e.ErrNotFoundCode)
 		}
-	}
-
-	if !handler.Client {
-		return nil, e.NewError(fmt.Errorf("pitaya/handler: %s not found", route), e.ErrNotFoundCode)
 	}
 
 	msgType, err := getMsgType(msgTypeIface)
@@ -94,7 +108,6 @@ func (h *HandlerPool) ProcessHandlerMessage(
 
 		return ctx, arg, nil
 	}
-	logger.Debugf("SID=%d, Data=%s", session.ID(), data)
 
 	resp, err := handler.Fn(handler.Receiver, ctx, data, prepare)
 	if remote && msgType == message.Notify {
@@ -119,11 +132,23 @@ func (h *HandlerPool) ProcessHandlerMessage(
 	return ret, nil
 }
 
-func (h *HandlerPool) getHandler(route string) (*component.Handler, error) {
-	handler, ok := h.handlers[route]
-	if !ok {
-		e := fmt.Errorf("pitaya/handler: %s not found", route)
-		return nil, e
+func (h *HandlerPool) getHandler(rpcType protos.RPCType, route string) (*component.Handler, error) {
+	switch rpcType {
+	case protos.RPCType_Sys:
+		handler, ok := h.handlers[route]
+		if !ok {
+			e := fmt.Errorf("pitaya/handler: %s not found", route)
+			return nil, e
+		}
+		return handler, nil
+	case protos.RPCType_User:
+		handler, ok := h.remotes[route]
+		if !ok {
+			e := fmt.Errorf("pitaya/remote: %s not found", route)
+			return nil, e
+		}
+		return handler, nil
+	default:
+		return nil, fmt.Errorf("pitaya/handler: unknown kind: %d", rpcType)
 	}
-	return handler, nil
 }

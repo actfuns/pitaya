@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/conn/message"
 	"github.com/actfuns/pitaya/v2/constants"
@@ -17,6 +16,7 @@ import (
 	protosmocks "github.com/actfuns/pitaya/v2/protos/mocks"
 	"github.com/actfuns/pitaya/v2/route"
 	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 )

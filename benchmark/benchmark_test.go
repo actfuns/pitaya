@@ -25,8 +25,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/actfuns/pitaya/v2/client"
+	"github.com/sirupsen/logrus"
 )
 
 var clients []*client.Client

@@ -37,8 +37,8 @@ func (app *App) Register(desc *prpc.ServiceDesc, comp component.Component) {
 		logger.Log.Fatalf("service %q must have a non-empty DomainName", desc.ServiceName)
 	}
 
-	app.handlerService.Register(desc, comp)
 	app.handlerComp = append(app.handlerComp, regComp{desc, comp})
+	app.handlerService.Register(desc, comp)
 }
 
 func (app *App) startupComponents() {

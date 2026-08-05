@@ -123,7 +123,7 @@ func buildRequest(
 	}
 	req.Msg.ShardKey = msg.ShardKey
 
-	if rpcType == protos.RPCType_Sys {
+	if rpcType == protos.RPCType_Sys && session != nil {
 		mid := uint(0)
 		if msg.Type == message.Request {
 			mid = msg.ID

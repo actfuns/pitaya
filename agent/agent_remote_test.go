@@ -27,8 +27,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/cluster"
 	clustermocks "github.com/actfuns/pitaya/v2/cluster/mocks"
 	codecmocks "github.com/actfuns/pitaya/v2/conn/codec/mocks"
@@ -40,6 +38,8 @@ import (
 	"github.com/actfuns/pitaya/v2/route"
 	serializemocks "github.com/actfuns/pitaya/v2/serialize/mocks"
 	"github.com/actfuns/pitaya/v2/session"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

@@ -690,7 +690,7 @@ func TestStaticRegister(t *testing.T) {
 	comp := &component.Base{}
 	ctrl := gomock.NewController(t)
 
-	desc := &prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}
+	desc := &prpc.ServiceDesc{DomainName: "test", ServiceName: "test", Kind: prpc.KindHandler}
 	app := mocks.NewMockPitaya(ctrl)
 	app.EXPECT().Register(desc, comp)
 

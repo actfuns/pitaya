@@ -23,10 +23,10 @@ package pitaya
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/prpc"
+	"github.com/stretchr/testify/assert"
 )
 
 type MyComp struct {
@@ -47,14 +47,14 @@ func TestRegister(t *testing.T) {
 	app := NewDefaultApp(true, "testtype", Cluster, map[string]string{}, *config).(*App)
 	before := len(app.handlerComp)
 	b := &component.Base{}
-	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}, b)
+	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test", Kind: prpc.KindHandler}, b)
 	assert.Equal(t, before+1, len(app.handlerComp))
 }
 
 func TestStartupComponents(t *testing.T) {
 	app := NewDefaultApp(true, "testtype", Standalone, map[string]string{}, *config.NewDefaultPitayaConfig()).(*App)
 
-	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}, &MyComp{})
+	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test", Kind: prpc.KindHandler}, &MyComp{})
 	app.startupComponents()
 	idx := len(app.handlerComp) - 1
 	assert.Equal(t, true, app.handlerComp[idx].comp.(*MyComp).running)
@@ -63,7 +63,7 @@ func TestStartupComponents(t *testing.T) {
 func TestShutdownComponents(t *testing.T) {
 	app := NewDefaultApp(true, "testtype", Standalone, map[string]string{}, *config.NewDefaultPitayaConfig()).(*App)
 
-	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test"}, &MyComp{})
+	app.Register(&prpc.ServiceDesc{DomainName: "test", ServiceName: "test", Kind: prpc.KindHandler}, &MyComp{})
 	app.startupComponents()
 
 	app.shutdownComponents()

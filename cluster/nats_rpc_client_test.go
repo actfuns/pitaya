@@ -27,9 +27,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	nats "github.com/nats-io/nats.go"
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/conn/message"
 	"github.com/actfuns/pitaya/v2/constants"
@@ -40,6 +37,9 @@ import (
 	"github.com/actfuns/pitaya/v2/protos"
 	"github.com/actfuns/pitaya/v2/route"
 	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/google/uuid"
+	nats "github.com/nats-io/nats.go"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 )

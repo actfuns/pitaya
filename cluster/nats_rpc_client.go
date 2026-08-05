@@ -25,9 +25,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	nats "github.com/nats-io/nats.go"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/conn/message"
 	"github.com/actfuns/pitaya/v2/constants"
@@ -40,6 +37,9 @@ import (
 	"github.com/actfuns/pitaya/v2/route"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/tracing"
+	"github.com/google/uuid"
+	nats "github.com/nats-io/nats.go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/protobuf/proto"
 )
 

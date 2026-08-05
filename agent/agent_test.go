@@ -35,9 +35,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/actfuns/pitaya/v2/conn/codec"
 	codecmocks "github.com/actfuns/pitaya/v2/conn/codec/mocks"
 	"github.com/actfuns/pitaya/v2/conn/message"
@@ -58,6 +55,9 @@ import (
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/util"
 	"github.com/actfuns/pitaya/v2/util/compression"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 

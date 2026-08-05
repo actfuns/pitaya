@@ -108,17 +108,15 @@ func NewHandlerService(
 }
 
 // Register registers components
-func (h *HandlerService) Register(desc *prpc.ServiceDesc, comp component.Component) error {
+func (h *HandlerService) Register(desc *prpc.ServiceDesc, comp component.Component) {
 	for _, m := range desc.Methods {
-		h.handlerPool.Register(desc.DomainName, desc.ServiceName, m.MethodName, &component.Handler{
+		h.handlerPool.Register(desc.Kind, desc.DomainName, desc.ServiceName, m.MethodName, &component.Handler{
 			Fn:        m.Handler,
 			Receiver:  comp,
 			Reentrant: m.Reentrant,
-			Client:    m.Client,
 			Codec:     m.Codec,
 		})
 	}
-	return nil
 }
 
 // Handle handles messages from a conn
@@ -344,7 +342,7 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, msg *m
 
 // DumpServices outputs all registered services
 func (h *HandlerService) DumpServices() {
-	handlers := h.handlerPool.GetHandlers()
+	handlers := h.handlerPool.GetHandlers(prpc.KindHandler)
 	for name := range handlers {
 		logger.Log.Infof("registered handler %s", name)
 	}

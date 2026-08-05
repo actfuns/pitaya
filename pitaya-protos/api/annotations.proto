@@ -5,19 +5,40 @@ option go_package = "github.com/actfuns/pitaya/v2/protos/api";
 
 import "google/protobuf/descriptor.proto";
 
-extend google.protobuf.ServiceOptions {
+// Service describes a service's routing and registration metadata.
+// It is a required option on every service.
+message Service {
+  // Kind enumerates the kinds of services pitaya can register.
+  enum Kind {
+    // HANDLER registers the service as a client-facing handler service
+    // (accessible via WebSocket/TCP).
+    HANDLER = 0;
+    // RPC registers the service as a remote service (accessible via RPC).
+    RPC = 1;
+  }
+
   // domain specifies the server type for routing (e.g. "room", "game").
   // Used by protoc-gen-pitaya-prpc to determine the target server type.
+  // Required.
+  string domain = 1;
+
+  // kind specifies whether this service is a handler or rpc service.
+  // Required.
+  Kind kind = 2;
+}
+
+extend google.protobuf.ServiceOptions {
+  // service specifies the routing and registration metadata of a service.
   // Usage:
   //   service Room {
-  //     option (pitaya.domain) = "room";
+  //     option (pitaya.service) = { domain: "room", kind: RPC };
   //     rpc Join(JoinReq) returns (JoinResp);
   //   }
-  optional string domain = 50000;
+  optional Service service = 50000;
 }
 
 // Method describes the behavioral flags of a method.
-// It combines reentrant and client options into a single extension.
+// It combines reentrant and codec options into a single extension.
 message Method {
   // reentrant marks a method as reentrant (Orleans-style).
   // When true, the method can be executed concurrently without blocking
@@ -25,18 +46,12 @@ message Method {
   // Default: false.
   bool reentrant = 1;
 
-  // client marks a method as a client-facing handler.
-  // When true, the method is registered in both the remote service (for RPC)
-  // and the handler service (for direct client connections via WebSocket/TCP).
-  // Default: false (only accessible via RPC).
-  bool client = 2;
-
   // codec enables UnmarshalXxx / MarshalXxx hooks for this method.
   // When true, generated code adds UnmarshalXxx and MarshalXxx methods
   // to the server interface and calls them in the handler.
   // This allows custom byte-level processing before unmarshal and after marshal.
   // Default: false.
-  bool codec = 3;
+  bool codec = 2;
 }
 
 extend google.protobuf.MethodOptions {
@@ -44,10 +59,10 @@ extend google.protobuf.MethodOptions {
   // including reentrant, client, and codec options.
   // Usage:
   //   rpc Query(QueryReq) returns (QueryResp) {
-  //     option (pitaya.method) = { reentrant: true, client: true, codec: true };
+  //     option (pitaya.method) = { reentrant: true, codec: true };
   //   }
   //   rpc Join(JoinReq) returns (JoinResp) {
-  //     option (pitaya.method) = { client: true };
+  //     option (pitaya.method) = { reentrant: true };
   //   }
   //   rpc Kick(KickMsg) returns (KickAnswer) {
   //     option (pitaya.method) = { reentrant: true, codec: true };

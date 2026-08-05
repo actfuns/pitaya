@@ -27,11 +27,11 @@ import (
 	"os"
 	"strconv"
 
-	workers "github.com/topfreegames/go-workers"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/logger"
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
+	workers "github.com/topfreegames/go-workers"
 	"google.golang.org/protobuf/proto"
 )
 

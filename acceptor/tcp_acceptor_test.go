@@ -26,10 +26,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/conn/packet"
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/helpers"
+	"github.com/stretchr/testify/assert"
 )
 
 var tcpAcceptorTables = []struct {

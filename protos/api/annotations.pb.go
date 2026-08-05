@@ -22,8 +22,117 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Kind enumerates the kinds of services pitaya can register.
+type Service_Kind int32
+
+const (
+	// HANDLER registers the service as a client-facing handler service
+	// (accessible via WebSocket/TCP).
+	Service_HANDLER Service_Kind = 0
+	// RPC registers the service as a remote service (accessible via RPC).
+	Service_RPC Service_Kind = 1
+)
+
+// Enum value maps for Service_Kind.
+var (
+	Service_Kind_name = map[int32]string{
+		0: "HANDLER",
+		1: "RPC",
+	}
+	Service_Kind_value = map[string]int32{
+		"HANDLER": 0,
+		"RPC":     1,
+	}
+)
+
+func (x Service_Kind) Enum() *Service_Kind {
+	p := new(Service_Kind)
+	*p = x
+	return p
+}
+
+func (x Service_Kind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Service_Kind) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_annotations_proto_enumTypes[0].Descriptor()
+}
+
+func (Service_Kind) Type() protoreflect.EnumType {
+	return &file_api_annotations_proto_enumTypes[0]
+}
+
+func (x Service_Kind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Service_Kind.Descriptor instead.
+func (Service_Kind) EnumDescriptor() ([]byte, []int) {
+	return file_api_annotations_proto_rawDescGZIP(), []int{0, 0}
+}
+
+// Service describes a service's routing and registration metadata.
+// It is a required option on every service.
+type Service struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// domain specifies the server type for routing (e.g. "room", "game").
+	// Used by protoc-gen-pitaya-prpc to determine the target server type.
+	// Required.
+	Domain string `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
+	// kind specifies whether this service is a handler or rpc service.
+	// Required.
+	Kind          Service_Kind `protobuf:"varint,2,opt,name=kind,proto3,enum=pitaya.Service_Kind" json:"kind,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Service) Reset() {
+	*x = Service{}
+	mi := &file_api_annotations_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Service) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Service) ProtoMessage() {}
+
+func (x *Service) ProtoReflect() protoreflect.Message {
+	mi := &file_api_annotations_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Service.ProtoReflect.Descriptor instead.
+func (*Service) Descriptor() ([]byte, []int) {
+	return file_api_annotations_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Service) GetDomain() string {
+	if x != nil {
+		return x.Domain
+	}
+	return ""
+}
+
+func (x *Service) GetKind() Service_Kind {
+	if x != nil {
+		return x.Kind
+	}
+	return Service_HANDLER
+}
+
 // Method describes the behavioral flags of a method.
-// It combines reentrant and client options into a single extension.
+// It combines reentrant and codec options into a single extension.
 type Method struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// reentrant marks a method as reentrant (Orleans-style).
@@ -31,24 +140,19 @@ type Method struct {
 	// the actor serial queue (e.g., for DB I/O operations).
 	// Default: false.
 	Reentrant bool `protobuf:"varint,1,opt,name=reentrant,proto3" json:"reentrant,omitempty"`
-	// client marks a method as a client-facing handler.
-	// When true, the method is registered in both the remote service (for RPC)
-	// and the handler service (for direct client connections via WebSocket/TCP).
-	// Default: false (only accessible via RPC).
-	Client bool `protobuf:"varint,2,opt,name=client,proto3" json:"client,omitempty"`
 	// codec enables UnmarshalXxx / MarshalXxx hooks for this method.
 	// When true, generated code adds UnmarshalXxx and MarshalXxx methods
 	// to the server interface and calls them in the handler.
 	// This allows custom byte-level processing before unmarshal and after marshal.
 	// Default: false.
-	Codec         bool `protobuf:"varint,3,opt,name=codec,proto3" json:"codec,omitempty"`
+	Codec         bool `protobuf:"varint,2,opt,name=codec,proto3" json:"codec,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Method) Reset() {
 	*x = Method{}
-	mi := &file_api_annotations_proto_msgTypes[0]
+	mi := &file_api_annotations_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -60,7 +164,7 @@ func (x *Method) String() string {
 func (*Method) ProtoMessage() {}
 
 func (x *Method) ProtoReflect() protoreflect.Message {
-	mi := &file_api_annotations_proto_msgTypes[0]
+	mi := &file_api_annotations_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -73,19 +177,12 @@ func (x *Method) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Method.ProtoReflect.Descriptor instead.
 func (*Method) Descriptor() ([]byte, []int) {
-	return file_api_annotations_proto_rawDescGZIP(), []int{0}
+	return file_api_annotations_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Method) GetReentrant() bool {
 	if x != nil {
 		return x.Reentrant
-	}
-	return false
-}
-
-func (x *Method) GetClient() bool {
-	if x != nil {
-		return x.Client
 	}
 	return false
 }
@@ -100,10 +197,10 @@ func (x *Method) GetCodec() bool {
 var file_api_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.ServiceOptions)(nil),
-		ExtensionType: (*string)(nil),
+		ExtensionType: (*Service)(nil),
 		Field:         50000,
-		Name:          "pitaya.domain",
-		Tag:           "bytes,50000,opt,name=domain",
+		Name:          "pitaya.service",
+		Tag:           "bytes,50000,opt,name=service",
 		Filename:      "api/annotations.proto",
 	},
 	{
@@ -134,17 +231,16 @@ var file_api_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 
 // Extension fields to descriptorpb.ServiceOptions.
 var (
-	// domain specifies the server type for routing (e.g. "room", "game").
-	// Used by protoc-gen-pitaya-prpc to determine the target server type.
+	// service specifies the routing and registration metadata of a service.
 	// Usage:
 	//
 	//	service Room {
-	//	  option (pitaya.domain) = "room";
+	//	  option (pitaya.service) = { domain: "room", kind: RPC };
 	//	  rpc Join(JoinReq) returns (JoinResp);
 	//	}
 	//
-	// optional string domain = 50000;
-	E_Domain = &file_api_annotations_proto_extTypes[0]
+	// optional pitaya.Service service = 50000;
+	E_Service = &file_api_annotations_proto_extTypes[0]
 )
 
 // Extension fields to descriptorpb.MethodOptions.
@@ -154,10 +250,10 @@ var (
 	// Usage:
 	//
 	//	rpc Query(QueryReq) returns (QueryResp) {
-	//	  option (pitaya.method) = { reentrant: true, client: true, codec: true };
+	//	  option (pitaya.method) = { reentrant: true, codec: true };
 	//	}
 	//	rpc Join(JoinReq) returns (JoinResp) {
-	//	  option (pitaya.method) = { client: true };
+	//	  option (pitaya.method) = { reentrant: true };
 	//	}
 	//	rpc Kick(KickMsg) returns (KickAnswer) {
 	//	  option (pitaya.method) = { reentrant: true, codec: true };
@@ -186,7 +282,7 @@ var (
 // Extension fields to descriptorpb.EnumValueOptions.
 var (
 	// error_level specifies the severity level for this error value.
-	// Maps to errors.Error.Level field. Default: 0.
+	// Maps to errors.Error.Level field. Default: 3.
 	// Usage:
 	//
 	//	ErrCritical = 2001 [(pitaya.error_level) = 2];
@@ -199,12 +295,17 @@ var File_api_annotations_proto protoreflect.FileDescriptor
 
 const file_api_annotations_proto_rawDesc = "" +
 	"\n" +
-	"\x15api/annotations.proto\x12\x06pitaya\x1a google/protobuf/descriptor.proto\"T\n" +
+	"\x15api/annotations.proto\x12\x06pitaya\x1a google/protobuf/descriptor.proto\"i\n" +
+	"\aService\x12\x16\n" +
+	"\x06domain\x18\x01 \x01(\tR\x06domain\x12(\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\x14.pitaya.Service.KindR\x04kind\"\x1c\n" +
+	"\x04Kind\x12\v\n" +
+	"\aHANDLER\x10\x00\x12\a\n" +
+	"\x03RPC\x10\x01\"<\n" +
 	"\x06Method\x12\x1c\n" +
-	"\treentrant\x18\x01 \x01(\bR\treentrant\x12\x16\n" +
-	"\x06client\x18\x02 \x01(\bR\x06client\x12\x14\n" +
-	"\x05codec\x18\x03 \x01(\bR\x05codec:<\n" +
-	"\x06domain\x12\x1f.google.protobuf.ServiceOptions\x18І\x03 \x01(\tR\x06domain\x88\x01\x01:K\n" +
+	"\treentrant\x18\x01 \x01(\bR\treentrant\x12\x14\n" +
+	"\x05codec\x18\x02 \x01(\bR\x05codec:O\n" +
+	"\aservice\x12\x1f.google.protobuf.ServiceOptions\x18І\x03 \x01(\v2\x0f.pitaya.ServiceR\aservice\x88\x01\x01:K\n" +
 	"\x06method\x12\x1e.google.protobuf.MethodOptions\x18ц\x03 \x01(\v2\x0e.pitaya.MethodR\x06method\x88\x01\x01:9\n" +
 	"\x06errors\x12\x1c.google.protobuf.EnumOptions\x18ӆ\x03 \x01(\bR\x06errors\x88\x01\x01:G\n" +
 	"\verror_level\x12!.google.protobuf.EnumValueOptions\x18Ն\x03 \x01(\x05R\n" +
@@ -222,25 +323,30 @@ func file_api_annotations_proto_rawDescGZIP() []byte {
 	return file_api_annotations_proto_rawDescData
 }
 
-var file_api_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_api_annotations_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_api_annotations_proto_goTypes = []any{
-	(*Method)(nil),                        // 0: pitaya.Method
-	(*descriptorpb.ServiceOptions)(nil),   // 1: google.protobuf.ServiceOptions
-	(*descriptorpb.MethodOptions)(nil),    // 2: google.protobuf.MethodOptions
-	(*descriptorpb.EnumOptions)(nil),      // 3: google.protobuf.EnumOptions
-	(*descriptorpb.EnumValueOptions)(nil), // 4: google.protobuf.EnumValueOptions
+	(Service_Kind)(0),                     // 0: pitaya.Service.Kind
+	(*Service)(nil),                       // 1: pitaya.Service
+	(*Method)(nil),                        // 2: pitaya.Method
+	(*descriptorpb.ServiceOptions)(nil),   // 3: google.protobuf.ServiceOptions
+	(*descriptorpb.MethodOptions)(nil),    // 4: google.protobuf.MethodOptions
+	(*descriptorpb.EnumOptions)(nil),      // 5: google.protobuf.EnumOptions
+	(*descriptorpb.EnumValueOptions)(nil), // 6: google.protobuf.EnumValueOptions
 }
 var file_api_annotations_proto_depIdxs = []int32{
-	1, // 0: pitaya.domain:extendee -> google.protobuf.ServiceOptions
-	2, // 1: pitaya.method:extendee -> google.protobuf.MethodOptions
-	3, // 2: pitaya.errors:extendee -> google.protobuf.EnumOptions
-	4, // 3: pitaya.error_level:extendee -> google.protobuf.EnumValueOptions
-	0, // 4: pitaya.method:type_name -> pitaya.Method
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	4, // [4:5] is the sub-list for extension type_name
-	0, // [0:4] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: pitaya.Service.kind:type_name -> pitaya.Service.Kind
+	3, // 1: pitaya.service:extendee -> google.protobuf.ServiceOptions
+	4, // 2: pitaya.method:extendee -> google.protobuf.MethodOptions
+	5, // 3: pitaya.errors:extendee -> google.protobuf.EnumOptions
+	6, // 4: pitaya.error_level:extendee -> google.protobuf.EnumValueOptions
+	1, // 5: pitaya.service:type_name -> pitaya.Service
+	2, // 6: pitaya.method:type_name -> pitaya.Method
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	5, // [5:7] is the sub-list for extension type_name
+	1, // [1:5] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_api_annotations_proto_init() }
@@ -253,13 +359,14 @@ func file_api_annotations_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_annotations_proto_rawDesc), len(file_api_annotations_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   1,
+			NumEnums:      1,
+			NumMessages:   2,
 			NumExtensions: 4,
 			NumServices:   0,
 		},
 		GoTypes:           file_api_annotations_proto_goTypes,
 		DependencyIndexes: file_api_annotations_proto_depIdxs,
+		EnumInfos:         file_api_annotations_proto_enumTypes,
 		MessageInfos:      file_api_annotations_proto_msgTypes,
 		ExtensionInfos:    file_api_annotations_proto_extTypes,
 	}.Build()

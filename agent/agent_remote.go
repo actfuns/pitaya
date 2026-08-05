@@ -76,13 +76,15 @@ func NewRemote(
 	}
 
 	// binding session
-	s := sessionPool.NewSession(a, false, sess.GetUid())
-	s.SetFrontendData(frontendID, sess.GetId())
-	err := s.SetDataEncoded(sess.GetData())
-	if err != nil {
-		return nil, err
+	if sess != nil {
+		s := sessionPool.NewSession(a, false, sess.GetUid())
+		s.SetFrontendData(frontendID, sess.GetId())
+		err := s.SetDataEncoded(sess.GetData())
+		if err != nil {
+			return nil, err
+		}
+		a.Session = s
 	}
-	a.Session = s
 
 	return a, nil
 }

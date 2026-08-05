@@ -26,7 +26,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	agentmocks "github.com/actfuns/pitaya/v2/agent/mocks"
 	"github.com/actfuns/pitaya/v2/cluster"
 	clustermocks "github.com/actfuns/pitaya/v2/cluster/mocks"
@@ -41,6 +40,7 @@ import (
 	serializemocks "github.com/actfuns/pitaya/v2/serialize/mocks"
 	"github.com/actfuns/pitaya/v2/session"
 	sessionmocks "github.com/actfuns/pitaya/v2/session/mocks"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 

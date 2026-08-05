@@ -28,7 +28,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	nats "github.com/nats-io/nats.go"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/constants"
 	e "github.com/actfuns/pitaya/v2/errors"
@@ -37,6 +36,7 @@ import (
 	"github.com/actfuns/pitaya/v2/protos"
 	"github.com/actfuns/pitaya/v2/session"
 	"github.com/actfuns/pitaya/v2/util"
+	nats "github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
 )
 

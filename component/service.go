@@ -30,7 +30,6 @@ type (
 		Fn        func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error)
 		Receiver  interface{}
 		Reentrant bool
-		Client    bool
 		Codec     bool
 	}
 )

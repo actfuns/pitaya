@@ -24,9 +24,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/actfuns/pitaya/v2/config"
 	"github.com/actfuns/pitaya/v2/metrics"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRateLimitingWrapper(t *testing.T) {

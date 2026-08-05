@@ -14,9 +14,9 @@ import (
 	net "net"
 	reflect "reflect"
 
-	nats "github.com/nats-io/nats.go"
 	networkentity "github.com/actfuns/pitaya/v2/networkentity"
 	session "github.com/actfuns/pitaya/v2/session"
+	nats "github.com/nats-io/nats.go"
 	gomock "go.uber.org/mock/gomock"
 )
 

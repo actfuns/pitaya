@@ -30,6 +30,7 @@ import (
 	"github.com/actfuns/pitaya/v2/conn/message"
 	e "github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/pipeline"
+	"github.com/actfuns/pitaya/v2/protos"
 	"github.com/actfuns/pitaya/v2/protos/test"
 	"github.com/actfuns/pitaya/v2/route"
 	"github.com/actfuns/pitaya/v2/serialize/mocks"
@@ -46,7 +47,7 @@ func TestGetHandlerExists(t *testing.T) {
 	handlerPool.handlers[rt.String()] = expected
 	defer func() { delete(handlerPool.handlers, rt.String()) }()
 
-	h, err := handlerPool.getHandler(rt.String())
+	h, err := handlerPool.getHandler(protos.RPCType_Sys, rt.String())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, h)
 }
@@ -54,7 +55,7 @@ func TestGetHandlerExists(t *testing.T) {
 func TestGetHandlerDoesntExist(t *testing.T) {
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	handlerPool := NewHandlerPool()
-	h, err := handlerPool.getHandler(rt.String())
+	h, err := handlerPool.getHandler(protos.RPCType_Sys, rt.String())
 	assert.Nil(t, h)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), fmt.Sprintf("%s not found", rt.String()))
@@ -68,7 +69,6 @@ func TestProcessHandlerMessage(t *testing.T) {
 	rt := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
 	handlerPool.handlers[rt.String()] = &component.Handler{
 		Receiver: tObj,
-		Client:   true,
 		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
 			if _, _, err := prepare(ctx, arg); err != nil {
@@ -81,7 +81,6 @@ func TestProcessHandlerMessage(t *testing.T) {
 	rtErr := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
 	handlerPool.handlers[rtErr.String()] = &component.Handler{
 		Receiver: tObj,
-		Client:   true,
 		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
 			if _, _, err := prepare(ctx, arg); err != nil {
@@ -94,7 +93,6 @@ func TestProcessHandlerMessage(t *testing.T) {
 	rtSt := route.NewRoute("domain", uuid.New().String(), uuid.New().String())
 	handlerPool.handlers[rtSt.String()] = &component.Handler{
 		Receiver: tObj,
-		Client:   true,
 		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
 			if _, _, err := prepare(ctx, arg); err != nil {
@@ -157,7 +155,6 @@ func TestProcessHandlerMessageBrokenBeforePipeline(t *testing.T) {
 	rt := route.NewRoute("", uuid.New().String(), uuid.New().String())
 	handlerPool := NewHandlerPool()
 	handlerPool.handlers[rt.String()] = &component.Handler{
-		Client: true,
 		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
 			if _, _, err := prepare(ctx, arg); err != nil {
@@ -191,7 +188,6 @@ func TestProcessHandlerMessageBrokenAfterPipeline(t *testing.T) {
 	handlerPool := NewHandlerPool()
 	handlerPool.handlers[rt.String()] = &component.Handler{
 		Receiver: tObj,
-		Client:   true,
 		Fn: func(srv interface{}, ctx context.Context, data []byte, prepare func(ctx context.Context, arg interface{}) (context.Context, interface{}, error)) (interface{}, error) {
 			arg := &test.SomeStruct{}
 			if _, _, err := prepare(ctx, arg); err != nil {
