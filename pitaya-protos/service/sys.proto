@@ -9,10 +9,7 @@ import "session.proto";
 import "api/annotations.proto";
 
 service Sys {
-  option (pitaya.service) =  {
-    domain: "sys";
-    kind  : HANDLER;
-  };
+  option (pitaya.service) = { domain: "sys"; kind: RPC };
 
   rpc BindSession(Session) returns (Response) {
     option (pitaya.method) = { reentrant: true };
