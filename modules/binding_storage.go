@@ -46,6 +46,7 @@ type ETCDBindingStorage struct {
 	etcdPass        string
 	leaseTTL        time.Duration
 	leaseID         clientv3.LeaseID
+	etcdServerType  string
 	thisServer      *cluster.Server
 	sessionPool     session.SessionPool
 	stopChan        chan struct{}
@@ -64,29 +65,30 @@ func NewETCDBindingStorage(server *cluster.Server, sessionPool session.SessionPo
 	b.etcdUser = conf.User
 	b.etcdPass = conf.Pass
 	b.leaseTTL = conf.LeaseTTL
+	b.etcdServerType = conf.ServerType
 	return b
 }
 
-func getUserBindingKey(uid, frontendType string) string {
-	return fmt.Sprintf("bindings/%s/%s", frontendType, uid)
+func (b *ETCDBindingStorage) getUserBindingKey(uid string) string {
+	return fmt.Sprintf("bindings/%s/%s", b.etcdServerType, uid)
 }
 
 // PutBinding puts the binding info into etcd
 func (b *ETCDBindingStorage) PutBinding(uid string) error {
-	_, err := b.cli.Put(context.Background(), getUserBindingKey(uid, b.thisServer.Type), b.thisServer.ID, clientv3.WithLease(b.leaseID))
+	_, err := b.cli.Put(context.Background(), b.getUserBindingKey(uid), b.thisServer.ID, clientv3.WithLease(b.leaseID))
 	return err
 }
 
 func (b *ETCDBindingStorage) removeBinding(uid string) error {
-	_, err := b.cli.Delete(context.Background(), getUserBindingKey(uid, b.thisServer.Type))
+	_, err := b.cli.Delete(context.Background(), b.getUserBindingKey(uid))
 	return err
 }
 
 // GetUserFrontendID gets the id of the frontend server a user is connected to
 // TODO: should we set context here?
 // TODO: this could be way more optimized, using watcher and local caching
-func (b *ETCDBindingStorage) GetUserFrontendID(uid, frontendType string) (string, error) {
-	etcdRes, err := b.cli.Get(context.Background(), getUserBindingKey(uid, frontendType))
+func (b *ETCDBindingStorage) GetUserFrontendID(uid, _ string) (string, error) {
+	etcdRes, err := b.cli.Get(context.Background(), b.getUserBindingKey(uid))
 	if err != nil {
 		return "", err
 	}

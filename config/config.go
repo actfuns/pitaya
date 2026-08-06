@@ -616,6 +616,7 @@ type ETCDBindingConfig struct {
 	Pass        string        `mapstructure:"pass"`
 	Prefix      string        `mapstructure:"prefix"`
 	LeaseTTL    time.Duration `mapstructure:"leasettl"`
+	ServerType  string        `mapstructure:"servertype"`
 }
 
 // NewDefaultETCDBindingConfig provides default configuration for ETCDBindingStorage
@@ -625,6 +626,7 @@ func newDefaultETCDBindingConfig() *ETCDBindingConfig {
 		Endpoints:   []string{"localhost:2379"},
 		Prefix:      "pitaya/",
 		LeaseTTL:    time.Duration(5 * time.Hour),
+		ServerType:  "gate",
 	}
 }
 

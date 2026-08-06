@@ -132,6 +132,7 @@ func (c *Config) fillDefaultValues() {
 		"pitaya.modules.bindingstorage.etcd.endpoints":     pitayaConfig.Modules.BindingStorage.Etcd.Endpoints,
 		"pitaya.modules.bindingstorage.etcd.leasettl":      pitayaConfig.Modules.BindingStorage.Etcd.LeaseTTL,
 		"pitaya.modules.bindingstorage.etcd.prefix":        pitayaConfig.Modules.BindingStorage.Etcd.Prefix,
+		"pitaya.modules.bindingstorage.etcd.servertype":    pitayaConfig.Modules.BindingStorage.Etcd.ServerType,
 		"pitaya.conn.ratelimiting.limit":                   pitayaConfig.Conn.RateLimiting.Limit,
 		"pitaya.conn.ratelimiting.interval":                pitayaConfig.Conn.RateLimiting.Interval,
 		"pitaya.conn.ratelimiting.forcedisable":            pitayaConfig.Conn.RateLimiting.ForceDisable,
