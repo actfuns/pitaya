@@ -62,6 +62,7 @@ type RemoteService struct {
 	server                 *cluster.Server // server obj
 	remoteBindingListeners []cluster.RemoteBindingListener
 	remoteHooks            *pipeline.RemoteHooks
+	interceptorChain       *cluster.InterceptorChain
 	sessionPool            session.SessionPool
 	handlerPool            *HandlerPool
 	taskSevice             *TaskService
@@ -100,8 +101,20 @@ func NewRemoteService(
 
 	remote.remoteHooks = remoteHooks
 	remote.handlerHooks = handlerHooks
+	remote.interceptorChain = cluster.NewInterceptorChain()
 
 	return remote
+}
+
+// AddRPCInterceptor registers client-side unary interceptors that wrap every
+// outbound RPC call made through this RemoteService.
+// Interceptors registered first are the outermost ones. Should not be used
+// after the server is running.
+func (r *RemoteService) AddRPCInterceptor(interceptors ...cluster.UnaryInterceptor) {
+	if r.interceptorChain == nil {
+		r.interceptorChain = cluster.NewInterceptorChain()
+	}
+	r.interceptorChain.Add(interceptors...)
 }
 
 func (r *RemoteService) remoteProcess(
@@ -547,10 +560,23 @@ func (r *RemoteService) remoteCall(
 	session session.Session,
 	msg *message.Message,
 ) (*protos.Response, error) {
-	var err error
-	res, err := r.rpcClient.Call(ctx, rpcType, route, session, msg, target)
+	rpcCtx := &cluster.RPCContext{
+		Context: ctx,
+		RPCType: rpcType,
+		Route:   route,
+		Session: session,
+		Msg:     msg,
+		Target:  target,
+	}
+	return r.interceptorChain.Execute(rpcCtx, r.invokeRPC)
+}
+
+// invokeRPC is the innermost invoker of the interceptor chain; it performs the
+// actual RPC call through the underlying RPC client.
+func (r *RemoteService) invokeRPC(c *cluster.RPCContext) (*protos.Response, error) {
+	res, err := r.rpcClient.Call(c.Context, c.RPCType, c.Route, c.Session, c.Msg, c.Target)
 	if err != nil {
-		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %v", target.ID, msg.Route, target.Hostname, err)
+		logger.Log.LogfWithErrorLevel(err, "error making call to target with id %s, route %s and host %s: %v", c.Target.ID, c.Msg.Route, c.Target.Hostname, err)
 		return nil, err
 	}
 	return res, err

@@ -59,28 +59,11 @@ const ErrTaskRunnerBusy int32 = 503
 // ErrSessionNotFound is a string code representing the session not found error
 const ErrSessionNotFound int32 = 460
 
-// ErrRPCRedirect is a string code representing an RPC redirect.
-// When a remote returns this code with metadata["server_id"],
-// the client should retry the RPC to the specified server.
-const ErrRPCRedirect int32 = 10007
-
 // Error is an error with a code and message.
 type Error = protos.Error
 
 // PitayaError is an error with a code, message and metadata.
 type PitayaError = protos.PitayaError
-
-// NewRPCRedirectError creates a redirect error with the given target server ID.
-func NewRPCRedirectError(serverID string) *Error {
-	return &Error{
-		Code:    ErrRPCRedirect,
-		Level:   interfaces.ErrorLevel,
-		Message: "rpc redirect",
-		Metadata: map[string]string{
-			"server_id": serverID,
-		},
-	}
-}
 
 // New ctor
 func New(code int32, level int32, message string, metadata ...map[string]string) *Error {

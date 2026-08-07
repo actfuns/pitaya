@@ -316,7 +316,7 @@ func TestAgentRemoteSendRequest(t *testing.T) {
 							Route: table.reqRoute,
 							Data:  serializeRet,
 						}
-						mockRPCClient.EXPECT().Call(nil, protos.RPCType_User, r, nil, expectedMsg, expectedServer).Return(table.resp, table.err)
+						mockRPCClient.EXPECT().Call(gomock.Any(), protos.RPCType_User, r, nil, expectedMsg, expectedServer).Return(table.resp, table.err)
 					}
 				}
 			}

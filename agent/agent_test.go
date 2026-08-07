@@ -1079,7 +1079,7 @@ func TestAnswerWithError(t *testing.T) {
 			ag.AnswerWithError(context.Background(), uint(rand.Int()), row.answeredErr)
 			if row.expectedErr != nil {
 				pWrite := helpers.ShouldEventuallyReceive(t, ag.chSend)
-				assert.Equal(t, pendingWrite{err: row.expectedErr}, pWrite)
+				assert.Equal(t, pendingWrite{ctx: context.Background(), err: row.expectedErr}, pWrite)
 			}
 		})
 	}

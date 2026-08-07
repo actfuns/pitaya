@@ -425,6 +425,23 @@ func (mr *MockPitayaMockRecorder) RPC(ctx, routeStr, reply, arg any, opts ...any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPC", reflect.TypeOf((*MockPitaya)(nil).RPC), varargs...)
 }
 
+// AddRPCInterceptor mocks base method.
+func (m *MockPitaya) AddRPCInterceptor(interceptors ...cluster.UnaryInterceptor) {
+	m.ctrl.T.Helper()
+	varargs := []any{}
+	for _, a := range interceptors {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "AddRPCInterceptor", varargs...)
+}
+
+// AddRPCInterceptor indicates an expected call of AddRPCInterceptor.
+func (mr *MockPitayaMockRecorder) AddRPCInterceptor(interceptors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{}, interceptors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRPCInterceptor", reflect.TypeOf((*MockPitaya)(nil).AddRPCInterceptor), varargs...)
+}
+
 // Register mocks base method.
 func (m *MockPitaya) Register(desc *prpc.ServiceDesc, comp component.Component) {
 	m.ctrl.T.Helper()

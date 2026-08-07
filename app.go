@@ -88,6 +88,7 @@ type Pitaya interface {
 	IsRunning() bool
 
 	RPC(ctx context.Context, routeStr string, reply proto.Message, arg proto.Message, opts ...prpc.CallOption) error
+	AddRPCInterceptor(interceptors ...cluster.UnaryInterceptor)
 
 	SendPushToUsers(route string, v interface{}, uids []string, frontendType string) ([]string, error)
 	SendKickToUsers(uids []string, frontendType string) ([]string, error)
@@ -523,6 +524,17 @@ func (app *App) StartWorker() {
 func (app *App) RegisterRPCJob(rpcJob worker.RPCJob) error {
 	err := app.worker.RegisterRPCJob(rpcJob)
 	return err
+}
+
+// AddRPCInterceptor registers client-side unary interceptors that wrap every
+// outbound RPC call made by the app. Interceptors registered first are the
+// outermost ones. Should not be used after the app starts running.
+func (app *App) AddRPCInterceptor(interceptors ...cluster.UnaryInterceptor) {
+	if app.remoteService == nil {
+		logger.Log.Warn("pitaya: cannot register RPC interceptors in standalone mode, skipping")
+		return
+	}
+	app.remoteService.AddRPCInterceptor(interceptors...)
 }
 
 // GetNumberOfConnectedClients returns the number of connected clients
