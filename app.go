@@ -117,6 +117,7 @@ type Pitaya interface {
 	SubmitAnonymousTask(ctx context.Context, task func(context.Context)) error
 	SetInterval(taskid string, delay time.Duration, counter int, fn func(context.Context)) (uint64, error)
 	ClearInterval(timerId uint64) error
+	GetSerializer() serialize.Serializer
 	IsReady(ctx context.Context) bool
 }
 
@@ -560,6 +561,11 @@ func (app *App) SetInterval(taskid string, delay time.Duration, counter int, fn 
 // ClearInterval clears an interval
 func (app *App) ClearInterval(timerId uint64) error {
 	return app.timerService.ClearInterval(timerId)
+}
+
+// GetSerializer gets the serializer instance
+func (app *App) GetSerializer() serialize.Serializer {
+	return app.serializer
 }
 
 // IsReady checks if pitaya is ready and able to serve requests

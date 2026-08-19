@@ -20,6 +20,7 @@ import (
 	metrics "github.com/actfuns/pitaya/v2/metrics"
 	prpc "github.com/actfuns/pitaya/v2/prpc"
 	router "github.com/actfuns/pitaya/v2/router"
+	"github.com/actfuns/pitaya/v2/serialize"
 	session "github.com/actfuns/pitaya/v2/session"
 	worker "github.com/actfuns/pitaya/v2/worker"
 	gomock "go.uber.org/mock/gomock"
@@ -376,6 +377,24 @@ func (m *MockPitaya) GroupRenewTTL(ctx context.Context, groupName string) error 
 func (mr *MockPitayaMockRecorder) GroupRenewTTL(ctx, groupName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupRenewTTL", reflect.TypeOf((*MockPitaya)(nil).GroupRenewTTL), ctx, groupName)
+}
+
+// GetSerializer mocks base method.
+func (m *MockPitaya) GetSerializer() serialize.Serializer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSerializer")
+	ret0, _ := ret[0].(serialize.Serializer)
+	return ret0
+}
+
+// GetSerializer indicates an expected call of GetSerializer.
+func (mr *MockPitayaMockRecorder) GetSerializer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(
+		mr.mock,
+		"GetSerializer",
+		reflect.TypeOf((*MockPitaya)(nil).GetSerializer),
+	)
 }
 
 // IsReady mocks base method.

@@ -166,7 +166,8 @@ func (r *RemoteService) Call(ctx context.Context, req *protos.Request) (*protos.
 			timeout, _ = time.ParseDuration(reqTimeout.(string))
 		}
 
-		ret, err := r.dispatchRemoteMessage(c, req, timeout)
+		var ret *protos.Response
+		ret, err = r.dispatchRemoteMessage(c, req, timeout)
 		if err == nil {
 			return ret, nil
 		}
