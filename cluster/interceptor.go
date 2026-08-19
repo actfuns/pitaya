@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"sync"
 
 	"github.com/actfuns/pitaya/v2/conn/message"
 	"github.com/actfuns/pitaya/v2/protos"
@@ -14,15 +15,19 @@ import (
 // RPCClient.Call wrapped by RemoteService.
 type UnaryInvoker func(c *RPCContext) (*protos.Response, error)
 
-// UnaryInterceptor processes a single outbound RPC call in the spirit of a gin
-// middleware: it may inspect or mutate the call state, and must call c.Next()
-// to let the rest of the chain (and the actual RPC) run. Code placed after
-// c.Next() runs once the downstream chain has completed.
-type UnaryInterceptor func(c *RPCContext)
+// UnaryInterceptor wraps a downstream handler in the spirit of a functional
+// middleware (like http.Handler or grpc.UnaryServerInterceptor). It receives
+// the next handler in the chain and returns its own handler. Interceptors may:
+//   - mutate the call parameters by writing to the fields of the *RPCContext
+//     passed to the returned handler (e.g. c.Target, c.Route, c.Msg, c.Context)
+//     before invoking next;
+//   - retry by calling next(c) more than once;
+//   - short-circuit by returning a response/error without calling next.
+type UnaryInterceptor func(next UnaryInvoker) UnaryInvoker
 
 // RPCContext carries the state of a single outbound RPC call through the
-// interceptor chain, modeled after gin.Context. The call parameters are
-// flattened onto the context so interceptors can read or mutate them directly.
+// interceptor chain. The call parameters are flattened onto the context so
+// interceptors can read or mutate them directly.
 type RPCContext struct {
 	context.Context
 
@@ -31,43 +36,6 @@ type RPCContext struct {
 	Session session.Session
 	Msg     *message.Message
 	Target  *Server
-
-	// Response and Error are populated by the actual RPC call at the end of
-	// the chain. Interceptors may set them before aborting to short-circuit.
-	Response *protos.Response
-	Error    error
-
-	chain   []UnaryInterceptor
-	index   int
-	aborted bool
-}
-
-// Next advances to the next interceptor in the chain. Interceptors must call
-// it exactly once unless they abort. Code placed after c.Next() runs when the
-// downstream chain (and the actual RPC call) has completed.
-func (c *RPCContext) Next() {
-	if c.aborted {
-		return
-	}
-	c.index++
-	for c.index < len(c.chain) && !c.aborted {
-		c.chain[c.index](c)
-		c.index++
-	}
-}
-
-// Abort short-circuits the chain: the remaining interceptors and the actual
-// RPC call are skipped. Interceptors that abort should set Response or Error
-// beforehand. Handlers already on the call stack still finish their post-Next
-// code, mirroring gin.Abort.
-func (c *RPCContext) Abort() {
-	c.aborted = true
-	c.index = len(c.chain)
-}
-
-// Aborted reports whether the chain was aborted.
-func (c *RPCContext) Aborted() bool {
-	return c.aborted
 }
 
 // InterceptorChain holds the ordered list of unary interceptors.
@@ -75,6 +43,9 @@ func (c *RPCContext) Aborted() bool {
 // onion model as gin and gRPC.
 type InterceptorChain struct {
 	interceptors []UnaryInterceptor
+
+	composeOnce sync.Once
+	compose     func(UnaryInvoker) UnaryInvoker
 }
 
 // NewInterceptorChain creates an empty interceptor chain.
@@ -88,37 +59,38 @@ func (c *InterceptorChain) Add(interceptors ...UnaryInterceptor) {
 	c.interceptors = append(c.interceptors, interceptors...)
 }
 
+// composeFn returns a function that, given an invoker, returns the fully
+// composed handler. The composition is computed once and cached, so repeated
+// Execute calls do not rebuild the closure chain on every RPC.
+func (c *InterceptorChain) composeFn() func(UnaryInvoker) UnaryInvoker {
+	c.composeOnce.Do(func() {
+		interceptors := c.interceptors
+		c.compose = func(invoker UnaryInvoker) UnaryInvoker {
+			handler := invoker
+			for i := len(interceptors) - 1; i >= 0; i-- {
+				handler = interceptors[i](handler)
+			}
+			return handler
+		}
+	})
+	return c.compose
+}
+
 // Execute runs the interceptor chain followed by the actual RPC invoker.
-// The invoker is appended as the final link of the chain so that post-Next
-// code in every interceptor observes the completed call. A nil chain or an
-// empty chain simply runs the invoker. The call result is always written back
-// to rpcCtx.Response / rpcCtx.Error.
+// Interceptors are composed functionally from the innermost (the invoker)
+// outward, so the first registered interceptor is the outermost wrapper.
+// A nil chain or an empty chain simply runs the invoker.
 //
 // A single RPCContext must not be reused across multiple Execute calls.
 func (c *InterceptorChain) Execute(rpcCtx *RPCContext, invoker UnaryInvoker) (*protos.Response, error) {
-	var interceptors []UnaryInterceptor
-	if c != nil {
-		interceptors = c.interceptors
-	}
-
-	rpcCtx.chain = make([]UnaryInterceptor, 0, len(interceptors)+1)
-	rpcCtx.chain = append(rpcCtx.chain, interceptors...)
-	rpcCtx.chain = append(rpcCtx.chain, func(c *RPCContext) {
-		c.Response, c.Error = invoker(c)
-	})
-	rpcCtx.index = -1
-	rpcCtx.aborted = false
 	if rpcCtx.Context == nil {
 		rpcCtx.Context = context.Background()
 	}
 
-	rpcCtx.Next()
+	handler := invoker
+	if c != nil {
+		handler = c.composeFn()(invoker)
+	}
 
-	if rpcCtx.Error != nil {
-		return rpcCtx.Response, rpcCtx.Error
-	}
-	if rpcCtx.Response == nil {
-		rpcCtx.Response = &protos.Response{}
-	}
-	return rpcCtx.Response, nil
+	return handler(rpcCtx)
 }
