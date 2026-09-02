@@ -13,19 +13,28 @@ type CallOption func(*CallOptions)
 
 // CallOptions holds all configurable options for an RPC call.
 type CallOptions struct {
-	ServerID            string                  // target server ID, empty means any
-	OneWay              bool                    // fire-and-forget, no response expected
-	Handler             bool                    // mark as client-side RPC (Sys type)
-	PropagateCtx        []pcontext.KeyValuePair // values to inject into the propagate context for RPC calls
-	Reliable            bool                    // reliable RPC, retries on failure
-	ReliableMetadata    map[string]interface{}  // metadata to be passed to the server
-	ReliableEnqueueOpts *config.EnqueueOpts     // enqueue options
+	ServerID            string                  `json:"serverID"`               // target server ID, empty means any
+	RandomServerID      bool                    `json:"randomServerID"`         // pick a random server ID of the route's domain
+	OneWay              bool                    `json:"oneWay"`                 // fire-and-forget, no response expected
+	Handler             bool                    `json:"handler"`                // mark as client-side RPC (Sys type)
+	PropagateCtx        []pcontext.KeyValuePair `json:"propagateCtx,omitempty"` // values to inject into the propagate context for RPC calls
+	Reliable            bool                    `json:"-"`                      // reliable RPC, retries on failure
+	ReliableMetadata    map[string]interface{}  `json:"-"`                      // metadata to be passed to the server
+	ReliableEnqueueOpts *config.EnqueueOpts     `json:"-"`                      // enqueue options
 }
 
 // WithServerID sets the target server ID for the RPC call.
 func WithServerID(id string) CallOption {
 	return func(o *CallOptions) {
 		o.ServerID = id
+	}
+}
+
+// WithRandomServerID makes the RPC target a random server ID of the route's
+// domain. It is ignored when WithServerID is set.
+func WithRandomServerID() CallOption {
+	return func(o *CallOptions) {
+		o.RandomServerID = true
 	}
 }
 

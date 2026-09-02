@@ -76,7 +76,9 @@ var RequestIDKey = "request.id"
 // RequestShardKey is the key holding the request instance to be sent over the context
 var RequestShardKey = "request.shardKey"
 
-// ReliableRPCOptionsKey is the key used to store prpc.CallOptions in reliable RPC metadata
+// ReliableRPCOptionsKey is the key used to store the JSON-encoded prpc.CallOptions
+// in reliable RPC metadata. The value is a JSON string, not a nested object, so
+// consumers can unmarshal it directly.
 var ReliableRPCOptionsKey = "__rpc_options__"
 
 type taskIdKey struct{}

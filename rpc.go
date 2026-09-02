@@ -22,6 +22,8 @@ package pitaya
 
 import (
 	"context"
+	"encoding/json"
+	"math/rand"
 	"reflect"
 	"slices"
 
@@ -46,17 +48,17 @@ func (app *App) RPC(ctx context.Context, routeStr string, reply proto.Message, a
 		if meta == nil {
 			meta = make(map[string]interface{})
 		}
-		storedOpt := opt
-		storedOpt.Reliable = false
-		storedOpt.ReliableMetadata = nil
-		storedOpt.ReliableEnqueueOpts = nil
-		meta[constants.ReliableRPCOptionsKey] = storedOpt
+		optsJSON, err := json.Marshal(opt)
+		if err != nil {
+			return err
+		}
+		meta[constants.ReliableRPCOptionsKey] = string(optsJSON)
 
 		if opt.ReliableEnqueueOpts != nil {
 			_, err := app.worker.EnqueueRPCWithOptions(routeStr, meta, reply, arg, opt.ReliableEnqueueOpts)
 			return err
 		}
-		_, err := app.worker.EnqueueRPC(routeStr, meta, reply, arg)
+		_, err = app.worker.EnqueueRPC(routeStr, meta, reply, arg)
 		return err
 	}
 
@@ -86,11 +88,38 @@ func (app *App) doSendRPC(ctx context.Context, rpcType protos.RPCType, serverID,
 		return constants.ErrNoServerTypeChosenForRPC
 	}
 
+	if opt.RandomServerID && serverID == "" {
+		serverID, err = app.randomServerID(r.Domain)
+		if err != nil {
+			return err
+		}
+	}
+
 	if ((slices.Contains(app.server.Domains, r.Domain) && serverID == "") || serverID == app.server.ID) && !app.server.IsLoopbackEnabled() {
 		return constants.ErrNonsenseRPC
 	}
 
 	return app.remoteService.RPC(ctx, rpcType, serverID, r, reply, arg, opt)
+}
+
+// randomServerID picks a random server ID of the given domain from the service
+// discovery, excluding the current server when loopback is disabled.
+func (app *App) randomServerID(domain string) (string, error) {
+	servers, err := app.serviceDiscovery.GetServersByDomain(domain)
+	if err != nil {
+		return "", err
+	}
+	ids := make([]string, 0, len(servers))
+	for id := range servers {
+		if id == app.server.ID && !app.server.IsLoopbackEnabled() {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return "", constants.ErrNoServersAvailableOfType
+	}
+	return ids[rand.Intn(len(ids))], nil
 }
 
 func applyOptions(opts []prpc.CallOption) prpc.CallOptions {
