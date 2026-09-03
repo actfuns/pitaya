@@ -22,11 +22,18 @@ package worker
 
 import "google.golang.org/protobuf/proto"
 
+// rpcPayload holds the fields that are unmarshalled from the job payload.
+// Metadata is intentionally excluded so it can be parsed separately by
+// rpcRoute and shared across the whole callback.
+type rpcPayload struct {
+	Route string
+	Arg   proto.Message
+	Reply proto.Message
+}
+
 type rpcInfo struct {
-	Route    string
+	rpcPayload
 	Metadata map[string]interface{}
-	Arg      proto.Message
-	Reply    proto.Message
 }
 
 type rpcRoute struct {

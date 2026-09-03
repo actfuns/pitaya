@@ -94,10 +94,12 @@ func (w *Worker) EnqueueRPC(
 ) (jid string, err error) {
 	opts := w.enqueueOptions(w.opts)
 	return workers.EnqueueWithOptions(rpcQueue, class, &rpcInfo{
-		Route:    routeStr,
+		rpcPayload: rpcPayload{
+			Route: routeStr,
+			Arg:   arg,
+			Reply: reply,
+		},
 		Metadata: metadata,
-		Arg:      arg,
-		Reply:    reply,
 	}, opts)
 }
 
@@ -109,10 +111,12 @@ func (w *Worker) EnqueueRPCWithOptions(
 	opts *config.EnqueueOpts,
 ) (jid string, err error) {
 	return workers.EnqueueWithOptions(rpcQueue, class, &rpcInfo{
-		Route:    routeStr,
+		rpcPayload: rpcPayload{
+			Route: routeStr,
+			Arg:   arg,
+			Reply: reply,
+		},
 		Metadata: metadata,
-		Arg:      arg,
-		Reply:    reply,
 	}, w.enqueueOptions(opts))
 }
 
@@ -144,12 +148,15 @@ func (w *Worker) parsedRPCJob(rpcJob RPCJob) func(*workers.Msg) {
 			panic(err)
 		}
 		rpcInfo := &rpcInfo{
-			Arg:   arg,
-			Reply: reply,
+			rpcPayload: rpcPayload{
+				Arg:   arg,
+				Reply: reply,
+			},
+			Metadata: rpcRoute.Metadata,
 		}
 
 		logger.Log.Debug("unmarshalling rpc info")
-		err = json.Unmarshal(bts, rpcInfo)
+		err = json.Unmarshal(bts, &rpcInfo.rpcPayload)
 		if err != nil {
 			logger.Log.Errorf("failed to unmarshal rpc info: %q", err)
 			panic(err)
