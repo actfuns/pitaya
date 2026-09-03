@@ -295,6 +295,9 @@ func (ns *NatsRPCClient) initConnection(isReplacement bool) error {
 // AfterInit runs after initialization
 func (ns *NatsRPCClient) AfterInit() {}
 
+// PreShutdown runs before BeforeShutdown.
+func (ns *NatsRPCClient) PreShutdown() {}
+
 // BeforeShutdown runs before shutdown
 func (ns *NatsRPCClient) BeforeShutdown() {}
 

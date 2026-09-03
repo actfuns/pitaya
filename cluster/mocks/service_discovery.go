@@ -149,6 +149,18 @@ func (mr *MockServiceDiscoveryMockRecorder) IsConnected(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConnected", reflect.TypeOf((*MockServiceDiscovery)(nil).IsConnected), ctx)
 }
 
+// PreShutdown mocks base method.
+func (m *MockServiceDiscovery) PreShutdown() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PreShutdown")
+}
+
+// PreShutdown indicates an expected call of PreShutdown.
+func (mr *MockServiceDiscoveryMockRecorder) PreShutdown() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreShutdown", reflect.TypeOf((*MockServiceDiscovery)(nil).PreShutdown))
+}
+
 // SetServerState mocks base method.
 func (m *MockServiceDiscovery) SetServerState(state int32) {
 	m.ctrl.T.Helper()

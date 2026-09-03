@@ -146,6 +146,10 @@ func (app *App) maxModuleSessionCount() int64 {
 // shutdownModules starts all modules in reverse order
 func (app *App) shutdownModules() {
 	for i := len(app.modulesArr) - 1; i >= 0; i-- {
+		app.modulesArr[i].module.PreShutdown()
+	}
+
+	for i := len(app.modulesArr) - 1; i >= 0; i-- {
 		app.modulesArr[i].module.BeforeShutdown()
 	}
 

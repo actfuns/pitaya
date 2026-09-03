@@ -279,6 +279,9 @@ func (gs *GRPCClient) RemoveServer(sv *Server) {
 // AfterInit runs after initialization
 func (gs *GRPCClient) AfterInit() {}
 
+// PreShutdown runs before BeforeShutdown.
+func (gs *GRPCClient) PreShutdown() {}
+
 // BeforeShutdown runs before shutdown
 func (gs *GRPCClient) BeforeShutdown() {}
 

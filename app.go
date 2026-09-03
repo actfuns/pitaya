@@ -333,6 +333,7 @@ func (app *App) Start() {
 	select {
 	case <-app.dieChan:
 		logger.Log.Warn("the app will shutdown in a few seconds")
+		app.serviceDiscovery.SetServerState(cluster.StateShuttingDown)
 	case s := <-app.sgChan:
 		logger.Log.Warn("got signal: ", s, ", shutting down...")
 		if app.config.Session.Drain.Enabled && s == syscall.SIGTERM {

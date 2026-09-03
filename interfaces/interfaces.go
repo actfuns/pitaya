@@ -24,6 +24,7 @@ package interfaces
 type Module interface {
 	Init() error
 	AfterInit()
+	PreShutdown()
 	BeforeShutdown()
 	Shutdown() error
 }

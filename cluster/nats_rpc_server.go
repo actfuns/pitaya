@@ -447,6 +447,9 @@ func (ns *NatsRPCServer) initConnection(isReplacement bool) error {
 // AfterInit runs after initialization
 func (ns *NatsRPCServer) AfterInit() {}
 
+// PreShutdown runs before BeforeShutdown.
+func (ns *NatsRPCServer) PreShutdown() {}
+
 // BeforeShutdown runs before shutdown
 func (ns *NatsRPCServer) BeforeShutdown() {}
 

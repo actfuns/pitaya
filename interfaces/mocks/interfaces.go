@@ -55,6 +55,16 @@ func (mr *MockModuleMockRecorder) AfterInit() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterInit", reflect.TypeOf((*MockModule)(nil).AfterInit))
 }
 
+// PreShutdown mocks base method
+func (m *MockModule) PreShutdown() {
+	m.ctrl.Call(m, "PreShutdown")
+}
+
+// PreShutdown indicates an expected call of PreShutdown
+func (mr *MockModuleMockRecorder) PreShutdown() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreShutdown", reflect.TypeOf((*MockModule)(nil).PreShutdown))
+}
+
 // BeforeShutdown mocks base method
 func (m *MockModule) BeforeShutdown() {
 	m.ctrl.Call(m, "BeforeShutdown")

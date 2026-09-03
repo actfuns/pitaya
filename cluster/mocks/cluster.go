@@ -51,6 +51,18 @@ func (mr *MockRPCServerMockRecorder) AfterInit() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterInit", reflect.TypeOf((*MockRPCServer)(nil).AfterInit))
 }
 
+// PreShutdown mocks base method.
+func (m *MockRPCServer) PreShutdown() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PreShutdown")
+}
+
+// PreShutdown indicates an expected call of PreShutdown.
+func (mr *MockRPCServerMockRecorder) PreShutdown() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreShutdown", reflect.TypeOf((*MockRPCServer)(nil).PreShutdown))
+}
+
 // BeforeShutdown mocks base method.
 func (m *MockRPCServer) BeforeShutdown() {
 	m.ctrl.T.Helper()
@@ -148,6 +160,18 @@ func (m *MockRPCClient) BeforeShutdown() {
 func (mr *MockRPCClientMockRecorder) BeforeShutdown() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeforeShutdown", reflect.TypeOf((*MockRPCClient)(nil).BeforeShutdown))
+}
+
+// PreShutdown mocks base method.
+func (m *MockRPCClient) PreShutdown() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PreShutdown")
+}
+
+// PreShutdown indicates an expected call of PreShutdown.
+func (mr *MockRPCClientMockRecorder) PreShutdown() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreShutdown", reflect.TypeOf((*MockRPCClient)(nil).PreShutdown))
 }
 
 // BroadcastSessionBind mocks base method.

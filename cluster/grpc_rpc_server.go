@@ -71,6 +71,9 @@ func (gs *GRPCServer) SetPitayaServer(ps protos.PitayaServer) {
 // AfterInit runs after initialization
 func (gs *GRPCServer) AfterInit() {}
 
+// PreShutdown runs before BeforeShutdown.
+func (gs *GRPCServer) PreShutdown() {}
+
 // BeforeShutdown runs before shutdown
 func (gs *GRPCServer) BeforeShutdown() {}
 

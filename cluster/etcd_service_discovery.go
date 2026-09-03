@@ -611,6 +611,9 @@ func (sd *etcdServiceDiscovery) SyncServers(firstSync bool) error {
 	return nil
 }
 
+// PreShutdown runs before BeforeShutdown.
+func (sd *etcdServiceDiscovery) PreShutdown() {}
+
 // BeforeShutdown executes before shutting down and will remove the server from the list
 func (sd *etcdServiceDiscovery) BeforeShutdown() {
 	sd.revoke()

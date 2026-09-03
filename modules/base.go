@@ -31,6 +31,10 @@ func (c *Base) Init() error {
 // AfterInit was called after the component is initialized.
 func (c *Base) AfterInit() {}
 
+// PreShutdown was called before BeforeShutdown, while shared resources
+// (e.g. etcd) are still available.
+func (c *Base) PreShutdown() {}
+
 // BeforeShutdown was called before the component to shutdown.
 func (c *Base) BeforeShutdown() {}
 

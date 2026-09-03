@@ -20,7 +20,7 @@ import (
 	metrics "github.com/actfuns/pitaya/v2/metrics"
 	prpc "github.com/actfuns/pitaya/v2/prpc"
 	router "github.com/actfuns/pitaya/v2/router"
-	"github.com/actfuns/pitaya/v2/serialize"
+	serialize "github.com/actfuns/pitaya/v2/serialize"
 	session "github.com/actfuns/pitaya/v2/session"
 	worker "github.com/actfuns/pitaya/v2/worker"
 	gomock "go.uber.org/mock/gomock"
@@ -49,6 +49,22 @@ func NewMockPitaya(ctrl *gomock.Controller) *MockPitaya {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockPitaya) EXPECT() *MockPitayaMockRecorder {
 	return m.recorder
+}
+
+// AddRPCInterceptor mocks base method.
+func (m *MockPitaya) AddRPCInterceptor(interceptors ...cluster.UnaryInterceptor) {
+	m.ctrl.T.Helper()
+	varargs := []any{}
+	for _, a := range interceptors {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "AddRPCInterceptor", varargs...)
+}
+
+// AddRPCInterceptor indicates an expected call of AddRPCInterceptor.
+func (mr *MockPitayaMockRecorder) AddRPCInterceptor(interceptors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRPCInterceptor", reflect.TypeOf((*MockPitaya)(nil).AddRPCInterceptor), interceptors...)
 }
 
 // AddRoute mocks base method.
@@ -134,6 +150,20 @@ func (m *MockPitaya) GetNumberOfConnectedClients() int64 {
 func (mr *MockPitayaMockRecorder) GetNumberOfConnectedClients() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNumberOfConnectedClients", reflect.TypeOf((*MockPitaya)(nil).GetNumberOfConnectedClients))
+}
+
+// GetSerializer mocks base method.
+func (m *MockPitaya) GetSerializer() serialize.Serializer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSerializer")
+	ret0, _ := ret[0].(serialize.Serializer)
+	return ret0
+}
+
+// GetSerializer indicates an expected call of GetSerializer.
+func (mr *MockPitayaMockRecorder) GetSerializer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSerializer", reflect.TypeOf((*MockPitaya)(nil).GetSerializer))
 }
 
 // GetServer mocks base method.
@@ -379,24 +409,6 @@ func (mr *MockPitayaMockRecorder) GroupRenewTTL(ctx, groupName any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupRenewTTL", reflect.TypeOf((*MockPitaya)(nil).GroupRenewTTL), ctx, groupName)
 }
 
-// GetSerializer mocks base method.
-func (m *MockPitaya) GetSerializer() serialize.Serializer {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSerializer")
-	ret0, _ := ret[0].(serialize.Serializer)
-	return ret0
-}
-
-// GetSerializer indicates an expected call of GetSerializer.
-func (mr *MockPitayaMockRecorder) GetSerializer() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(
-		mr.mock,
-		"GetSerializer",
-		reflect.TypeOf((*MockPitaya)(nil).GetSerializer),
-	)
-}
-
 // IsReady mocks base method.
 func (m *MockPitaya) IsReady(ctx context.Context) bool {
 	m.ctrl.T.Helper()
@@ -442,23 +454,6 @@ func (mr *MockPitayaMockRecorder) RPC(ctx, routeStr, reply, arg any, opts ...any
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, routeStr, reply, arg}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RPC", reflect.TypeOf((*MockPitaya)(nil).RPC), varargs...)
-}
-
-// AddRPCInterceptor mocks base method.
-func (m *MockPitaya) AddRPCInterceptor(interceptors ...cluster.UnaryInterceptor) {
-	m.ctrl.T.Helper()
-	varargs := []any{}
-	for _, a := range interceptors {
-		varargs = append(varargs, a)
-	}
-	m.ctrl.Call(m, "AddRPCInterceptor", varargs...)
-}
-
-// AddRPCInterceptor indicates an expected call of AddRPCInterceptor.
-func (mr *MockPitayaMockRecorder) AddRPCInterceptor(interceptors ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{}, interceptors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRPCInterceptor", reflect.TypeOf((*MockPitaya)(nil).AddRPCInterceptor), varargs...)
 }
 
 // Register mocks base method.

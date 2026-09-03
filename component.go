@@ -56,8 +56,8 @@ func (app *App) startupComponents() {
 }
 
 func (app *App) shutdownComponents() {
-	// reverse call `BeforeShutdown` hooks
 	length := len(app.handlerComp)
+	// reverse call `BeforeShutdown` hooks
 	for i := length - 1; i >= 0; i-- {
 		app.handlerComp[i].comp.BeforeShutdown()
 	}
