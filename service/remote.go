@@ -362,9 +362,9 @@ func (r *RemoteService) dispatchRemoteMessage(
 		}, nil
 	}
 
-	var taskId string
+	var taskID string
 	if h.Reentrant {
-		taskId = r.taskSevice.NewAnonymousTaskId()
+		taskID = r.taskSevice.NewAnonymousTaskId()
 	} else {
 		if req.Msg.ShardKey == "" {
 			return &protos.Response{
@@ -374,11 +374,11 @@ func (r *RemoteService) dispatchRemoteMessage(
 				},
 			}, nil
 		}
-		taskId = req.Msg.ShardKey
+		taskID = req.Msg.ShardKey
 	}
 
 	if req.Msg.Type == protos.MsgType_MsgNotify {
-		err := r.taskSevice.Submit(ctx, taskId, func(tctx context.Context) {
+		err := r.taskSevice.Submit(ctx, taskID, func(tctx context.Context) {
 			processRemoteMessage(tctx, req, r, h)
 		})
 		if err != nil {
@@ -388,7 +388,7 @@ func (r *RemoteService) dispatchRemoteMessage(
 	}
 
 	result := make(chan *protos.Response, 1)
-	err = r.taskSevice.Submit(ctx, taskId, func(tctx context.Context) {
+	err = r.taskSevice.Submit(ctx, taskID, func(tctx context.Context) {
 		result <- processRemoteMessage(tctx, req, r, h)
 	})
 	if err != nil {

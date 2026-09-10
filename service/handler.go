@@ -292,24 +292,51 @@ func (h *HandlerService) processMessage(a agent.Agent, msg *message.Message) {
 	msg.ShardKey = shardKey
 	ctx = sctx
 
-	if err := h.taskService.Submit(ctx, shardKey, func(tctx context.Context) {
-		if target.ID == h.server.ID {
-			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
-			h.localProcess(tctx, a, msg)
-		} else {
-			if h.remoteService != nil {
-				metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "remote")
-				h.remoteService.remoteProcess(tctx, target, a, r, msg)
-			} else {
-				logger.Log.Warnf("request made to another server type but no remoteService running")
-			}
+	if target.ID == h.server.ID {
+		handler, err := h.handlerPool.getHandler(protos.RPCType_Sys, msg.Route)
+		if err != nil {
+			logger.Log.Errorf("failed to get handler for route %s: %v", msg.Route, err)
+			a.AnswerWithError(ctx, msg.ID, err)
+			return
 		}
-	}); err != nil {
-		logger.Log.Errorf("Failed to subit task: %s", err.Error())
+		var taskID string
+		if handler.Reentrant {
+			taskID = h.taskService.NewAnonymousTaskId()
+		} else {
+			if msg.ShardKey == "" {
+				a.AnswerWithError(ctx, msg.ID, e.NewError(
+					fmt.Errorf("shard key is required for non-reentrant methods"),
+					e.ErrInternalCode,
+				))
+				return
+			}
+			taskID = msg.ShardKey
+		}
+		if err := h.taskService.Submit(ctx, taskID, func(tctx context.Context) {
+			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "local")
+			h.localProcess(tctx, a, msg, handler)
+		}); err != nil {
+			logger.Log.Errorf("Failed to subit task: %s", err.Error())
+		}
+	} else {
+		if h.remoteService == nil {
+			logger.Log.Warnf("request made to another server type but no remoteService running")
+			a.AnswerWithError(ctx, msg.ID, e.NewError(
+				fmt.Errorf("request made to another server type but no remoteService running"),
+				e.ErrInternalCode,
+			))
+			return
+		}
+		if err := h.taskService.Submit(ctx, shardKey, func(tctx context.Context) {
+			metrics.ReportMessageProcessDelayFromCtx(tctx, h.metricsReporters, "remote")
+			h.remoteService.remoteProcess(tctx, target, a, r, msg)
+		}); err != nil {
+			logger.Log.Errorf("Failed to subit task: %s", err.Error())
+		}
 	}
 }
 
-func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, msg *message.Message) {
+func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, msg *message.Message, handler *component.Handler) {
 	var mid uint
 	switch msg.Type {
 	case message.Request:
@@ -318,7 +345,7 @@ func (h *HandlerService) localProcess(ctx context.Context, a agent.Agent, msg *m
 		mid = 0
 	}
 
-	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, msg.Route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false, nil)
+	ret, err := h.handlerPool.ProcessHandlerMessage(ctx, msg.Route, h.serializer, h.handlerHooks, a.GetSession(), msg.Data, msg.Type, false, handler)
 	if msg.Type != message.Notify {
 		if err != nil {
 			logger.Log.LogfWithErrorLevel(err, "handler %s failed to process message: %s", msg.Route, err.Error())
