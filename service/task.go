@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -27,7 +27,7 @@ func NewTaskService(size int, workerChanCap int, expiryDurationSecond int) (*Tas
 
 func (ts *TaskService) NewAnonymousTaskId() string {
 	seq := atomic.AddUint64(&ts.taskSeq, 1)
-	return fmt.Sprintf("pitaya:task:anonymous:%d", seq)
+	return "pitaya:task:anonymous:" + strconv.FormatUint(seq, 10)
 }
 
 func (ts *TaskService) Submit(ctx context.Context, id string, task func(context.Context)) error {

@@ -122,7 +122,14 @@ func (w *goWorker) inputFunc(t *TaskEntry, timeout time.Duration) error {
 		}
 	}
 
-	// 有超时情况
+	// 快路径: 队列未满时直接入队,避免为每次提交分配定时器(高频热路径)
+	select {
+	case w.task <- t:
+		return nil
+	default:
+	}
+
+	// 慢路径: 队列已满,带超时等待
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
