@@ -124,6 +124,7 @@ type Session interface {
 	SetRequestInFlight(reqID string, reqData string, inFlight bool)
 
 	Push(route string, v interface{}) error
+	PushPacket(ctx context.Context, pkt []byte) error
 	ResponseMID(ctx context.Context, mid uint, v interface{}, err ...bool) error
 	ID() int64
 	UID() string
@@ -371,6 +372,12 @@ func (s *sessionImpl) SetSubscriptions(subscriptions []*nats.Subscription) {
 // Push message to client
 func (s *sessionImpl) Push(route string, v interface{}) error {
 	return s.entity.Push(route, v)
+}
+
+// PushPacket pushes an already wire-encoded push packet to the client,
+// skipping per-session encoding. See networkentity.NetworkEntity.PushPacket.
+func (s *sessionImpl) PushPacket(ctx context.Context, pkt []byte) error {
+	return s.entity.PushPacket(ctx, pkt)
 }
 
 // ResponseMID responses message to client, mid is

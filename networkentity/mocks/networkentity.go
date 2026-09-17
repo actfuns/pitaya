@@ -98,6 +98,20 @@ func (mr *MockNetworkEntityMockRecorder) Push(route, v any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Push", reflect.TypeOf((*MockNetworkEntity)(nil).Push), route, v)
 }
 
+// PushPacket mocks base method.
+func (m *MockNetworkEntity) PushPacket(ctx context.Context, encoded []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushPacket", ctx, encoded)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PushPacket indicates an expected call of PushPacket.
+func (mr *MockNetworkEntityMockRecorder) PushPacket(ctx, encoded any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushPacket", reflect.TypeOf((*MockNetworkEntity)(nil).PushPacket), ctx, encoded)
+}
+
 // RemoteAddr mocks base method.
 func (m *MockNetworkEntity) RemoteAddr() net.Addr {
 	m.ctrl.T.Helper()

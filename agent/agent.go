@@ -89,6 +89,10 @@ type (
 		serializer         serialize.Serializer // message serializer
 		state              int32                // current agent state
 		writeLock          sync.Mutex
+		// writeDeadlineRefresh 下次刷新写超时的时刻。写超时按消息设置开销不可忽略,
+		// 改为按半个 writeTimeout 周期刷新一次。writeToConnection 可能被写
+		// goroutine 和 Kick 并发调用, 因此该字段由 writeLock 保护。
+		writeDeadlineRefresh time.Time
 	}
 
 	pendingMessage struct {
@@ -110,6 +114,7 @@ type (
 	Agent interface {
 		GetSession() session.Session
 		Push(route string, v interface{}) error
+		PushPacket(ctx context.Context, pkt []byte) error
 		ResponseMID(ctx context.Context, mid uint, v interface{}, isError ...bool) error
 		Close() error
 		RemoteAddr() net.Addr
@@ -352,6 +357,38 @@ func (a *agentImpl) Push(route string, v interface{}) error {
 	}
 
 	return a.send(pendingMessage{typ: message.Push, route: route, payload: v})
+}
+
+// PushPacket enqueues an already wire-encoded push packet, skipping the
+// per-session message/packet encoding step. It is intended for broadcast
+// fan-out, where ClusterSession encodes one packet and shares it across all
+// target sessions of the same route+payload.
+//
+// As with Push, the write carries no request context: push writes are not
+// timed/traced (metrics.ReportTimingFromCtx requires StartTimeKey/RouteKey,
+// which broadcast contexts do not have).
+func (a *agentImpl) PushPacket(_ context.Context, pkt []byte) (err error) {
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errors.NewError(
+				fmt.Errorf("%s: %s", constants.ErrBrokenPipe.Error(), panicErr),
+				errors.ErrClientClosedRequest,
+			)
+			logger.Log.Error("agent PushPacket panicked: ", err)
+		}
+	}()
+
+	if a.GetStatus() == constants.StatusClosed {
+		return errors.NewError(constants.ErrBrokenPipe, errors.ErrClientClosedRequest)
+	}
+
+	a.reportChannelSize()
+
+	select {
+	case a.chSend <- pendingWrite{data: pkt}:
+	case <-a.chDie:
+	}
+	return nil
 }
 
 // ResponseMID implementation for NetworkEntity interface
@@ -636,7 +673,13 @@ func (a *agentImpl) writeToConnection(ctx context.Context, data []byte) error {
 	span := createConnectionSpan(ctx, a.conn, "conn write")
 	defer span.Finish()
 
-	a.conn.SetWriteDeadline(time.Now().Add(a.writeTimeout))
+	a.writeLock.Lock()
+	now := time.Now()
+	if now.After(a.writeDeadlineRefresh) {
+		a.conn.SetWriteDeadline(now.Add(a.writeTimeout))
+		a.writeDeadlineRefresh = now.Add(a.writeTimeout / 2)
+	}
+	a.writeLock.Unlock()
 	_, writeErr := a.connWrite(data)
 	if writeErr != nil {
 		tracing.LogError(span, writeErr.Error())
@@ -657,6 +700,13 @@ func createConnectionSpan(ctx context.Context, conn net.Conn, op string) opentra
 		return noOpTracer.StartSpan(op)
 	}
 
+	// 只有存在父 span 时才创建子 span, 避免在每次写入时生成无意义的根 span
+	// (高 QPS 下会向 tracer 上报大量孤儿 span)。
+	parentSpan := opentracing.SpanFromContext(ctx)
+	if parentSpan == nil {
+		return noOpTracer.StartSpan(op)
+	}
+
 	remoteAddress := ""
 	if conn.RemoteAddr() != nil {
 		remoteAddress = conn.RemoteAddr().String()
@@ -667,12 +717,7 @@ func createConnectionSpan(ctx context.Context, conn net.Conn, op string) opentra
 		"addr":      remoteAddress,
 	}
 
-	var parent opentracing.SpanContext
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		parent = span.Context()
-	}
-
-	return opentracing.StartSpan(op, opentracing.ChildOf(parent), tags)
+	return opentracing.StartSpan(op, opentracing.ChildOf(parentSpan.Context()), tags)
 }
 
 // SendRequest sends a request to a server
@@ -780,6 +825,9 @@ func (a *agentImpl) reportChannelSize() {
 	chSendCapacity := a.messagesBufferSize - len(a.chSend)
 	if chSendCapacity == 0 {
 		logger.Log.Warnf("chSend is at maximum capacity")
+	}
+	if len(a.metricsReporters) == 0 {
+		return
 	}
 	for _, mr := range a.metricsReporters {
 		if err := mr.ReportGauge(metrics.ChannelCapacity, channelCapacityLabels, float64(chSendCapacity)); err != nil {

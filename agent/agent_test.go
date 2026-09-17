@@ -1433,7 +1433,7 @@ func TestAgentWriteChSendWriteError(t *testing.T) {
 	mockMetricsReporter.EXPECT().ReportGauge(metrics.ConnectedClients, gomock.Any(), gomock.Any())
 	mockMetricsReporter.EXPECT().ReportSummary(metrics.ResponseTime, errorTags, gomock.Any())
 
-	mockConn.EXPECT().RemoteAddr().AnyTimes().Return(&mockAddr{}).Times(4)
+	mockConn.EXPECT().RemoteAddr().AnyTimes().Return(&mockAddr{})
 	mockConn.EXPECT().Close().Do(func() {
 		wg.Done()
 	})
@@ -1479,7 +1479,7 @@ func TestAgentWriteChSendWriteTimeout(t *testing.T) {
 
 	mockMetricsReporter.EXPECT().ReportSummary(metrics.ResponseTime, gomock.Any(), gomock.Any()).Times(2)
 
-	mockConn.EXPECT().RemoteAddr().AnyTimes().Return(&mockAddr{}).Times(5)
+	mockConn.EXPECT().RemoteAddr().AnyTimes().Return(&mockAddr{})
 	mockConn.EXPECT().SetWriteDeadline(gomock.Any()).Return(nil).Times(2)
 	mockConn.EXPECT().Write(expectedFirstPacket).Do(func(b []byte) {
 		time.Sleep(writeTimeout * 2)

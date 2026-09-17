@@ -22,6 +22,8 @@ package acceptor
 
 import (
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -215,6 +217,13 @@ func NewWSConn(conn *websocket.Conn) (*WSConn, error) {
 func (c *WSConn) GetNextMessage() (b []byte, err error) {
 	_, msgBytes, err := c.conn.ReadMessage()
 	if err != nil {
+		if err == io.EOF {
+			return nil, constants.ErrConnectionClosed
+		}
+		var closeErr *websocket.CloseError
+		if errors.As(err, &closeErr) {
+			return nil, fmt.Errorf("%w: %v", constants.ErrConnectionClosed, err)
+		}
 		return nil, err
 	}
 	if len(msgBytes) < codec.HeadLength {

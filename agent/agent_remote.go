@@ -22,6 +22,7 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"reflect"
 
@@ -127,6 +128,13 @@ func (a *Remote) Push(route string, v interface{}) error {
 		pendingMessage{typ: message.Push, route: route, payload: v},
 		a.Session.UID(), sv,
 	)
+}
+
+// PushPacket is not supported on a remote agent: the raw wire packet is only
+// valid for the frontend that owns the session. ClusterSession falls back to
+// Push(route, payload) when this returns an error.
+func (a *Remote) PushPacket(_ context.Context, _ []byte) error {
+	return fmt.Errorf("agent: PushPacket not supported on remote agent")
 }
 
 // ResponseMID reponds the message with mid to the user

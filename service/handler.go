@@ -146,9 +146,11 @@ func (h *HandlerService) Handle(conn acceptor.PlayerConn) {
 
 		if err != nil {
 			// Check if this is an expected error due to connection being closed
-			if errors.Is(err, net.ErrClosed) || err == constants.ErrConnectionClosed {
-				if a.GetStatus() == constants.StatusClosed || err == constants.ErrConnectionClosed {
+			if errors.Is(err, net.ErrClosed) || errors.Is(err, constants.ErrConnectionClosed) {
+				if a.GetStatus() == constants.StatusClosed {
 					logger.WithError(err).Warn("Connection closed by server")
+				} else if errors.Is(err, constants.ErrConnectionClosed) {
+					logger.WithError(err).Warn("Connection closed by peer")
 				} else {
 					logger.WithError(err).Debug("Connection no longer available while reading next available message")
 				}

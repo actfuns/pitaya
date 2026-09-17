@@ -167,6 +167,20 @@ func (mr *MockAgentMockRecorder) Push(route, v any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Push", reflect.TypeOf((*MockAgent)(nil).Push), route, v)
 }
 
+// PushPacket mocks base method.
+func (m *MockAgent) PushPacket(ctx context.Context, encoded []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushPacket", ctx, encoded)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PushPacket indicates an expected call of PushPacket.
+func (mr *MockAgentMockRecorder) PushPacket(ctx, encoded any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushPacket", reflect.TypeOf((*MockAgent)(nil).PushPacket), ctx, encoded)
+}
+
 // RemoteAddr mocks base method.
 func (m *MockAgent) RemoteAddr() net.Addr {
 	m.ctrl.T.Helper()

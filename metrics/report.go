@@ -44,11 +44,14 @@ func ReportTimingFromCtx(ctx context.Context, reporters []Reporter, typ string, 
 		status = "failed"
 	}
 	if len(reporters) > 0 {
-		startTime := pcontext.GetFromPropagateCtx(ctx, constants.StartTimeKey)
-		route := pcontext.GetFromPropagateCtx(ctx, constants.RouteKey)
-		elapsed := time.Since(time.Unix(0, startTime.(int64)))
+		startTime, ok := pcontext.GetFromPropagateCtx(ctx, constants.StartTimeKey).(int64)
+		if !ok {
+			return
+		}
+		route, _ := pcontext.GetFromPropagateCtx(ctx, constants.RouteKey).(string)
+		elapsed := time.Since(time.Unix(0, startTime))
 		tags := getTags(ctx, map[string]string{
-			"route":  route.(string),
+			"route":  route,
 			"status": status,
 			"type":   typ,
 			"code":   strconv.FormatInt(int64(code), 10),
@@ -62,11 +65,14 @@ func ReportTimingFromCtx(ctx context.Context, reporters []Reporter, typ string, 
 // ReportMessageProcessDelayFromCtx reports the delay to process the messages
 func ReportMessageProcessDelayFromCtx(ctx context.Context, reporters []Reporter, typ string) {
 	if len(reporters) > 0 {
-		startTime := pcontext.GetFromPropagateCtx(ctx, constants.StartTimeKey)
-		elapsed := time.Since(time.Unix(0, startTime.(int64)))
-		route := pcontext.GetFromPropagateCtx(ctx, constants.RouteKey)
+		startTime, ok := pcontext.GetFromPropagateCtx(ctx, constants.StartTimeKey).(int64)
+		if !ok {
+			return
+		}
+		route, _ := pcontext.GetFromPropagateCtx(ctx, constants.RouteKey).(string)
+		elapsed := time.Since(time.Unix(0, startTime))
 		tags := getTags(ctx, map[string]string{
-			"route": route.(string),
+			"route": route,
 			"type":  typ,
 		})
 		for _, r := range reporters {
