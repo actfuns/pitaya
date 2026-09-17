@@ -43,5 +43,7 @@ type Logger interface {
 	WithField(key string, value interface{}) Logger
 	WithError(err error) Logger
 
+	Enabled(level int32) bool
+
 	GetInternalLogger() any
 }

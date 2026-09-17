@@ -126,6 +126,33 @@ func (l *zapImpl) GetInternalLogger() any {
 	return l.sugar
 }
 
+// toZapLevel maps the interfaces level constants to zapcore levels.
+func toZapLevel(level int32) (zapcore.Level, bool) {
+	switch level {
+	case interfaces.PanicLevel:
+		return zapcore.PanicLevel, true
+	case interfaces.FatalLevel:
+		return zapcore.FatalLevel, true
+	case interfaces.ErrorLevel:
+		return zapcore.ErrorLevel, true
+	case interfaces.WarnLevel:
+		return zapcore.WarnLevel, true
+	case interfaces.InfoLevel:
+		return zapcore.InfoLevel, true
+	case interfaces.DebugLevel:
+		return zapcore.DebugLevel, true
+	}
+	return zapcore.InfoLevel, false
+}
+
+func (l *zapImpl) Enabled(level int32) bool {
+	zl, ok := toZapLevel(level)
+	if !ok {
+		return false
+	}
+	return l.sugar.Desugar().Core().Enabled(zl)
+}
+
 func (l *zapImpl) LogWithErrorLevel(err error, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {

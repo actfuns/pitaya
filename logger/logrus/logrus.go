@@ -49,6 +49,41 @@ func (l *logrusImpl) GetInternalLogger() any {
 	return l.FieldLogger
 }
 
+// toLogrusLevel maps the interfaces level constants to logrus levels.
+func toLogrusLevel(level int32) (logrus.Level, bool) {
+	switch level {
+	case interfaces.PanicLevel:
+		return logrus.PanicLevel, true
+	case interfaces.FatalLevel:
+		return logrus.FatalLevel, true
+	case interfaces.ErrorLevel:
+		return logrus.ErrorLevel, true
+	case interfaces.WarnLevel:
+		return logrus.WarnLevel, true
+	case interfaces.InfoLevel:
+		return logrus.InfoLevel, true
+	case interfaces.DebugLevel:
+		return logrus.DebugLevel, true
+	}
+	return logrus.InfoLevel, false
+}
+
+func (l *logrusImpl) Enabled(level int32) bool {
+	ll, ok := toLogrusLevel(level)
+	if !ok {
+		return false
+	}
+	switch v := l.FieldLogger.(type) {
+	case *logrus.Entry:
+		return v.Logger.IsLevelEnabled(ll)
+	case *logrus.Logger:
+		return v.IsLevelEnabled(ll)
+	case interface{ IsLevelEnabled(logrus.Level) bool }:
+		return v.IsLevelEnabled(ll)
+	}
+	return false
+}
+
 func (l *logrusImpl) LogWithErrorLevel(err error, args ...interface{}) {
 	level, log := l.prepareLoggerWithError(err)
 	switch level {

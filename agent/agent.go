@@ -41,6 +41,7 @@ import (
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/logger"
+	"github.com/actfuns/pitaya/v2/logger/interfaces"
 	"github.com/actfuns/pitaya/v2/metrics"
 	"github.com/actfuns/pitaya/v2/protos"
 	"github.com/actfuns/pitaya/v2/serialize"
@@ -332,21 +333,23 @@ func (a *agentImpl) Push(route string, v interface{}) error {
 		return errors.NewError(constants.ErrBrokenPipe, errors.ErrClientClosedRequest)
 	}
 
-	logger := logger.Log.WithFields(map[string]interface{}{
-		"type":       "Push",
-		"session_id": a.Session.ID(),
-		"uid":        a.Session.UID(),
-		"route":      route,
-	})
+	if logger.Log.Enabled(interfaces.DebugLevel) {
+		debugLogger := logger.Log.WithFields(map[string]interface{}{
+			"type":       "Push",
+			"session_id": a.Session.ID(),
+			"uid":        a.Session.UID(),
+			"route":      route,
+		})
 
-	switch d := v.(type) {
-	case []byte:
-		logger = logger.WithField("bytes", len(d))
-	default:
-		logger = logger.WithField("data", fmt.Sprintf("%+v", d))
+		switch d := v.(type) {
+		case []byte:
+			debugLogger = debugLogger.WithField("bytes", len(d))
+		default:
+			debugLogger = debugLogger.WithField("data", fmt.Sprintf("%+v", d))
+		}
+
+		debugLogger.Debugf("pushing message to session")
 	}
-
-	logger.Debugf("pushing message to session")
 
 	return a.send(pendingMessage{typ: message.Push, route: route, payload: v})
 }
@@ -366,21 +369,23 @@ func (a *agentImpl) ResponseMID(ctx context.Context, mid uint, v interface{}, is
 		return constants.ErrSessionOnNotify
 	}
 
-	logger := logger.Log.WithFields(map[string]interface{}{
-		"type":       "Push",
-		"session_id": a.Session.ID(),
-		"uid":        a.Session.UID(),
-		"mid":        mid,
-	})
+	if logger.Log.Enabled(interfaces.DebugLevel) {
+		debugLogger := logger.Log.WithFields(map[string]interface{}{
+			"type":       "Push",
+			"session_id": a.Session.ID(),
+			"uid":        a.Session.UID(),
+			"mid":        mid,
+		})
 
-	switch d := v.(type) {
-	case []byte:
-		logger = logger.WithField("bytes", len(d))
-	default:
-		logger = logger.WithField("data", fmt.Sprintf("%+v", d))
+		switch d := v.(type) {
+		case []byte:
+			debugLogger = debugLogger.WithField("bytes", len(d))
+		default:
+			debugLogger = debugLogger.WithField("data", fmt.Sprintf("%+v", d))
+		}
+
+		debugLogger.Debugf("responding message to session")
 	}
-
-	logger.Debugf("responding message to session")
 
 	return a.send(pendingMessage{ctx: ctx, typ: message.Response, mid: mid, payload: v, err: err})
 }
@@ -767,16 +772,20 @@ func encodeAndCompress(data interface{}, dataCompression bool) ([]byte, error) {
 	return encData, nil
 }
 
+// channelCapacityLabels is shared by all reportChannelSize calls to avoid
+// allocating a fresh label map on every send, which is a very hot path.
+var channelCapacityLabels = map[string]string{"channel": "agent_chsend"}
+
 func (a *agentImpl) reportChannelSize() {
 	chSendCapacity := a.messagesBufferSize - len(a.chSend)
 	if chSendCapacity == 0 {
 		logger.Log.Warnf("chSend is at maximum capacity")
 	}
 	for _, mr := range a.metricsReporters {
-		if err := mr.ReportGauge(metrics.ChannelCapacity, map[string]string{"channel": "agent_chsend"}, float64(chSendCapacity)); err != nil {
+		if err := mr.ReportGauge(metrics.ChannelCapacity, channelCapacityLabels, float64(chSendCapacity)); err != nil {
 			logger.Log.Warnf("failed to report gauge chSend channel capacity: %s", err.Error())
 		}
-		if err := mr.ReportHistogram(metrics.ChannelCapacityHistogram, map[string]string{"channel": "agent_chsend"}, float64(chSendCapacity)); err != nil {
+		if err := mr.ReportHistogram(metrics.ChannelCapacityHistogram, channelCapacityLabels, float64(chSendCapacity)); err != nil {
 			logger.Log.Warnf("failed to report histogram chSend channel capacity: %s", err.Error())
 		}
 	}
