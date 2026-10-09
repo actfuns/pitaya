@@ -12,23 +12,24 @@ import (
 
 type zapImpl struct {
 	sugar *zap.SugaredLogger
+	// level is the level enabler used to build the logger.
+	level zap.AtomicLevel
 }
 
 func New() interfaces.Logger {
 	cfg := zap.NewProductionConfig()
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	level := zap.NewAtomicLevelAt(cfg.Level.Level())
+	cfg.Level = level
 	logger, _ := cfg.Build(zap.AddCaller(), zap.AddCallerSkip(1))
-	return &zapImpl{
-		sugar: logger.Sugar(),
-	}
+	return &zapImpl{sugar: logger.Sugar(), level: level}
 }
 
-func NewWithLogger(logger *zap.Logger) interfaces.Logger {
-	return &zapImpl{sugar: logger.Sugar()}
-}
-
-func NewWithSugaredLogger(logger *zap.SugaredLogger) interfaces.Logger {
-	return &zapImpl{sugar: logger}
+// NewWithSugaredLogger returns a new interfaces.Logger implementation based on
+// a provided sugared zap instance. level must be the level enabler used to
+// build the logger.
+func NewWithSugaredLogger(logger *zap.SugaredLogger, level zap.AtomicLevel) interfaces.Logger {
+	return &zapImpl{sugar: logger, level: level}
 }
 
 func (l *zapImpl) WithFields(fields map[string]interface{}) interfaces.Logger {
@@ -36,18 +37,29 @@ func (l *zapImpl) WithFields(fields map[string]interface{}) interfaces.Logger {
 	for k, v := range fields {
 		kv = append(kv, k, v)
 	}
-	return &zapImpl{sugar: l.sugar.With(kv...)}
+
+	return &zapImpl{
+		sugar: l.sugar.With(kv...),
+		level: l.level,
+	}
 }
 
 func (l *zapImpl) WithField(key string, value interface{}) interfaces.Logger {
-	return &zapImpl{sugar: l.sugar.With(zap.Any(key, value))}
+	return &zapImpl{
+		sugar: l.sugar.With(zap.Any(key, value)),
+		level: l.level,
+	}
 }
 
 func (l *zapImpl) WithError(err error) interfaces.Logger {
 	if err == nil {
 		return l
 	}
-	return &zapImpl{sugar: l.sugar.With(zap.Error(err))}
+
+	return &zapImpl{
+		sugar: l.sugar.With(zap.Error(err)),
+		level: l.level,
+	}
 }
 
 func (l *zapImpl) Fatal(args ...interface{}) {
@@ -150,7 +162,18 @@ func (l *zapImpl) Enabled(level int32) bool {
 	if !ok {
 		return false
 	}
-	return l.sugar.Desugar().Core().Enabled(zl)
+
+	return l.level.Enabled(zl)
+}
+
+func (l *zapImpl) SetLevel(level int32) error {
+	zl, ok := toZapLevel(level)
+	if !ok {
+		return fmt.Errorf("unknown log level: %d", level)
+	}
+
+	l.level.SetLevel(zl)
+	return nil
 }
 
 func (l *zapImpl) LogWithErrorLevel(err error, args ...interface{}) {

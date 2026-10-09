@@ -48,7 +48,8 @@ func initLogrusLogger() interfaces.Logger {
 
 func initZapLogger() interfaces.Logger {
 	cfg := zap.NewProductionConfig()
-	cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	level := zap.NewAtomicLevelAt(zap.DebugLevel)
+	cfg.Level = level
 	cfg.Encoding = "console"
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -62,7 +63,7 @@ func initZapLogger() interfaces.Logger {
 		panic(err)
 	}
 	sugar := logger.Sugar().With("source", "pitaya")
-	return zapwrapper.NewWithSugaredLogger(sugar)
+	return zapwrapper.NewWithSugaredLogger(sugar, level)
 }
 
 // SetLogger rewrites the default logger
@@ -70,6 +71,16 @@ func SetLogger(l interfaces.Logger) {
 	if l != nil {
 		Log = l
 	}
+}
+
+// SetLevel updates the log level of the default logger. The level is given
+// as its name, e.g. "debug", "info", "warn", "error", "fatal" or "panic".
+func SetLevel(level string) error {
+	l, err := interfaces.ParseLevel(level)
+	if err != nil {
+		return err
+	}
+	return Log.SetLevel(l)
 }
 
 // WithCtx returns a logger with the context

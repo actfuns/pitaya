@@ -27,7 +27,11 @@ import (
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
 
 	logruswrapper "github.com/actfuns/pitaya/v2/logger/logrus"
+	"github.com/actfuns/pitaya/v2/logger/test"
+	zapwrapper "github.com/actfuns/pitaya/v2/logger/zap"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func TestInitLogrusLogger(t *testing.T) {
@@ -124,4 +128,72 @@ func TestSetLogger(t *testing.T) {
 	l := logruswrapper.New()
 	SetLogger(l)
 	assert.Equal(t, l, Log)
+}
+
+func TestSetLevel(t *testing.T) {
+	log := initZapLogger()
+	assert.True(t, log.Enabled(interfaces.DebugLevel))
+
+	assert.NoError(t, log.SetLevel(interfaces.WarnLevel))
+	assert.False(t, log.Enabled(interfaces.InfoLevel))
+	assert.True(t, log.Enabled(interfaces.ErrorLevel))
+
+	assert.Error(t, log.SetLevel(0))
+}
+
+func TestSetLevelWithName(t *testing.T) {
+	previous := Log
+	defer SetLogger(previous)
+	SetLogger(initZapLogger())
+
+	assert.NoError(t, SetLevel("warning"))
+	assert.False(t, Log.Enabled(interfaces.InfoLevel))
+	assert.True(t, Log.Enabled(interfaces.ErrorLevel))
+
+	assert.NoError(t, SetLevel("DEBUG"))
+	assert.True(t, Log.Enabled(interfaces.DebugLevel))
+
+	assert.Error(t, SetLevel("unknown"))
+}
+
+func TestSetLevelLogrus(t *testing.T) {
+	log, hook := test.NewNullLogger()
+	defer hook.Reset()
+
+	assert.False(t, log.Enabled(interfaces.DebugLevel))
+	assert.NoError(t, log.SetLevel(interfaces.DebugLevel))
+	assert.True(t, log.Enabled(interfaces.DebugLevel))
+
+	log.Debug("debug msg")
+	assert.Equal(t, 1, len(hook.AllEntries()))
+
+	assert.Error(t, log.SetLevel(0))
+}
+
+func TestSetLevelZap(t *testing.T) {
+	log := zapwrapper.New()
+	assert.NoError(t, log.SetLevel(interfaces.DebugLevel))
+	assert.True(t, log.Enabled(interfaces.DebugLevel))
+	assert.True(t, log.WithField("key", "val").Enabled(interfaces.DebugLevel))
+
+	assert.NoError(t, log.SetLevel(interfaces.ErrorLevel))
+	assert.False(t, log.Enabled(interfaces.WarnLevel))
+	assert.False(t, log.WithField("key", "val").Enabled(interfaces.WarnLevel))
+	assert.True(t, log.Enabled(interfaces.ErrorLevel))
+
+	assert.Error(t, log.SetLevel(0))
+}
+
+func TestSetLevelZapCustomLevel(t *testing.T) {
+	level := zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	log := zapwrapper.NewWithSugaredLogger(zap.New(zapcore.NewNopCore()).Sugar(), level)
+
+	assert.True(t, log.Enabled(interfaces.InfoLevel))
+	assert.False(t, log.Enabled(interfaces.DebugLevel))
+
+	assert.NoError(t, log.SetLevel(interfaces.DebugLevel))
+	assert.True(t, log.Enabled(interfaces.DebugLevel))
+
+	assert.NoError(t, log.SetLevel(interfaces.ErrorLevel))
+	assert.False(t, log.Enabled(interfaces.WarnLevel))
 }

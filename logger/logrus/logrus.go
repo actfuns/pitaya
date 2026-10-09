@@ -1,6 +1,8 @@
 package logrus
 
 import (
+	"fmt"
+
 	"github.com/actfuns/pitaya/v2/errors"
 	"github.com/actfuns/pitaya/v2/logger/interfaces"
 	"github.com/sirupsen/logrus"
@@ -82,6 +84,24 @@ func (l *logrusImpl) Enabled(level int32) bool {
 		return v.IsLevelEnabled(ll)
 	}
 	return false
+}
+
+func (l *logrusImpl) SetLevel(level int32) error {
+	ll, ok := toLogrusLevel(level)
+	if !ok {
+		return fmt.Errorf("unknown log level: %d", level)
+	}
+	switch v := l.FieldLogger.(type) {
+	case *logrus.Entry:
+		v.Logger.SetLevel(ll)
+	case *logrus.Logger:
+		v.SetLevel(ll)
+	case interface{ SetLevel(logrus.Level) }:
+		v.SetLevel(ll)
+	default:
+		return fmt.Errorf("logrus logger of type %T does not support setting the level", l.FieldLogger)
+	}
+	return nil
 }
 
 func (l *logrusImpl) LogWithErrorLevel(err error, args ...interface{}) {
