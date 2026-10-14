@@ -24,17 +24,20 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"sync/atomic"
 	"testing"
 
 	agentmocks "github.com/actfuns/pitaya/v2/agent/mocks"
 	"github.com/actfuns/pitaya/v2/cluster"
 	clustermocks "github.com/actfuns/pitaya/v2/cluster/mocks"
+	"github.com/actfuns/pitaya/v2/component"
 	"github.com/actfuns/pitaya/v2/conn/codec"
 	"github.com/actfuns/pitaya/v2/conn/message"
 	messagemocks "github.com/actfuns/pitaya/v2/conn/message/mocks"
 	"github.com/actfuns/pitaya/v2/constants"
 	"github.com/actfuns/pitaya/v2/pipeline"
 	"github.com/actfuns/pitaya/v2/protos"
+	"github.com/actfuns/pitaya/v2/prpc"
 	"github.com/actfuns/pitaya/v2/route"
 	"github.com/actfuns/pitaya/v2/router"
 	serializemocks "github.com/actfuns/pitaya/v2/serialize/mocks"
@@ -255,4 +258,109 @@ func TestRemoteServiceRemoteProcess(t *testing.T) {
 			svc.remoteProcess(ctx, sv, mockAgent, rt, expectedMsg)
 		})
 	}
+}
+
+func TestRemoteServiceDoRPCHitsInterceptorsOnLoopback(t *testing.T) {
+	sv := cluster.NewServer("server-1", "chat", false, cluster.WithLoopbackEnabled(true))
+	rt := route.NewRoute("sv", "svc", "method")
+	ctx := context.Background()
+
+	svc := NewRemoteService(nil, nil, nil, nil, nil, nil, nil, sv, nil, pipeline.NewRemoteHooks(), pipeline.NewHandlerHooks(), NewHandlerPool(), nil)
+
+	calls := 0
+	var gotTarget *cluster.Server
+	var gotRoute *route.Route
+	svc.AddRPCInterceptor(func(next cluster.UnaryInvoker) cluster.UnaryInvoker {
+		return func(c *cluster.RPCContext) (*protos.Response, error) {
+			calls++
+			gotTarget = c.Target
+			gotRoute = c.Route
+			return &protos.Response{Data: []byte("intercepted")}, nil
+		}
+	})
+
+	res, err := svc.DoRPC(ctx, protos.RPCType_Sys, sv.ID, rt, nil, prpc.CallOptions{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("intercepted"), res.Data)
+	assert.Equal(t, 1, calls)
+	assert.Equal(t, sv, gotTarget)
+	assert.Equal(t, rt, gotRoute)
+}
+
+func TestRemoteServiceDoRPCHitsInterceptorsOnRemotePath(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sv := cluster.NewServer("server-1", "chat", false)
+	target := cluster.NewServer("server-2", "chat", false)
+	rt := route.NewRoute("sv", "svc", "method")
+	ctx := context.Background()
+	msg := &message.Message{Type: message.Request, Route: rt.String(), Data: []byte("ok")}
+
+	mockSD := clustermocks.NewMockServiceDiscovery(ctrl)
+	mockRPCClient := clustermocks.NewMockRPCClient(ctrl)
+
+	mockSD.EXPECT().GetServer(target.ID).Return(target, nil)
+	mockRPCClient.EXPECT().Call(ctx, protos.RPCType_Sys, rt, gomock.Any(), msg, target).Return(&protos.Response{Data: []byte("remote")}, nil)
+
+	svc := NewRemoteService(mockRPCClient, nil, mockSD, nil, nil, nil, nil, sv, nil, pipeline.NewRemoteHooks(), pipeline.NewHandlerHooks(), nil, nil)
+
+	calls := 0
+	var gotTarget *cluster.Server
+	svc.AddRPCInterceptor(func(next cluster.UnaryInvoker) cluster.UnaryInvoker {
+		return func(c *cluster.RPCContext) (*protos.Response, error) {
+			calls++
+			gotTarget = c.Target
+			return next(c)
+		}
+	})
+
+	res, err := svc.DoRPC(ctx, protos.RPCType_Sys, target.ID, rt, []byte("ok"), prpc.CallOptions{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("remote"), res.Data)
+	assert.Equal(t, 1, calls)
+	assert.Equal(t, target, gotTarget)
+}
+
+func TestRemoteServiceDoRPCLoopbackDispatchesThroughInterceptors(t *testing.T) {
+	sv := cluster.NewServer("server-1", "chat", false, cluster.WithLoopbackEnabled(true))
+	rt := route.NewRoute("sv", "svc", "method")
+	ctx := context.Background()
+
+	var handlerRan int32
+	handlerPool := NewHandlerPool()
+	handlerPool.Register(prpc.KindRPC, rt.Domain, rt.Service, rt.Method, &component.Handler{
+		Codec:     true,
+		Reentrant: true,
+		Fn: func(srv interface{}, hctx context.Context, data []byte, prepare func(context.Context, interface{}) (context.Context, interface{}, error)) (interface{}, error) {
+			atomic.AddInt32(&handlerRan, 1)
+			return []byte("pong"), nil
+		},
+	})
+
+	taskService, err := NewTaskService(1, 1, 60)
+	assert.NoError(t, err)
+	defer taskService.Shutdown()
+
+	// no rpcClient: a loopback call that tried to reach the wire would panic.
+	svc := NewRemoteService(nil, nil, nil, nil, nil, nil, nil, sv, nil, pipeline.NewRemoteHooks(), pipeline.NewHandlerHooks(), handlerPool, taskService)
+
+	var order []string
+	svc.AddRPCInterceptor(func(next cluster.UnaryInvoker) cluster.UnaryInvoker {
+		return func(c *cluster.RPCContext) (*protos.Response, error) {
+			order = append(order, "before")
+			res, err := next(c)
+			order = append(order, "after")
+			return res, err
+		}
+	})
+
+	res, err := svc.DoRPC(ctx, protos.RPCType_User, sv.ID, rt, nil, prpc.CallOptions{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("pong"), res.Data)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&handlerRan))
+	assert.Equal(t, []string{"before", "after"}, order)
 }

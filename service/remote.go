@@ -248,16 +248,28 @@ func (r *RemoteService) DoRPC(ctx context.Context, rpcType protos.RPCType, serve
 		ctx = sctx
 	}
 
+	target, err := r.resolveTarget(serverID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.remoteCall(ctx, target, rpcType, route, nil, msg)
+}
+
+// resolveTarget resolves the server an outbound call is addressed to. When the
+// target is this very server and loopback is enabled it resolves to the local
+// server without consulting service discovery. Whether the call is then served
+// in-process or sent over the wire is decided by invokeOutbound.
+func (r *RemoteService) resolveTarget(serverID string) (*cluster.Server, error) {
 	if serverID == r.server.ID && r.server.IsLoopbackEnabled() {
-		return r.Loopback(ctx, rpcType, route, msg)
+		return r.server, nil
 	}
 
 	target, _ := r.serviceDiscovery.GetServer(serverID)
 	if target == nil {
 		return nil, constants.ErrServerNotFound
 	}
-
-	return r.remoteCall(ctx, target, rpcType, route, nil, msg)
+	return target, nil
 }
 
 // RPC makes rpcs
@@ -569,11 +581,23 @@ func (r *RemoteService) remoteCall(
 		Msg:     msg,
 		Target:  target,
 	}
-	return r.interceptorChain.Execute(rpcCtx, r.invokeRPC)
+	return r.interceptorChain.Execute(rpcCtx, r.invokeOutbound)
 }
 
-// invokeRPC is the innermost invoker of the interceptor chain; it performs the
-// actual RPC call through the underlying RPC client.
+// invokeOutbound is the innermost invoker of the interceptor chain. It picks
+// the transport from c.Target: a call addressed to this very server, with
+// loopback enabled, is dispatched in-process instead of over the wire.
+func (r *RemoteService) invokeOutbound(c *cluster.RPCContext) (*protos.Response, error) {
+	if c.Target == nil {
+		return nil, constants.ErrServerNotFound
+	}
+	if r.server.IsLoopbackEnabled() && c.Target.ID == r.server.ID {
+		return r.Loopback(c.Context, c.RPCType, c.Route, c.Msg)
+	}
+	return r.invokeRPC(c)
+}
+
+// invokeRPC performs the actual RPC call through the underlying RPC client.
 func (r *RemoteService) invokeRPC(c *cluster.RPCContext) (*protos.Response, error) {
 	res, err := r.rpcClient.Call(c.Context, c.RPCType, c.Route, c.Session, c.Msg, c.Target)
 	if err != nil {

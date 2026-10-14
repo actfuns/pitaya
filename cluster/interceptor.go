@@ -18,16 +18,22 @@ type UnaryInvoker func(c *RPCContext) (*protos.Response, error)
 // UnaryInterceptor wraps a downstream handler in the spirit of a functional
 // middleware (like http.Handler or grpc.UnaryServerInterceptor). It receives
 // the next handler in the chain and returns its own handler. Interceptors may:
-//   - mutate the call parameters by writing to the fields of the *RPCContext
-//     passed to the returned handler (e.g. c.Target, c.Route, c.Msg, c.Context)
-//     before invoking next;
+//   - read the call parameters from the *RPCContext passed to the returned
+//     handler;
+//   - rewrite the request by mutating c.Msg (route, data, shard key) or
+//     c.Context before invoking next;
 //   - retry by calling next(c) more than once;
 //   - short-circuit by returning a response/error without calling next.
+//
+// c.Target and c.Route are read-only: c.Target points at the server object the
+// call was resolved to (the live server object on the loopback path), so
+// writing to it corrupts shared state, and c.Route does not select the
+// destination -- the route actually dispatched is c.Msg.Route.
 type UnaryInterceptor func(next UnaryInvoker) UnaryInvoker
 
 // RPCContext carries the state of a single outbound RPC call through the
 // interceptor chain. The call parameters are flattened onto the context so
-// interceptors can read or mutate them directly.
+// interceptors can read them directly.
 type RPCContext struct {
 	context.Context
 
